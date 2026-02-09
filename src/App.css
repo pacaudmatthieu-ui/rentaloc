@@ -190,6 +190,12 @@
   gap: 1rem;
 }
 
+@media (max-width: 900px) {
+  .sortable-section-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .sortable-section-item {
   transition: opacity 0.2s ease, box-shadow 0.2s ease;
 }
