@@ -3,7 +3,6 @@ import type { Locale } from '../../../shared/types'
 import { FormField, FormFieldReadOnly, SortableSectionList } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
-import { exportMarchandToExcel } from '../../../features/export-excel/lib'
 import type { ApartmentItem, MarchandDeBiensValues } from '../model/types'
 import { MB_INITIAL } from '../model/types'
 import { validateMarchandData } from '../model/validation'
@@ -106,10 +105,6 @@ export function FlipPanelPage({ locale, strings }: FlipPanelPageProps) {
         a.id === id ? { ...a, [field]: value } : a,
       ),
     }))
-  }
-
-  const handleExportExcel = () => {
-    exportMarchandToExcel(values, strings, (n) => currencyFormatter.format(n))
   }
 
   const { order, collapsed, moveSection, setCollapsed } = usePanelLayout(
@@ -315,11 +310,6 @@ export function FlipPanelPage({ locale, strings }: FlipPanelPageProps) {
         }}
         validateData={validateMarchandData}
         strings={strings}
-        extraButton={
-          <button type="button" className="export-import-btn" onClick={handleExportExcel}>
-            {strings.exportExcel}
-          </button>
-        }
       />
       <SortableSectionList
         sections={sections}
