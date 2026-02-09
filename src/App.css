@@ -575,6 +575,10 @@
   .mb-revente-section {
     grid-template-columns: 1fr;
   }
+
+  .mb-revente-mobile-hidden {
+    display: none !important;
+  }
 }
 
 .mb-taxation-section {

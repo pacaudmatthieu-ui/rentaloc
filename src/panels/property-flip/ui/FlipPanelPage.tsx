@@ -200,10 +200,22 @@ export function FlipPanelPage({ locale, strings }: FlipPanelPageProps) {
       {
         id: 'revente',
         title: strings.mbReventeLogic.replace(/\s*–\s*.*$/, ''),
-        description: strings.mbReventeLogic,
+        description: `${strings.mbReventePessimistic} / ${strings.mbReventeLogic} / ${strings.mbReventeOptimistic}`,
         content:
           values.apartments.length > 0 ? (
             <div className="mb-revente-section">
+              <div className="mb-revente-mobile-hidden">
+                <ReventeTable
+                  title={strings.mbReventePessimistic}
+                  apartments={values.apartments}
+                  resaleField="resalePessimistic"
+                  updateApartment={updateApartment}
+                  strings={strings}
+                  currencyFormatter={currencyFormatter}
+                  totalAcquisitionCost={totalCostForMarge}
+                  locale={locale}
+                />
+              </div>
               <ReventeTable
                 title={strings.mbReventeLogic}
                 apartments={values.apartments}
@@ -214,6 +226,18 @@ export function FlipPanelPage({ locale, strings }: FlipPanelPageProps) {
                 totalAcquisitionCost={totalCostForMarge}
                 locale={locale}
               />
+              <div className="mb-revente-mobile-hidden">
+                <ReventeTable
+                  title={strings.mbReventeOptimistic}
+                  apartments={values.apartments}
+                  resaleField="resaleOptimistic"
+                  updateApartment={updateApartment}
+                  strings={strings}
+                  currencyFormatter={currencyFormatter}
+                  totalAcquisitionCost={totalCostForMarge}
+                  locale={locale}
+                />
+              </div>
             </div>
           ) : (
             <p className="mb-no-apartments">{strings.mbNoApartments}</p>
