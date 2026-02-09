@@ -29,6 +29,10 @@ export type SimulationFormValues = {
   marginalTaxRate: string
   socialChargesRate: string
   corporateTaxRate: string
+  /** Durée de détention en mois (projet de revente) */
+  resaleHoldingMonths: string
+  /** Prix de revente prévu (projet de revente) */
+  resalePrice: string
 }
 
 export type SimulationResults = {
@@ -77,4 +81,6 @@ export const INITIAL_VALUES: SimulationFormValues = {
   marginalTaxRate: '30',
   socialChargesRate: '17.2',
   corporateTaxRate: '25',
+  resaleHoldingMonths: '',
+  resalePrice: '',
 }

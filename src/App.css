@@ -755,6 +755,31 @@
   min-height: 420px;
 }
 
+.loan-charts-section {
+  width: 100%;
+}
+
+.loan-chart-card {
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 1rem 1.25rem;
+}
+
+.loan-chart-card-single {
+  width: 100%;
+}
+
+.loan-chart-card-irr {
+  margin-top: 1.25rem;
+}
+
+.loan-chart-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: #e5e7eb;
+}
+
 .chart-tooltip {
   background: #0f172a;
   border: 1px solid rgba(148, 163, 184, 0.5);

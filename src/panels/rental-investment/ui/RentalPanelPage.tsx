@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
-import { FormField, FormFieldReadOnly, ResultTile, BreakdownRow, CashflowChart, SortableSectionList } from '../../../shared/ui'
+import { FormField, FormFieldReadOnly, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
 import { INITIAL_VALUES } from '../model/types'
@@ -9,11 +9,13 @@ import type { SimulationFormValues } from '../model/types'
 import { validateInvestissementData } from '../model/validation'
 import {
   calculateResults,
+  computeIRRByYearData,
+  computeLoanChartsData,
   computeYearlyChartData,
   computeYearlyTableData,
 } from '../lib/calculations'
 
-/** Structure par défaut : Ligne 1: Acquisition | Résultat | Ligne 2: Financement | Revenus | Charge | Ligne 3: Cash flow | Ligne 4: Détail */
+/** Structure par défaut : Ligne 1: Acquisition | Résultat | Ligne 2: Financement | Revenus | Charge | Ligne 3: Fiscalité | Projet revente | Ligne 4: Cash flow | Ligne 5: Détail | Ligne 6: Évolution crédit */
 const RENTAL_DEFAULT_ORDER = [
   'acquisition',
   'results',
@@ -21,10 +23,12 @@ const RENTAL_DEFAULT_ORDER = [
   'revenues',
   'charges',
   'taxation',
+  'resale',
   'chart',
   'yearly-table',
+  'loan-charts',
 ]
-const RENTAL_GRID_LAYOUT = [2, 4, 1, 1] as const
+const RENTAL_GRID_LAYOUT = [2, 3, 2, 1, 1, 1] as const
 
 interface RentalPanelPageProps {
   locale: Locale
@@ -38,6 +42,8 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
   const results = useMemo(() => calculateResults(values), [values])
   const chartData = useMemo(() => computeYearlyChartData(values), [values])
   const tableData = useMemo(() => computeYearlyTableData(values), [values])
+  const loanChartsData = useMemo(() => computeLoanChartsData(values), [values])
+  const irrByYearData = useMemo(() => computeIRRByYearData(values), [values])
 
   const currencyFormatter = useMemo(
     () =>
@@ -166,6 +172,25 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
         ),
       },
       {
+        id: 'resale',
+        title: strings.sectionResale,
+        description: strings.resaleDescription,
+        content: (
+          <div className="form-card-body">
+            <FormField
+              label={strings.resaleHoldingMonths}
+              value={values.resaleHoldingMonths}
+              onChange={handleChange('resaleHoldingMonths')}
+            />
+            <FormField
+              label={strings.resalePrice}
+              value={values.resalePrice}
+              onChange={handleChange('resalePrice')}
+            />
+          </div>
+        ),
+      },
+      {
         id: 'taxation',
         title: strings.sectionTaxation,
         description: strings.taxDescription,
@@ -253,6 +278,7 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
                 depreciation: strings.chartChargeDepreciation,
                 carryforward: strings.chartChargeCarryforward,
                 tax: strings.chartChargeTax,
+                saleTax: strings.chartChargeSaleTax,
               }}
             />
           </div>
@@ -262,7 +288,8 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
         id: 'yearly-table',
         title: strings.tableTitle,
         content:
-          values.taxRegime !== 'none' ? (
+          values.taxRegime !== 'none' ||
+          (values.resalePrice && Number(values.resalePrice) > 0 && values.resaleHoldingMonths && Number(values.resaleHoldingMonths) > 0) ? (
             <div className="yearly-table-wrapper">
               <table className="yearly-table">
                 <thead>
@@ -279,6 +306,7 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
                     <th>{strings.tableTaxBase}</th>
                     <th>{strings.tableTax}</th>
                     <th>{strings.tableCarryforward}</th>
+                    <th>{strings.tableResalePrice}</th>
                     <th>{strings.tableCashDispo}</th>
                     <th>{strings.tableSaleTax}</th>
                   </tr>
@@ -297,9 +325,10 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
                       <td className="yearly-table-num">{currencyFormatter.format(row.depreciation)}</td>
                       <td className="yearly-table-num">{currencyFormatter.format(row.taxBase)}</td>
                       <td className="yearly-table-num">{currencyFormatter.format(row.tax)}</td>
-                      <td className="yearly-table-num">{currencyFormatter.format(row.carryforwardUsed)}</td>
-                      <td className="yearly-table-num">{currencyFormatter.format(row.cashDispo)}</td>
-                      <td className="yearly-table-num">{currencyFormatter.format(row.saleTax)}</td>
+                    <td className="yearly-table-num">{currencyFormatter.format(row.carryforwardUsed)}</td>
+                    <td className="yearly-table-num">{row.resalePrice > 0 ? currencyFormatter.format(row.resalePrice) : '–'}</td>
+                    <td className="yearly-table-num">{currencyFormatter.format(row.cashDispo)}</td>
+                    <td className="yearly-table-num">{currencyFormatter.format(row.saleTax)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -308,6 +337,24 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
           ) : (
             <p className="results-disclaimer">{strings.taxDescription}</p>
           ),
+      },
+      {
+        id: 'loan-charts',
+        title: strings.sectionLoanCharts,
+        description: strings.loanChartsDescription,
+        content: (
+          <LoanChartsSection
+            data={loanChartsData}
+            currencyFormatter={currencyFormatter}
+            percentFormatter={percentFormatter}
+            principalLabel={strings.loanChartPrincipal}
+            interestLabel={strings.loanChartInterest}
+            ltvLabel={strings.loanChartLtv}
+            yearLabel={strings.tableYear}
+            irrData={irrByYearData}
+            irrLabel={strings.loanChartIrr}
+          />
+        ),
       },
     ],
     [
@@ -318,6 +365,8 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
       results,
       chartData,
       tableData,
+      loanChartsData,
+      irrByYearData,
       handleChange,
       handleTaxRegimeChange,
       handleDeferralTypeChange,
@@ -338,6 +387,8 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
               loanDurationMonths: d.loanDurationMonths ?? String((Number(d.loanDurationYears) || 20) * 12),
               deferralMonths: d.deferralMonths ?? '0',
               deferralType: d.deferralType ?? 'none',
+              resaleHoldingMonths: d.resaleHoldingMonths ?? '',
+              resalePrice: d.resalePrice ?? '',
             })
           }}
           validateData={validateInvestissementData}

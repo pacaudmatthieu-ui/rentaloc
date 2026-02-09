@@ -7,7 +7,7 @@ import {
   BAILLEUR_PRIVE_BUILDING_RATE,
   BAILLEUR_PRIVE_TAX_CAP_EUR,
 } from './constants'
-import type { YearlyChartPoint } from '../../../shared/types/chart'
+import type { ChargesBreakdown, YearlyChartPoint } from '../../../shared/types/chart'
 import type { SimulationFormValues, SimulationResults } from '../model/types'
 
 export function computeDepreciationForYear(
@@ -356,6 +356,323 @@ export function calculateResults(values: SimulationFormValues): SimulationResult
   }
 }
 
+export function computeLoanChartsData(
+  values: SimulationFormValues,
+): { year: number; principal: number; interest: number; ltv: number }[] {
+  const purchasePrice = toNumber(values.purchasePrice)
+  const notaryFees = purchasePrice * 0.08
+  const agencyFees = toNumber(values.agencyFees)
+  const renovationBudget = toNumber(values.renovationBudget)
+  const furnitureBudget = toNumber(values.furnitureBudget)
+  const ownFunds = toNumber(values.ownFunds)
+  const interestRate = toNumber(values.interestRate) / 100
+  const loanDurationMonths = Math.max(toNumber(values.loanDurationMonths), 1)
+  const deferralMonths = Math.max(0, Math.min(toNumber(values.deferralMonths ?? '0'), loanDurationMonths - 1))
+  const deferralType = (values.deferralType || 'none') as 'none' | 'partial' | 'total'
+  const loanFees = toNumber(values.loanFees)
+  const guaranteeFees = toNumber(values.guaranteeFees)
+
+  const totalCost =
+    purchasePrice +
+    notaryFees +
+    agencyFees +
+    renovationBudget +
+    furnitureBudget +
+    loanFees +
+    guaranteeFees
+  const loanAmount = Math.max(totalCost - ownFunds, 0)
+
+  if (loanAmount <= 0) return []
+
+  const monthlyRate = interestRate / 12
+  const schedule = computeAmortizationSchedule(
+    loanAmount,
+    loanDurationMonths,
+    monthlyRate,
+    deferralMonths,
+    deferralType,
+  )
+
+  const propertyValue = totalCost
+  const data: { year: number; principal: number; interest: number; ltv: number }[] = []
+
+  for (let y = 0; y < schedule.loanDurationYears; y++) {
+    const principal = schedule.principalPerYear[y] ?? 0
+    const interest = schedule.interestPerYear[y] ?? 0
+    const balance = schedule.balanceEndOfYear[y] ?? 0
+    const ltv = propertyValue > 0 ? (balance / propertyValue) * 100 : 0
+
+    data.push({
+      year: y + 1,
+      principal,
+      interest,
+      ltv,
+    })
+  }
+
+  return data
+}
+
+/** Calcule le TRI par la méthode de Newton-Raphson */
+function computeIRR(cashFlows: number[], maxIterations = 100): number | null {
+  if (cashFlows.length < 2 || cashFlows[0] >= 0) return null
+
+  const npv = (r: number) => {
+    let sum = 0
+    for (let i = 0; i < cashFlows.length; i++) {
+      sum += cashFlows[i] / Math.pow(1 + r, i)
+    }
+    return sum
+  }
+
+  const npvDerivative = (r: number) => {
+    let sum = 0
+    for (let i = 1; i < cashFlows.length; i++) {
+      sum -= (i * cashFlows[i]) / Math.pow(1 + r, i + 1)
+    }
+    return sum
+  }
+
+  let r = 0.1
+  for (let i = 0; i < maxIterations; i++) {
+    const v = npv(r)
+    const dv = npvDerivative(r)
+    if (Math.abs(v) < 1e-9) return r
+    if (dv === 0) break
+    r = r - v / dv
+    if (r <= -0.99) r = -0.98
+    if (r > 10) return null
+  }
+  return Math.abs(npv(r)) < 1e-6 ? r : null
+}
+
+export function computeIRRByYearData(
+  values: SimulationFormValues,
+): { year: number; irr: number }[] {
+  const resaleHoldingMonths = Math.max(0, toNumber(values.resaleHoldingMonths ?? '0'))
+  const resalePrice = toNumber(values.resalePrice ?? '0')
+  const hasResale = resalePrice > 0 && resaleHoldingMonths > 0
+  if (!hasResale) return []
+
+  const purchasePrice = toNumber(values.purchasePrice)
+  const notaryFees = purchasePrice * 0.08
+  const agencyFees = toNumber(values.agencyFees)
+  const renovationBudget = toNumber(values.renovationBudget)
+  const furnitureBudget = toNumber(values.furnitureBudget)
+  const ownFunds = toNumber(values.ownFunds)
+  const interestRate = toNumber(values.interestRate) / 100
+  const insuranceRate = toNumber(values.insuranceRate) / 100
+  const loanDurationMonths = Math.max(toNumber(values.loanDurationMonths), 1)
+  const deferralMonths = Math.max(0, Math.min(toNumber(values.deferralMonths ?? '0'), loanDurationMonths - 1))
+  const deferralType = (values.deferralType || 'none') as 'none' | 'partial' | 'total'
+  const monthlyRent = toNumber(values.monthlyRent)
+  const monthlyRecoverableCharges = toNumber(values.monthlyRecoverableCharges)
+  const vacancyRate = toNumber(values.vacancyRate) / 100
+  const annualPropertyTax = toNumber(values.annualPropertyTax)
+  const annualNonRecoverableCharges = toNumber(values.annualNonRecoverableCharges)
+  const annualManagementPercent = toNumber(values.annualManagementPercent) / 100
+  const annualMaintenance = toNumber(values.annualMaintenance)
+  const annualInsurancePNO = toNumber(values.annualInsurancePNO)
+  const otherAnnualExpenses = toNumber(values.otherAnnualExpenses)
+  const marginalTaxRate = toNumber(values.marginalTaxRate) / 100
+  const socialChargesRate = toNumber(values.socialChargesRate) / 100
+  const corporateTaxRate = toNumber(values.corporateTaxRate) / 100
+  const taxRegime = values.taxRegime
+  const rentRevaluationRate = toNumber(values.rentRevaluationPercent) / 100
+  const feesAmortizeYear1 = values.feesAmortizeYear1
+  const loanFees = toNumber(values.loanFees)
+  const guaranteeFees = toNumber(values.guaranteeFees)
+
+  const totalCost =
+    purchasePrice +
+    notaryFees +
+    agencyFees +
+    renovationBudget +
+    furnitureBudget +
+    loanFees +
+    guaranteeFees
+  const loanAmount = Math.max(totalCost - ownFunds, 0)
+
+  const monthlyRate = interestRate / 12
+  const schedule = computeAmortizationSchedule(
+    loanAmount,
+    loanDurationMonths,
+    monthlyRate,
+    deferralMonths,
+    deferralType,
+  )
+
+  const monthlyInsurance = loanAmount * (insuranceRate / 12)
+  const grossMonthlyIncome = monthlyRent + monthlyRecoverableCharges
+  const effectiveMonthlyIncome = grossMonthlyIncome * (1 - vacancyRate)
+  const annualRentEffectiveBase = effectiveMonthlyIncome * 12
+  const tmiPlusSocial = marginalTaxRate + socialChargesRate
+
+  const numYears = Math.max(1, Math.ceil(resaleHoldingMonths / 12))
+  const data: { year: number; irr: number }[] = []
+
+  for (let saleYear = 1; saleYear <= numYears; saleYear++) {
+    const cashFlows: number[] = [-ownFunds]
+    let totalDepreciationTaken = 0
+    let deficitCarryforward = 0
+
+    for (let y = 0; y < saleYear; y++) {
+      const interestThisYear = schedule.interestPerYear[y] ?? 0
+      const creditThisYear =
+        (schedule.paymentPerYear[y] ?? 0) + monthlyInsurance * 12
+      const revenue =
+        annualRentEffectiveBase * Math.pow(1 + rentRevaluationRate, y)
+      const annualManagementY = revenue * annualManagementPercent
+      const annualChargesY =
+        annualPropertyTax +
+        annualNonRecoverableCharges +
+        annualManagementY +
+        annualMaintenance +
+        annualInsurancePNO +
+        otherAnnualExpenses
+
+      const depreciationY = computeDepreciationForYear(
+        purchasePrice,
+        notaryFees,
+        agencyFees,
+        renovationBudget,
+        furnitureBudget,
+        taxRegime,
+        y,
+        feesAmortizeYear1,
+      )
+      totalDepreciationTaken += depreciationY.total
+
+      const cfBeforeTax = revenue - annualChargesY - creditThisYear
+
+      let base = 0
+      let taxable = 0
+
+      switch (taxRegime) {
+        case 'micro_foncier':
+          base = revenue * 0.7
+          taxable = base
+          break
+        case 'reel_foncier':
+        case 'lmnp_reel':
+        case 'sci_ir':
+          base =
+            revenue -
+            annualChargesY -
+            interestThisYear -
+            depreciationY.total
+          if (base < 0) {
+            deficitCarryforward += -base
+            taxable = 0
+          } else {
+            taxable = Math.max(0, base - deficitCarryforward)
+            deficitCarryforward = Math.max(0, deficitCarryforward - base)
+          }
+          break
+        case 'lmnp_micro_bic':
+          base = revenue * 0.5
+          taxable = base
+          break
+        case 'sci_is':
+          base =
+            revenue -
+            annualChargesY -
+            creditThisYear -
+            depreciationY.total
+          if (base < 0) {
+            deficitCarryforward += -base
+            taxable = 0
+          } else {
+            taxable = Math.max(0, base - deficitCarryforward)
+            deficitCarryforward = Math.max(0, deficitCarryforward - base)
+          }
+          break
+        case 'bailleur_prive': {
+          base =
+            revenue -
+            annualChargesY -
+            interestThisYear -
+            depreciationY.total
+          if (base < 0) {
+            deficitCarryforward += -base
+            taxable = 0
+          } else {
+            taxable = Math.max(0, base - deficitCarryforward)
+            deficitCarryforward = Math.max(0, deficitCarryforward - base)
+          }
+          break
+        }
+        default:
+          taxable = 0
+      }
+
+      let tax = 0
+      switch (taxRegime) {
+        case 'micro_foncier':
+          tax = Math.max(taxable * tmiPlusSocial, 0)
+          break
+        case 'reel_foncier':
+        case 'lmnp_reel':
+        case 'sci_ir':
+          tax = taxable * tmiPlusSocial
+          break
+        case 'lmnp_micro_bic':
+          tax = Math.max(taxable * tmiPlusSocial, 0)
+          break
+        case 'sci_is':
+          tax = taxable * corporateTaxRate
+          break
+        case 'bailleur_prive': {
+          const taxWithDepreciation = taxable * tmiPlusSocial
+          const taxWithoutDepreciation = Math.max(
+            (revenue - annualChargesY - interestThisYear) * tmiPlusSocial,
+            0,
+          )
+          const taxAdvantage = Math.min(
+            taxWithoutDepreciation - taxWithDepreciation,
+            BAILLEUR_PRIVE_TAX_CAP_EUR,
+          )
+          tax = taxWithoutDepreciation - taxAdvantage
+          break
+        }
+        default:
+          break
+      }
+
+      let annualCashflow = cfBeforeTax - tax
+
+      if (y === saleYear - 1) {
+        const saleTax =
+          taxRegime !== 'none'
+            ? computeSaleTaxAtResale(
+                resalePrice,
+                totalCost,
+                totalDepreciationTaken,
+                taxRegime,
+                corporateTaxRate,
+                tmiPlusSocial,
+              )
+            : 0
+        const crd =
+          y < schedule.loanDurationYears - 1
+            ? schedule.balanceEndOfYear[y] ?? 0
+            : 0
+        annualCashflow += resalePrice - saleTax - crd
+      }
+
+      cashFlows.push(annualCashflow)
+    }
+
+    const irr = computeIRR(cashFlows)
+    data.push({
+      year: saleYear,
+      irr: irr != null ? irr * 100 : 0,
+    })
+  }
+
+  return data
+}
+
 export function computeYearlyChartData(
   values: SimulationFormValues,
 ): YearlyChartPoint[] {
@@ -410,14 +727,22 @@ export function computeYearlyChartData(
   const effectiveMonthlyIncome = grossMonthlyIncome * (1 - vacancyRate)
   const annualRentEffectiveBase = effectiveMonthlyIncome * 12
   const rentRevaluationRate = toNumber(values.rentRevaluationPercent) / 100
+  const resaleHoldingMonths = Math.max(0, toNumber(values.resaleHoldingMonths ?? '0'))
+  const resalePrice = toNumber(values.resalePrice ?? '0')
+  const hasResale = resalePrice > 0 && resaleHoldingMonths > 0
+  const chartNumYears = hasResale
+    ? Math.max(1, Math.ceil(resaleHoldingMonths / 12))
+    : schedule.loanDurationYears
+  const chartResaleYearIndex = hasResale ? chartNumYears - 1 : -1
 
   const tmiPlusSocial = marginalTaxRate + socialChargesRate
   const feesAmortizeYear1 = values.feesAmortizeYear1
 
   const data: YearlyChartPoint[] = []
   let deficitCarryforward = 0
+  let totalDepreciationForChart = 0
 
-  for (let y = 0; y < schedule.loanDurationYears; y++) {
+  for (let y = 0; y < chartNumYears; y++) {
     const interestThisYear = schedule.interestPerYear[y] ?? 0
     const annualLoanAndInsurance =
       (schedule.paymentPerYear[y] ?? 0) + monthlyInsurance * 12
@@ -443,6 +768,7 @@ export function computeYearlyChartData(
       y,
       feesAmortizeYear1,
     )
+    totalDepreciationForChart += depreciationY.total
 
     let base = 0
     let taxable = 0
@@ -542,30 +868,80 @@ export function computeYearlyChartData(
         break
     }
 
-    const cashflow = revenue - expenses - tax
-    const totalCharges = expenses + tax
+    let saleTaxChart = 0
+    if (hasResale && y === chartResaleYearIndex && taxRegime !== 'none') {
+      saleTaxChart = computeSaleTaxAtResale(
+        resalePrice,
+        totalCost,
+        totalDepreciationForChart,
+        taxRegime,
+        corporateTaxRate,
+        tmiPlusSocial,
+      )
+    }
+
+    const crdAtSale =
+      hasResale &&
+      y === chartResaleYearIndex &&
+      y < schedule.loanDurationYears - 1
+        ? schedule.balanceEndOfYear[y] ?? 0
+        : 0
+    const totalCharges = expenses + tax + saleTaxChart + crdAtSale
+    const revenueWithResale = revenue + (hasResale && y === chartResaleYearIndex ? resalePrice : 0)
+    const cashflow = revenueWithResale - totalCharges
+
+    const breakdown: ChargesBreakdown = {
+      propertyTax: annualPropertyTax,
+      copro: annualNonRecoverableCharges,
+      management: annualManagementY,
+      maintenance: annualMaintenance,
+      insurance: annualInsurancePNO,
+      other: otherAnnualExpenses,
+      loanAndInsurance: annualLoanAndInsurance,
+      depreciation: depreciationY.total,
+      carryforwardUsed,
+      tax,
+    }
+    if (saleTaxChart > 0) breakdown.saleTax = saleTaxChart
 
     data.push({
       year: `${y + 1}`,
-      revenue,
+      revenue: revenueWithResale,
       charges: -totalCharges,
       cashflow,
-      chargesBreakdown: {
-        propertyTax: annualPropertyTax,
-        copro: annualNonRecoverableCharges,
-        management: annualManagementY,
-        maintenance: annualMaintenance,
-        insurance: annualInsurancePNO,
-        other: otherAnnualExpenses,
-        loanAndInsurance: annualLoanAndInsurance,
-        depreciation: depreciationY.total,
-        carryforwardUsed,
-        tax,
-      },
+      chargesBreakdown: breakdown,
+      ...(hasResale && y === chartResaleYearIndex ? { resalePrice } : {}),
     })
   }
 
   return data
+}
+
+function computeSaleTaxAtResale(
+  resalePrice: number,
+  totalCost: number,
+  totalDepreciationTaken: number,
+  taxRegime: TaxRegime,
+  corporateTaxRate: number,
+  tmiPlusSocial: number,
+): number {
+  if (resalePrice <= 0) return 0
+  const vnc = totalCost - totalDepreciationTaken
+  const taxableGain = Math.max(0, resalePrice - vnc)
+  if (taxableGain <= 0) return 0
+  switch (taxRegime) {
+    case 'sci_is':
+      return taxableGain * corporateTaxRate
+    case 'reel_foncier':
+    case 'lmnp_reel':
+    case 'sci_ir':
+    case 'micro_foncier':
+    case 'lmnp_micro_bic':
+    case 'bailleur_prive':
+      return taxableGain * tmiPlusSocial
+    default:
+      return 0
+  }
 }
 
 export type YearlyTableRow = {
@@ -583,6 +959,7 @@ export type YearlyTableRow = {
   carryforwardUsed: number
   cashDispo: number
   saleTax: number
+  resalePrice: number
 }
 
 export function computeYearlyTableData(
@@ -616,6 +993,9 @@ export function computeYearlyTableData(
   const feesAmortizeYear1 = values.feesAmortizeYear1
   const loanFees = toNumber(values.loanFees)
   const guaranteeFees = toNumber(values.guaranteeFees)
+  const resaleHoldingMonths = Math.max(0, toNumber(values.resaleHoldingMonths ?? '0'))
+  const resalePrice = toNumber(values.resalePrice ?? '0')
+  const hasResale = resalePrice > 0 && resaleHoldingMonths > 0
 
   const totalCost =
     purchasePrice +
@@ -642,11 +1022,16 @@ export function computeYearlyTableData(
   const annualRentEffectiveBase = effectiveMonthlyIncome * 12
   const tmiPlusSocial = marginalTaxRate + socialChargesRate
 
+  const numYears = hasResale
+    ? Math.max(1, Math.ceil(resaleHoldingMonths / 12))
+    : schedule.loanDurationYears
+  const resaleYearIndex = hasResale ? numYears - 1 : -1
+
   const data: YearlyTableRow[] = []
   let deficitCarryforward = 0
   let totalDepreciationTaken = 0
 
-  for (let y = 0; y < schedule.loanDurationYears; y++) {
+  for (let y = 0; y < numYears; y++) {
     const interestThisYear = schedule.interestPerYear[y] ?? 0
     const principalThisYear = schedule.principalPerYear[y] ?? 0
     const creditThisYear =
@@ -776,18 +1161,28 @@ export function computeYearlyTableData(
         break
     }
 
-    const cashDispo = cfBeforeTax - tax
-
     let saleTax = 0
-    if (taxRegime === 'sci_is' && y === schedule.loanDurationYears - 1) {
-      const acquisitionCost = totalCost
-      const loanDurationYears = schedule.loanDurationYears
-      const estimatedSalePrice =
-        purchasePrice * Math.pow(1 + rentRevaluationRate, loanDurationYears)
-      const vnc = acquisitionCost - totalDepreciationTaken
-      const taxableGain = Math.max(0, estimatedSalePrice - vnc)
-      saleTax = taxableGain * corporateTaxRate
+    if (hasResale && y === resaleYearIndex && taxRegime !== 'none') {
+      saleTax = computeSaleTaxAtResale(
+        resalePrice,
+        totalCost,
+        totalDepreciationTaken,
+        taxRegime,
+        corporateTaxRate,
+        tmiPlusSocial,
+      )
     }
+
+    const cashDispo =
+      cfBeforeTax -
+      tax -
+      saleTax +
+      (hasResale && y === resaleYearIndex ? resalePrice : 0) -
+      (hasResale &&
+      y === resaleYearIndex &&
+      y < schedule.loanDurationYears - 1
+        ? schedule.balanceEndOfYear[y] ?? 0
+        : 0)
 
     data.push({
       year: y + 1,
@@ -804,6 +1199,7 @@ export function computeYearlyTableData(
       carryforwardUsed,
       cashDispo,
       saleTax,
+      resalePrice: hasResale && y === resaleYearIndex ? resalePrice : 0,
     })
   }
 

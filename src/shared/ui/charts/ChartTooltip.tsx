@@ -14,6 +14,7 @@ export type ChartTooltipStrings = {
   depreciation: string
   carryforward: string
   tax: string
+  saleTax?: string
 }
 
 interface ChartTooltipContentProps {
@@ -107,6 +108,12 @@ export function ChartTooltipContent({
             <div className="chart-tooltip-row">
               <span>{tooltipStrings.tax}</span>
               <span>{currencyFormatter.format(b.tax)}</span>
+            </div>
+          )}
+          {b.saleTax != null && b.saleTax > 0 && (
+            <div className="chart-tooltip-row">
+              <span>{tooltipStrings.saleTax ?? 'Impôt revente'}</span>
+              <span>{currencyFormatter.format(b.saleTax)}</span>
             </div>
           )}
         </div>

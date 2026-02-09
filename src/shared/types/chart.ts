@@ -9,6 +9,7 @@ export type ChargesBreakdown = {
   depreciation: number
   carryforwardUsed: number
   tax: number
+  saleTax?: number
 }
 
 export type YearlyChartPoint = {
@@ -17,4 +18,5 @@ export type YearlyChartPoint = {
   charges: number
   cashflow: number
   chargesBreakdown: ChargesBreakdown
+  resalePrice?: number
 }
