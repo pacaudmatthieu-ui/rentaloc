@@ -67,6 +67,10 @@
   gap: 1.75rem;
 }
 
+.app-main-sortable {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .form-section {
   min-width: 0;
 }
@@ -75,6 +79,128 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
+}
+
+/* Collapsible & Sortable sections */
+.collapsible-section {
+  border-radius: 1.1rem;
+  background: radial-gradient(circle at top left, #020617, #020617);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  overflow: hidden;
+}
+
+.collapsible-section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.5);
+  transition: background 0.15s ease;
+}
+
+.collapsible-section-header:hover {
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.collapsible-section-arrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 0.4rem;
+  font-size: 0.7rem;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.collapsible-section-arrow:hover {
+  color: #38bdf8;
+}
+
+.collapsible-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.collapsible-arrow.collapsed {
+  transform: rotate(-90deg);
+}
+
+.collapsible-section-drag-handle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #64748b;
+  cursor: grab;
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
+  letter-spacing: -0.15em;
+  user-select: none;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.collapsible-section-drag-handle:hover {
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.collapsible-section-drag-handle:active {
+  cursor: grabbing;
+}
+
+.collapsible-section-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.collapsible-section-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.collapsible-section-description {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.collapsible-section-body {
+  padding: 0 1rem 1.2rem 1rem;
+  padding-top: 0.25rem;
+}
+
+.sortable-section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sortable-section-row {
+  display: grid;
+  gap: 1rem;
+}
+
+.sortable-section-item {
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sortable-section-item.dragging {
+  opacity: 0.5;
+}
+
+.sortable-section-item.drag-over {
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6);
+  border-radius: 1.1rem;
 }
 
 .form-card {
