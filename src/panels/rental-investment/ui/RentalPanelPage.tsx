@@ -249,6 +249,7 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         id: 'taxation',
         title: strings.sectionTaxation,
         description: strings.taxDescription,
+        className: 'section-allow-tooltip-overflow',
         content: (
           <div className="form-card-body">
             <label className="form-field">
@@ -273,6 +274,66 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
                 <span>{strings.feesAmortizeYear1}</span>
               </label>
             )}
+            {values.taxRegime === 'sci_is' && (() => {
+              const flatTaxDetail = tableData.find((r) => r.flatTaxDetail)?.flatTaxDetail
+              return (
+                <div className="form-field-checkbox-with-pfu-tooltip">
+                  <label className="form-field form-field-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={!!values.sciIsWithdrawFlatTax}
+                      onChange={(e) => setValues((prev) => ({ ...prev, sciIsWithdrawFlatTax: e.target.checked }))}
+                    />
+                    <span>{strings.sciIsWithdrawFlatTax}</span>
+                  </label>
+                  {flatTaxDetail && (
+                    <div className="pfu-detail-tooltip">
+                      <div className="pfu-detail-tooltip-content">
+                        <h4 className="pfu-detail-tooltip-title">{strings.flatTaxDetailTitle}</h4>
+                        <p className="pfu-detail-tooltip-intro">{strings.flatTaxAccumulatedPerYear}:</p>
+                        <ul className="pfu-detail-tooltip-list">
+                          {flatTaxDetail.annualAccumulated.map((a) => (
+                            <li key={a.year}>
+                              {strings.flatTaxYear.replace('{year}', String(a.year))}: {currencyFormatter.format(a.cfBeforeTax)} − {currencyFormatter.format(a.corporateTax)} = {currencyFormatter.format(a.amount)}
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="pfu-detail-tooltip-steps">
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxSumAnnual}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.annualAccumulated.reduce((s, a) => s + a.amount, 0))}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxResaleNet}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.resalePrice)} − {currencyFormatter.format(flatTaxDetail.crdAtResale)} − {currencyFormatter.format(flatTaxDetail.corporateTaxOnGain)} = {currencyFormatter.format(flatTaxDetail.resaleNet)}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row pfu-detail-tooltip-total">
+                            <span>{strings.flatTaxTotalAccumulated}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.totalAccumulated)}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxRate}</span>
+                            <span>{(flatTaxDetail.flatTaxRate * 100).toFixed(1)} %</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxAmount}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.totalAccumulated)} × {(flatTaxDetail.flatTaxRate * 100).toFixed(1)} % = {currencyFormatter.format(flatTaxDetail.flatTaxAmount)}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxCorporateOnGain}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.corporateTaxOnGain)}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row pfu-detail-tooltip-total">
+                            <span>{strings.flatTaxTotalResaleTax}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.totalResaleTax)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         ),
       },
@@ -334,6 +395,8 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
                 carryforward: strings.chartChargeCarryforward,
                 tax: strings.chartChargeTax,
                 saleTax: strings.chartChargeSaleTax,
+                corporateTaxOnGain: strings.chartChargeCorporateOnGain,
+                flatTax: strings.chartChargeFlatTax,
               }}
             />
           </div>
@@ -444,6 +507,7 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
               deferralType: d.deferralType ?? 'none',
               resaleHoldingMonths: d.resaleHoldingMonths ?? '',
               resalePrice: d.resalePrice ?? '',
+              sciIsWithdrawFlatTax: d.sciIsWithdrawFlatTax ?? false,
             })
           }}
           validateData={validateInvestissementData}

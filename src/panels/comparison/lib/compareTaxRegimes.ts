@@ -16,7 +16,6 @@ import {
 
 const MB_IS_RATE = 0.25
 const MB_FLAT_TAX_RATE = 0.314
-const FLAT_TAX_RATE = 0.314 // Flat tax (PFU) : 31,4% depuis le 1er janvier 2026
 
 export interface YearlyTaxData {
   year: number
@@ -24,23 +23,6 @@ export interface YearlyTaxData {
   resaleTax?: number
   totalTax: number
   cashflowAfterTax: number
-}
-
-/** Detail du calcul de la flat tax (PFU) sur l'argent accumulé en SCI IS */
-export interface FlatTaxDetail {
-  /** Montant laissé en société chaque année (après IS) : cfBeforeTax - tax */
-  annualAccumulated: { year: number; amount: number; cfBeforeTax: number; corporateTax: number }[]
-  /** Année de revente : produit de la vente - remboursement crédit - IS sur plus-value */
-  resaleNet: number
-  resalePrice: number
-  crdAtResale: number
-  corporateTaxOnGain: number
-  /** Total accumulé = sum(annualAccumulated) + resaleNet */
-  totalAccumulated: number
-  flatTaxRate: number
-  flatTaxAmount: number
-  /** Impôt total revente = IS sur plus-value + flat tax */
-  totalResaleTax: number
 }
 
 export interface TaxRegimeComparisonResult {
@@ -57,8 +39,6 @@ export interface TaxRegimeComparisonResult {
     yearlyTaxData: YearlyTaxData[]
     totalTaxOverPeriod: number
     resaleTax?: number
-    /** Détail du calcul flat tax (si SCI IS + option retrait activée) */
-    flatTaxDetail?: FlatTaxDetail
   }>
   bestRegime?: {
     simulationId: string
@@ -153,7 +133,6 @@ export function compareTaxRegimes(
   calculatedSimulations: CalculatedSimulation[],
   originalSimulations: ComparisonSimulation[],
   strings: Record<string, string>,
-  sciIsWithdrawFlatTax?: Record<string, boolean>,
 ): TaxRegimeComparisonResult {
   // Separate rental and property flipping simulations
   const rentalSimulations = calculatedSimulations.filter((sim) => sim.type === 'rental')
@@ -180,66 +159,17 @@ export function compareTaxRegimes(
       if (!calculated || !('annualTax' in calculated)) return null
 
       // Calculate yearly tax data
+      // Note: sciIsWithdrawFlatTax is now handled directly in computeYearlyTableData
+      // based on the value stored in rentalData.sciIsWithdrawFlatTax
       const yearlyTableData = computeYearlyTableData(rentalData)
       
-      // Check if SCI IS with flat tax withdrawal option
-      const shouldApplyFlatTax = rentalData.taxRegime === 'sci_is' && 
-        sciIsWithdrawFlatTax?.[sim.id] === true
-      
-      let flatTaxDetail: FlatTaxDetail | undefined
-      let resaleTaxFinal = 0
-      
-      if (shouldApplyFlatTax && yearlyTableData.some((r) => r.saleTax > 0)) {
-        // Flat tax sur l'ensemble de l'argent accumulé (comme si on n'avait pas touché au bien)
-        // 1. Chaque année : montant laissé en société = cfBeforeTax - tax (résultat après IS)
-        const annualAccumulated = yearlyTableData.map((row) => ({
-          year: row.year,
-          amount: row.cfBeforeTax - row.tax,
-          cfBeforeTax: row.cfBeforeTax,
-          corporateTax: row.tax,
-        }))
-        const sumAnnualAccumulated = annualAccumulated.reduce((s, a) => s + a.amount, 0)
-        
-        // 2. Année de revente : produit de la vente - remboursement crédit - IS sur plus-value
-        const resaleRow = yearlyTableData.find((r) => r.resalePrice > 0)
-        const corporateTaxRate = parseFloat(rentalData.corporateTaxRate || '0') / 100
-        const corporateTaxOnGain = resaleRow ? resaleRow.saleTax : 0
-        const resalePrice = resaleRow?.resalePrice ?? 0
-        const crdAtResale = resaleRow?.crd ?? 0
-        const resaleNet = resalePrice - crdAtResale - corporateTaxOnGain
-        
-        // 3. Total accumulé = sum(annual) + net revente
-        const totalAccumulated = sumAnnualAccumulated + resaleNet
-        const flatTaxAmount = totalAccumulated * FLAT_TAX_RATE
-        const totalResaleTax = corporateTaxOnGain + flatTaxAmount
-        
-        flatTaxDetail = {
-          annualAccumulated,
-          resaleNet,
-          resalePrice,
-          crdAtResale,
-          corporateTaxOnGain,
-          totalAccumulated,
-          flatTaxRate: FLAT_TAX_RATE,
-          flatTaxAmount,
-          totalResaleTax,
-        }
-        resaleTaxFinal = totalResaleTax
-      }
-      
-      const yearlyTaxData: YearlyTaxData[] = yearlyTableData.map((row) => {
-        let resaleTax = row.saleTax
-        if (flatTaxDetail && row.resalePrice > 0) {
-          resaleTax = flatTaxDetail.totalResaleTax
-        }
-        return {
-          year: row.year,
-          annualTax: row.tax,
-          resaleTax: resaleTax > 0 ? resaleTax : undefined,
-          totalTax: row.tax + resaleTax,
-          cashflowAfterTax: row.cashDispo,
-        }
-      })
+      const yearlyTaxData: YearlyTaxData[] = yearlyTableData.map((row) => ({
+        year: row.year,
+        annualTax: row.tax,
+        resaleTax: row.saleTax > 0 ? row.saleTax : undefined,
+        totalTax: row.tax + row.saleTax,
+        cashflowAfterTax: row.cashDispo,
+      }))
 
       const totalTaxOverPeriod = yearlyTaxData.reduce((sum, y) => sum + y.totalTax, 0)
       const resaleTax = yearlyTaxData.find((y) => y.resaleTax !== undefined)?.resaleTax
@@ -256,7 +186,6 @@ export function compareTaxRegimes(
         yearlyTaxData,
         totalTaxOverPeriod,
         resaleTax,
-        flatTaxDetail,
       }
     })
     .filter((r): r is NonNullable<typeof r> => r !== null)

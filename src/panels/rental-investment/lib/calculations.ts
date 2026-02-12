@@ -741,6 +741,8 @@ export function computeYearlyChartData(
   const data: YearlyChartPoint[] = []
   let deficitCarryforward = 0
   let totalDepreciationForChart = 0
+  const sciIsWithdrawFlatTax = !!values.sciIsWithdrawFlatTax
+  let sumAnnualAccumulatedForFlatTax = 0
 
   for (let y = 0; y < chartNumYears; y++) {
     const interestThisYear = schedule.interestPerYear[y] ?? 0
@@ -880,6 +882,11 @@ export function computeYearlyChartData(
       )
     }
 
+    if (taxRegime === 'sci_is' && sciIsWithdrawFlatTax) {
+      const cfBeforeTax = revenue - annualChargesY - annualLoanAndInsurance
+      sumAnnualAccumulatedForFlatTax += cfBeforeTax - tax
+    }
+
     const crdAtSale =
       hasResale &&
       y === chartResaleYearIndex &&
@@ -914,6 +921,52 @@ export function computeYearlyChartData(
     })
   }
 
+  // SCI IS : appliquer flat tax sur l'argent accumulé au graphique aussi
+  if (
+    taxRegime === 'sci_is' &&
+    hasResale &&
+    sciIsWithdrawFlatTax &&
+    data.length > 0 &&
+    chartResaleYearIndex >= 0
+  ) {
+    const FLAT_TAX_RATE = 0.314
+    const resalePoint = data[chartResaleYearIndex]
+    const crdAtResale =
+      chartResaleYearIndex < schedule.loanDurationYears - 1
+        ? schedule.balanceEndOfYear[chartResaleYearIndex] ?? 0
+        : 0
+    const corporateTaxOnGain = computeSaleTaxAtResale(
+      resalePrice,
+      totalCost,
+      totalDepreciationForChart,
+      taxRegime,
+      corporateTaxRate,
+      tmiPlusSocial,
+    )
+    const resaleNet = resalePrice - crdAtResale - corporateTaxOnGain
+    const totalAccumulated = sumAnnualAccumulatedForFlatTax + resaleNet
+    const flatTaxAmount = totalAccumulated * FLAT_TAX_RATE
+    const totalResaleTax = corporateTaxOnGain + flatTaxAmount
+
+    const oldSaleTax = resalePoint.chargesBreakdown?.saleTax ?? 0
+    const totalChargesDelta = totalResaleTax - oldSaleTax
+    const currentTotalCharges = -resalePoint.charges
+    const newTotalCharges = currentTotalCharges + totalChargesDelta
+    const newCashflow = resalePoint.revenue - newTotalCharges
+
+    data[chartResaleYearIndex] = {
+      ...resalePoint,
+      charges: -newTotalCharges,
+      cashflow: newCashflow,
+      chargesBreakdown: {
+        ...resalePoint.chargesBreakdown!,
+        saleTax: totalResaleTax,
+        corporateTaxOnGain,
+        flatTax: flatTaxAmount,
+      },
+    }
+  }
+
   return data
 }
 
@@ -944,6 +997,18 @@ function computeSaleTaxAtResale(
   }
 }
 
+export type FlatTaxDetail = {
+  annualAccumulated: { year: number; amount: number; cfBeforeTax: number; corporateTax: number }[]
+  resaleNet: number
+  resalePrice: number
+  crdAtResale: number
+  corporateTaxOnGain: number
+  totalAccumulated: number
+  flatTaxRate: number
+  flatTaxAmount: number
+  totalResaleTax: number
+}
+
 export type YearlyTableRow = {
   year: number
   credit: number
@@ -960,6 +1025,8 @@ export type YearlyTableRow = {
   cashDispo: number
   saleTax: number
   resalePrice: number
+  /** Détail du calcul PFU (si SCI IS + option retrait activée et année de revente) */
+  flatTaxDetail?: FlatTaxDetail
 }
 
 export function computeYearlyTableData(
@@ -1201,6 +1268,52 @@ export function computeYearlyTableData(
       saleTax,
       resalePrice: hasResale && y === resaleYearIndex ? resalePrice : 0,
     })
+  }
+
+  // SCI IS : option flat tax (PFU) sur l'argent accumulé (comme si on n'avait pas touché au bien)
+  const sciIsWithdrawFlatTax = !!values.sciIsWithdrawFlatTax
+  if (
+    taxRegime === 'sci_is' &&
+    hasResale &&
+    sciIsWithdrawFlatTax &&
+    data.length > 0
+  ) {
+    const FLAT_TAX_RATE = 0.314
+    // Calculer le détail pour le tooltip
+    const annualAccumulated = data.map((row) => ({
+      year: row.year,
+      amount: row.cfBeforeTax - row.tax,
+      cfBeforeTax: row.cfBeforeTax,
+      corporateTax: row.tax,
+    }))
+    const sumAnnualAccumulated = annualAccumulated.reduce((s, a) => s + a.amount, 0)
+    const resaleRow = data[resaleYearIndex]
+    const corporateTaxOnGain = resaleRow.saleTax
+    const resaleNet = resalePrice - (resaleRow.crd ?? 0) - corporateTaxOnGain
+    const totalAccumulated = sumAnnualAccumulated + resaleNet
+    const flatTaxAmount = totalAccumulated * FLAT_TAX_RATE
+    const totalResaleTax = corporateTaxOnGain + flatTaxAmount
+
+    resaleRow.saleTax = totalResaleTax
+    resaleRow.cashDispo =
+      resaleRow.cfBeforeTax -
+      resaleRow.tax -
+      totalResaleTax +
+      resalePrice -
+      (resaleYearIndex < schedule.loanDurationYears - 1 ? (resaleRow.crd ?? 0) : 0)
+    
+    // Ajouter le détail PFU pour le tooltip
+    resaleRow.flatTaxDetail = {
+      annualAccumulated,
+      resaleNet,
+      resalePrice,
+      crdAtResale: resaleRow.crd ?? 0,
+      corporateTaxOnGain,
+      totalAccumulated,
+      flatTaxRate: FLAT_TAX_RATE,
+      flatTaxAmount,
+      totalResaleTax,
+    }
   }
 
   return data

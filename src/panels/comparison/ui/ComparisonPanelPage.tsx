@@ -26,7 +26,6 @@ interface ComparisonPanelPageProps {
 export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProps) {
   const comparisonStore = useComparisonStore()
   const scrollRefs = useRef<(HTMLDivElement | null)[]>([])
-  const [sciIsWithdrawFlatTax, setSciIsWithdrawFlatTax] = useState<Record<string, boolean>>({})
 
   // Initialize store on mount
   useEffect(() => {
@@ -175,8 +174,8 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
 
   // Compare tax regimes
   const taxRegimeComparison = useMemo(() => {
-    return compareTaxRegimes(calculatedResults, simulations, strings, sciIsWithdrawFlatTax)
-  }, [calculatedResults, simulations, strings, sciIsWithdrawFlatTax])
+    return compareTaxRegimes(calculatedResults, simulations, strings)
+  }, [calculatedResults, simulations, strings])
 
   // Criteria options based on simulation types
   const criteriaOptions = useMemo(() => {
@@ -389,9 +388,6 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
         const maxYears = Math.max(...taxRegimeComparison.regimes.map((r) => r.yearlyTaxData.length))
         const years = Array.from({ length: maxYears }, (_, i) => i + 1)
         
-        // Check if there are SCI IS simulations
-        const hasSciIsSimulations = taxRegimeComparison.regimes.some((r) => r.taxRegime === 'sci_is')
-        
         return (
           <div className="comparison-strategy-section">
             <h3 className="comparison-strategy-title">{strings.taxRegimeComparisonTitle}</h3>
@@ -421,92 +417,6 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
               </div>
             )}
 
-            {/* Flat tax note */}
-            <div className="comparison-tax-flat-tax-note">
-              <p>{strings.taxRegimeComparisonFlatTaxNote}</p>
-            </div>
-
-            {/* SCI IS Flat Tax Checkbox */}
-            {hasSciIsSimulations && (
-              <div className="comparison-tax-sci-is-options">
-                {taxRegimeComparison.regimes
-                  .filter((r) => r.taxRegime === 'sci_is')
-                  .map((regime) => (
-                    <label key={regime.simulationId} className="comparison-tax-checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={sciIsWithdrawFlatTax[regime.simulationId] || false}
-                        onChange={(e) => {
-                          setSciIsWithdrawFlatTax((prev) => ({
-                            ...prev,
-                            [regime.simulationId]: e.target.checked,
-                          }))
-                        }}
-                        className="comparison-tax-checkbox"
-                      />
-                      <span className="comparison-tax-checkbox-text">
-                        {strings.taxRegimeComparisonSciIsWithdrawFlatTax.replace(
-                          '{simulation}',
-                          regime.simulationName,
-                        )}
-                      </span>
-                    </label>
-                  ))}
-              </div>
-            )}
-
-            {/* Flat tax calculation detail (when option enabled for SCI IS) */}
-            {taxRegimeComparison.regimes.filter((r) => r.flatTaxDetail).map((regime) => {
-              const d = regime.flatTaxDetail!
-              const sumAnnual = d.annualAccumulated.reduce((s, a) => s + a.amount, 0)
-              return (
-                <div key={regime.simulationId} className="comparison-tax-flat-tax-detail">
-                  <h4 className="comparison-tax-flat-tax-detail-title">
-                    {strings.taxRegimeComparisonFlatTaxDetailTitle} – {regime.simulationName}
-                  </h4>
-                  <p className="comparison-tax-flat-tax-detail-intro">
-                    {strings.taxRegimeComparisonFlatTaxAccumulatedPerYear}:
-                  </p>
-                  <ul className="comparison-tax-flat-tax-detail-list">
-                    {d.annualAccumulated.map((a) => (
-                      <li key={a.year}>
-                        {strings.taxRegimeComparisonFlatTaxYear.replace('{year}', String(a.year))}: {currencyFormatter.format(a.cfBeforeTax)} − {currencyFormatter.format(a.corporateTax)} = {currencyFormatter.format(a.amount)}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="comparison-tax-flat-tax-detail-steps">
-                    <div className="comparison-tax-flat-tax-detail-row">
-                      <span>{strings.taxRegimeComparisonFlatTaxSumAnnual}</span>
-                      <span>{currencyFormatter.format(sumAnnual)}</span>
-                    </div>
-                    <div className="comparison-tax-flat-tax-detail-row">
-                      <span>{strings.taxRegimeComparisonFlatTaxResaleNet}</span>
-                      <span>{currencyFormatter.format(d.resalePrice)} − {currencyFormatter.format(d.crdAtResale)} − {currencyFormatter.format(d.corporateTaxOnGain)} = {currencyFormatter.format(d.resaleNet)}</span>
-                    </div>
-                    <div className="comparison-tax-flat-tax-detail-row comparison-tax-flat-tax-detail-total">
-                      <span>{strings.taxRegimeComparisonFlatTaxTotalAccumulated}</span>
-                      <span>{currencyFormatter.format(d.totalAccumulated)}</span>
-                    </div>
-                    <div className="comparison-tax-flat-tax-detail-row">
-                      <span>{strings.taxRegimeComparisonFlatTaxRate}</span>
-                      <span>{(d.flatTaxRate * 100).toFixed(1)} %</span>
-                    </div>
-                    <div className="comparison-tax-flat-tax-detail-row">
-                      <span>{strings.taxRegimeComparisonFlatTaxAmount}</span>
-                      <span>{currencyFormatter.format(d.totalAccumulated)} × {(d.flatTaxRate * 100).toFixed(1)} % = {currencyFormatter.format(d.flatTaxAmount)}</span>
-                    </div>
-                    <div className="comparison-tax-flat-tax-detail-row">
-                      <span>{strings.taxRegimeComparisonFlatTaxCorporateOnGain}</span>
-                      <span>{currencyFormatter.format(d.corporateTaxOnGain)}</span>
-                    </div>
-                    <div className="comparison-tax-flat-tax-detail-row comparison-tax-flat-tax-detail-total">
-                      <span>{strings.taxRegimeComparisonFlatTaxTotalResaleTax}</span>
-                      <span>{currencyFormatter.format(d.totalResaleTax)}</span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
 
             {/* Yearly Tax Comparison Table */}
             <div className="comparison-tax-yearly-section">

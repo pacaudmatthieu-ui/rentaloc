@@ -33,6 +33,8 @@ export type SimulationFormValues = {
   resaleHoldingMonths: string
   /** Prix de revente prévu (projet de revente) */
   resalePrice: string
+  /** SCI IS : appliquer la flat tax (PFU) sur le retrait (argent accumulé pendant la détention) */
+  sciIsWithdrawFlatTax?: boolean
 }
 
 export type SimulationResults = {
@@ -83,4 +85,5 @@ export const INITIAL_VALUES: SimulationFormValues = {
   corporateTaxRate: '25',
   resaleHoldingMonths: '',
   resalePrice: '',
+  sciIsWithdrawFlatTax: false,
 }

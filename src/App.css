@@ -89,6 +89,11 @@
   overflow: hidden;
 }
 
+/* Permet au tooltip PFU de dépasser la section (z-index + overflow) */
+.collapsible-section.section-allow-tooltip-overflow {
+  overflow: visible;
+}
+
 .collapsible-section-header {
   display: flex;
   align-items: flex-start;
@@ -901,6 +906,228 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* PFU detail tooltip on checkbox (Fiscalité section) */
+.form-field-checkbox-with-pfu-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.form-field-checkbox-with-pfu-tooltip .pfu-detail-tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  width: max-content;
+  max-width: 90vw;
+}
+
+.form-field-checkbox-with-pfu-tooltip:hover .pfu-detail-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pfu-detail-tooltip-content {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  min-width: 500px;
+  max-width: 600px;
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  position: relative;
+}
+
+.pfu-detail-tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 1.5rem;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(148, 163, 184, 0.4);
+}
+
+.pfu-detail-tooltip-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+.pfu-detail-tooltip-intro {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.pfu-detail-tooltip-list {
+  margin: 0 0 1rem;
+  padding-left: 1.5rem;
+  font-size: 0.8rem;
+  color: #bfdbfe;
+  line-height: 1.6;
+}
+
+.pfu-detail-tooltip-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.pfu-detail-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  color: #e5e7eb;
+}
+
+.pfu-detail-tooltip-row span:first-child {
+  color: #9ca3af;
+  flex-shrink: 0;
+  min-width: 200px;
+}
+
+.pfu-detail-tooltip-row span:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+}
+
+.pfu-detail-tooltip-row.pfu-detail-tooltip-total {
+  font-weight: 600;
+  color: #93c5fd;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.yearly-table-sale-tax-cell {
+  position: relative;
+}
+
+.yearly-table-sale-tax-with-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.yearly-table-sale-tax-value {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(148, 163, 184, 0.5);
+}
+
+.yearly-table-flat-tax-tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  width: max-content;
+  max-width: 90vw;
+}
+
+.yearly-table-sale-tax-with-tooltip:hover .yearly-table-flat-tax-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.yearly-table-flat-tax-tooltip-content {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  min-width: 500px;
+  max-width: 600px;
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  position: relative;
+}
+
+.yearly-table-flat-tax-tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(148, 163, 184, 0.4);
+}
+
+.yearly-table-flat-tax-tooltip-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+.yearly-table-flat-tax-tooltip-intro {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.yearly-table-flat-tax-tooltip-list {
+  margin: 0 0 1rem;
+  padding-left: 1.5rem;
+  font-size: 0.8rem;
+  color: #bfdbfe;
+  line-height: 1.6;
+}
+
+.yearly-table-flat-tax-tooltip-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.yearly-table-flat-tax-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  color: #e5e7eb;
+}
+
+.yearly-table-flat-tax-tooltip-row span:first-child {
+  color: #9ca3af;
+  flex-shrink: 0;
+  min-width: 200px;
+}
+
+.yearly-table-flat-tax-tooltip-row span:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+}
+
+.yearly-table-flat-tax-tooltip-row.yearly-table-flat-tax-tooltip-total {
+  font-weight: 600;
+  color: #93c5fd;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+}
+
 .yearly-table tbody tr:hover {
   background: rgba(56, 189, 248, 0.08);
 }
@@ -1502,115 +1729,6 @@
   font-size: 0.85rem;
   color: #93c5fd;
   font-weight: 500;
-}
-
-.comparison-tax-flat-tax-note {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  font-size: 0.85rem;
-  color: #bfdbfe;
-  line-height: 1.5;
-}
-
-.comparison-tax-sci-is-options {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background: rgba(15, 23, 42, 0.3);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.comparison-tax-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.15s ease;
-}
-
-.comparison-tax-checkbox-label:hover {
-  background: rgba(15, 23, 42, 0.5);
-}
-
-.comparison-tax-checkbox {
-  width: 1.125rem;
-  height: 1.125rem;
-  cursor: pointer;
-  accent-color: #3b82f6;
-}
-
-.comparison-tax-checkbox-text {
-  font-size: 0.9rem;
-  color: #e5e7eb;
-  user-select: none;
-}
-
-.comparison-tax-flat-tax-detail {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-}
-
-.comparison-tax-flat-tax-detail-title {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #93c5fd;
-}
-
-.comparison-tax-flat-tax-detail-intro {
-  margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  color: #9ca3af;
-}
-
-.comparison-tax-flat-tax-detail-list {
-  margin: 0 0 1rem;
-  padding-left: 1.5rem;
-  font-size: 0.85rem;
-  color: #bfdbfe;
-  line-height: 1.6;
-}
-
-.comparison-tax-flat-tax-detail-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.comparison-tax-flat-tax-detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 0.35rem 0;
-  color: #e5e7eb;
-}
-
-.comparison-tax-flat-tax-detail-row span:first-child {
-  color: #9ca3af;
-  flex-shrink: 0;
-}
-
-.comparison-tax-flat-tax-detail-row span:last-child {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.comparison-tax-flat-tax-detail-row.comparison-tax-flat-tax-detail-total {
-  font-weight: 600;
-  color: #93c5fd;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
-  padding-top: 0.5rem;
-  margin-top: 0.25rem;
 }
 
 .comparison-tax-yearly-section {
