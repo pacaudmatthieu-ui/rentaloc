@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { FormField, FormFieldReadOnly, SortableSectionList } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
@@ -6,6 +6,7 @@ import { ExportImportPanel } from '../../../features/export-json'
 import type { ApartmentItem, MarchandDeBiensValues } from '../model/types'
 import { MB_INITIAL } from '../model/types'
 import { validateMarchandData } from '../model/validation'
+import { savePropertyFlippingSimulation } from '../../../shared/utils/storage'
 import { MargeVatTable } from './sections/MargeVatTable'
 import { MbFiscalResultTable } from './sections/MbFiscalResultTable'
 import { ReventeTable } from './sections/ReventeTable'
@@ -24,11 +25,66 @@ const FLIP_GRID_LAYOUT = [3, 1, 1, 1] as const
 interface FlipPanelPageProps {
   locale: Locale
   strings: Record<string, string>
+  initialValues?: MarchandDeBiensValues | null
+  valuesRef?: React.MutableRefObject<MarchandDeBiensValues | null>
 }
 
-export function FlipPanelPage({ locale, strings }: FlipPanelPageProps) {
-  const [values, setValues] = useState<MarchandDeBiensValues>(MB_INITIAL)
+export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: FlipPanelPageProps) {
+  // Initialize with provided initial values, saved values, or default values
+  // Priority: initialValues (from localStorage) > MB_INITIAL (defaults)
+  const [values, setValues] = useState<MarchandDeBiensValues>(() => {
+    try {
+      // Use provided initial values if available (from localStorage)
+      if (initialValues && typeof initialValues === 'object') {
+        return initialValues
+      }
+      // Fallback to default MB_INITIAL
+      if (!MB_INITIAL || typeof MB_INITIAL !== 'object') {
+        console.error('MB_INITIAL is invalid, using empty defaults')
+        return {
+          purchasePrice: '',
+          agencyFees: '',
+          renovationBudget: '',
+          apartments: [],
+          apportPercent: '',
+          ratePerYear: '',
+          durationMonths: '',
+        }
+      }
+      return MB_INITIAL
+    } catch (error) {
+      console.error('Error initializing FlipPanelPage:', error)
+      return {
+        purchasePrice: '',
+        agencyFees: '',
+        renovationBudget: '',
+        apartments: [],
+        apportPercent: '',
+        ratePerYear: '',
+        durationMonths: '',
+      }
+    }
+  })
   const pdfRef = useRef<HTMLDivElement>(null)
+
+  // Update values when initialValues prop changes (when switching back to this simulation type)
+  useEffect(() => {
+    if (initialValues && typeof initialValues === 'object') {
+      setValues(initialValues)
+    }
+  }, [initialValues])
+
+  // Keep ref in sync with current values
+  useEffect(() => {
+    if (valuesRef) {
+      valuesRef.current = values
+    }
+  }, [values, valuesRef])
+
+  // Save values to localStorage whenever they change
+  useEffect(() => {
+    savePropertyFlippingSimulation(values)
+  }, [values])
 
   const notaryFees = useMemo(() => {
     const price = Number(values.purchasePrice) || 0

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
 import { FormField, FormFieldReadOnly, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
@@ -7,6 +7,7 @@ import { ExportImportPanel } from '../../../features/export-json'
 import { INITIAL_VALUES } from '../model/types'
 import type { SimulationFormValues } from '../model/types'
 import { validateInvestissementData } from '../model/validation'
+import { saveRentalSimulation } from '../../../shared/utils/storage'
 import {
   calculateResults,
   computeIRRByYearData,
@@ -33,11 +34,50 @@ const RENTAL_GRID_LAYOUT = [2, 3, 2, 1, 1, 1] as const
 interface RentalPanelPageProps {
   locale: Locale
   strings: Record<string, string>
+  initialValues?: SimulationFormValues | null
+  valuesRef?: React.MutableRefObject<SimulationFormValues | null>
 }
 
-export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
-  const [values, setValues] = useState<SimulationFormValues>(INITIAL_VALUES)
+export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: RentalPanelPageProps) {
+  // Initialize with provided initial values, saved values, or default values
+  // Priority: initialValues (from localStorage) > INITIAL_VALUES (defaults)
+  const [values, setValues] = useState<SimulationFormValues>(() => {
+    try {
+      // Use provided initial values if available (from localStorage)
+      if (initialValues && typeof initialValues === 'object') {
+        return initialValues
+      }
+      // Fallback to default INITIAL_VALUES
+      if (!INITIAL_VALUES || typeof INITIAL_VALUES !== 'object') {
+        console.error('INITIAL_VALUES is invalid, using empty defaults')
+        return {} as SimulationFormValues
+      }
+      return INITIAL_VALUES
+    } catch (error) {
+      console.error('Error initializing RentalPanelPage:', error)
+      return {} as SimulationFormValues
+    }
+  })
   const pdfRef = useRef<HTMLDivElement>(null)
+
+  // Update values when initialValues prop changes (when switching back to this simulation type)
+  useEffect(() => {
+    if (initialValues && typeof initialValues === 'object') {
+      setValues(initialValues)
+    }
+  }, [initialValues])
+
+  // Keep ref in sync with current values
+  useEffect(() => {
+    if (valuesRef) {
+      valuesRef.current = values
+    }
+  }, [values, valuesRef])
+
+  // Save values to localStorage whenever they change
+  useEffect(() => {
+    saveRentalSimulation(values)
+  }, [values])
 
   const results = useMemo(() => calculateResults(values), [values])
   const chartData = useMemo(() => computeYearlyChartData(values), [values])

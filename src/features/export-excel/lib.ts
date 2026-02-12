@@ -10,7 +10,8 @@ import {
 import type { MarchandDeBiensValues } from '../../panels/property-flip/model/types'
 
 const MB_IS_RATE = 0.25
-const MB_FLAT_TAX_RATE = 0.30
+// Flat tax (PFU) : 31,4% depuis le 1er janvier 2026 (12,8% IR + 18,6% prélèvements sociaux)
+const MB_FLAT_TAX_RATE = 0.314
 
 export async function exportMarchandToExcel(
   values: MarchandDeBiensValues,
@@ -74,9 +75,10 @@ export async function exportMarchandToExcel(
   const flatTaxeP = beneficeImposableP * MB_FLAT_TAX_RATE
   const flatTaxeL = beneficeImposableL * MB_FLAT_TAX_RATE
   const flatTaxeO = beneficeImposableO * MB_FLAT_TAX_RATE
-  const beneficesEnPocheP = beneficeImposableP - flatTaxeP
-  const beneficesEnPocheL = beneficeImposableL - flatTaxeL
-  const beneficesEnPocheO = beneficeImposableO - flatTaxeO
+  // Bénéfices en poche = Bénéfices nets - Flat taxe
+  const beneficesEnPocheP = beneficesNetsP - flatTaxeP
+  const beneficesEnPocheL = beneficesNetsL - flatTaxeL
+  const beneficesEnPocheO = beneficesNetsO - flatTaxeO
 
   const headerStyle: Partial<ExcelJS.Style> = {
     font: { bold: true, color: { argb: 'FFFFFFFF' } },
@@ -233,7 +235,7 @@ export async function exportMarchandToExcel(
     'Bénéfice imposable = Marge − Reste à payer TVA',
     'Impôts sur sociétés = Bénéfice × 25%',
     'Bénéfices nets = Bénéfice − IS',
-    'Flat taxe = Bénéfice × 30%',
+    'Flat taxe = Bénéfice × 31,4%',
     'Bénéfices en poche = Bénéfice − Flat taxe',
   ]
   formulaRowsFiscal.forEach((f) => {
