@@ -542,21 +542,27 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
                       }
                       return null
                     })()}
-                    <ResultTile
-                      label={strings.grossYield}
-                      value={percentFormatter.format(sim.calculated.grossYield)}
-                      variant={sim.calculated.grossYield > 0 ? 'positive' : 'negative'}
-                    />
-                    <ResultTile
-                      label={strings.netYield}
-                      value={percentFormatter.format(sim.calculated.netYield)}
-                      variant={sim.calculated.netYield > 0 ? 'positive' : 'negative'}
-                    />
-                    <ResultTile
-                      label={strings.annualCashflow}
-                      value={currencyFormatter.format(sim.calculated.annualCashflow)}
-                      variant={sim.calculated.annualCashflow > 0 ? 'positive' : 'negative'}
-                    />
+                    {sim.calculated.grossYield !== undefined && (
+                      <ResultTile
+                        label={strings.grossYield}
+                        value={percentFormatter.format(sim.calculated.grossYield)}
+                        variant={sim.calculated.grossYield > 0 ? 'positive' : 'negative'}
+                      />
+                    )}
+                    {sim.calculated.netYield !== undefined && (
+                      <ResultTile
+                        label={strings.netYield}
+                        value={percentFormatter.format(sim.calculated.netYield)}
+                        variant={sim.calculated.netYield > 0 ? 'positive' : 'negative'}
+                      />
+                    )}
+                    {sim.calculated.annualCashflow !== undefined && (
+                      <ResultTile
+                        label={strings.annualCashflow}
+                        value={currencyFormatter.format(sim.calculated.annualCashflow)}
+                        variant={sim.calculated.annualCashflow > 0 ? 'positive' : 'negative'}
+                      />
+                    )}
                     {sim.calculated.annualTax !== undefined && (
                       <ResultTile
                         label={strings.estimatedAnnualTax}
@@ -571,14 +577,18 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
                         variant={sim.calculated.annualCashflowAfterTax > 0 ? 'positive' : 'negative'}
                       />
                     )}
-                    <ResultTile
-                      label={strings.totalCost}
-                      value={currencyFormatter.format(sim.calculated.totalCost)}
-                    />
-                    <ResultTile
-                      label={strings.loanAmount}
-                      value={currencyFormatter.format(sim.calculated.loanAmount)}
-                    />
+                    {sim.calculated.totalCost !== undefined && (
+                      <ResultTile
+                        label={strings.totalCost}
+                        value={currencyFormatter.format(sim.calculated.totalCost)}
+                      />
+                    )}
+                    {sim.calculated.loanAmount !== undefined && (
+                      <ResultTile
+                        label={strings.loanAmount}
+                        value={currencyFormatter.format(sim.calculated.loanAmount)}
+                      />
+                    )}
                     {sim.calculated.monthlyCashflow !== undefined && (
                       <ResultTile
                         label={strings.monthlyCashflow}
@@ -595,24 +605,32 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
                   </>
                 ) : sim.type === 'property-flipping' && sim.calculated && 'margin' in sim.calculated ? (
                   <>
-                    <ResultTile
-                      label={strings.mbMarge || 'Marge'}
-                      value={percentFormatter.format(sim.calculated.margin / 100)}
-                      variant={sim.calculated.margin > 0 ? 'positive' : 'negative'}
-                    />
-                    <ResultTile
-                      label={strings.mbBeneficesNets || 'Bénéfices nets'}
-                      value={currencyFormatter.format(sim.calculated.totalProfit)}
-                      variant={sim.calculated.totalProfit > 0 ? 'positive' : 'negative'}
-                    />
-                    <ResultTile
-                      label={strings.totalCost}
-                      value={currencyFormatter.format(sim.calculated.totalCost)}
-                    />
-                    <ResultTile
-                      label={strings.mbReventeLogic || 'Revente logique'}
-                      value={currencyFormatter.format(sim.calculated.totalResale)}
-                    />
+                    {sim.calculated.margin !== undefined && (
+                      <ResultTile
+                        label={strings.mbMarge || 'Marge'}
+                        value={percentFormatter.format(sim.calculated.margin / 100)}
+                        variant={sim.calculated.margin > 0 ? 'positive' : 'negative'}
+                      />
+                    )}
+                    {sim.calculated.totalProfit !== undefined && (
+                      <ResultTile
+                        label={strings.mbBeneficesNets || 'Bénéfices nets'}
+                        value={currencyFormatter.format(sim.calculated.totalProfit)}
+                        variant={sim.calculated.totalProfit > 0 ? 'positive' : 'negative'}
+                      />
+                    )}
+                    {sim.calculated.totalCost !== undefined && (
+                      <ResultTile
+                        label={strings.totalCost}
+                        value={currencyFormatter.format(sim.calculated.totalCost)}
+                      />
+                    )}
+                    {sim.calculated.totalResale !== undefined && (
+                      <ResultTile
+                        label={strings.mbReventeLogic || 'Revente logique'}
+                        value={currencyFormatter.format(sim.calculated.totalResale)}
+                      />
+                    )}
                   {sim.calculated.financialCost !== undefined && (
                     <ResultTile
                       label={strings.mbFinancialCost || 'Coût financier'}

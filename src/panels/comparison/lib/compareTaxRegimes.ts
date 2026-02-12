@@ -2,16 +2,12 @@ import type { CalculatedSimulation } from './detectBestScenario'
 import type { ComparisonSimulation } from '../../../shared/types/comparison'
 import type { SimulationFormValues } from '../../rental-investment/model/types'
 import type { TaxRegime } from '../../../shared/types'
-import type { YearlyTableRow } from '../../rental-investment/lib/calculations'
 import { computeYearlyTableData } from '../../rental-investment/lib/calculations'
 import type { MarchandDeBiensValues } from '../../property-flip/model/types'
 import {
   computeTvaSurMarge,
   computeTvaDeductible,
   computeAResterPayer,
-  computeTvaSurTotal,
-  computeResteTvaTotal,
-  VAT_RATE_TRAVAUX,
 } from '../../../entities/finance/vat'
 
 const MB_IS_RATE = 0.25

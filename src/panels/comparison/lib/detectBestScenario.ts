@@ -1,5 +1,3 @@
-import type { ComparisonSimulation } from '../../../shared/types/comparison'
-
 export type ComparisonCriteria =
   | 'netYield'
   | 'grossYield'
@@ -14,6 +12,7 @@ export type ComparisonCriteria =
 
 export interface CalculatedSimulation {
   id: string
+  name: string
   type: 'rental' | 'property-flipping'
   calculated: {
     grossYield?: number
@@ -148,7 +147,7 @@ function getMetricValue(
  */
 function generateReason(
   criteria: ComparisonCriteria,
-  value: number,
+  _value: number,
   higherIsBetter: boolean,
 ): string {
   const criteriaLabels: Record<ComparisonCriteria, string> = {
