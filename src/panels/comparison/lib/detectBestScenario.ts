@@ -24,6 +24,12 @@ export interface CalculatedSimulation {
     totalCost?: number
     annualTax?: number
     annualCashflowAfterTax?: number
+    monthlyPayment?: number
+    loanAmount?: number
+    financialCost?: number
+    totalResale?: number
+    monthlyCashflow?: number
+    annualizedReturn?: number
   } | null
 }
 

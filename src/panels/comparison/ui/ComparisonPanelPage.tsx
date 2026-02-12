@@ -15,6 +15,8 @@ import {
   prepareComparisonExport,
   exportComparisonToJson,
 } from '../lib/exportComparison'
+import { compareStrategies } from '../lib/compareStrategies'
+import { compareTaxRegimes, getTaxRegimeLabel } from '../lib/compareTaxRegimes'
 
 interface ComparisonPanelPageProps {
   locale: Locale
@@ -24,6 +26,7 @@ interface ComparisonPanelPageProps {
 export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProps) {
   const comparisonStore = useComparisonStore()
   const scrollRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [sciIsWithdrawFlatTax, setSciIsWithdrawFlatTax] = useState<Record<string, boolean>>({})
 
   // Initialize store on mount
   useEffect(() => {
@@ -125,6 +128,11 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
           // Convert to percentage for display
           const margin = marginRatio * 100
           const totalProfit = totalResale - totalCostForMarge
+          // Calculate annualized return based on holding period
+          const holdingPeriodMonths = months
+          const annualizedReturn = holdingPeriodMonths > 0
+            ? (Math.pow(1 + marginRatio, 12 / holdingPeriodMonths) - 1) * 100
+            : 0
           return {
             ...sim,
             calculated: {
@@ -135,6 +143,7 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
               financialCost,
               loanAmount: financementAmount,
               monthlyPayment,
+              annualizedReturn,
             },
           }
         } catch {
@@ -158,6 +167,16 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
   const bestScenario = useMemo(() => {
     return detectBestScenario(calculatedResults, comparisonCriteria)
   }, [calculatedResults, comparisonCriteria])
+
+  // Compare strategies (rental vs flip)
+  const strategyComparison = useMemo(() => {
+    return compareStrategies(calculatedResults, simulations)
+  }, [calculatedResults, simulations])
+
+  // Compare tax regimes
+  const taxRegimeComparison = useMemo(() => {
+    return compareTaxRegimes(calculatedResults, simulations, strings, sciIsWithdrawFlatTax)
+  }, [calculatedResults, simulations, strings, sciIsWithdrawFlatTax])
 
   // Criteria options based on simulation types
   const criteriaOptions = useMemo(() => {
@@ -224,6 +243,11 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
       <div className="comparison-header">
         <div>
           <h2>{strings.comparisonSimulations}</h2>
+          {strategyComparison.hasMixedTypes && (
+            <p className="comparison-strategy-indicator">
+              {strings.strategyComparisonRentalVsFlip}
+            </p>
+          )}
           {bestScenario && (
             <p className="comparison-best-reason">
               {strings.bestScenarioReason}: {criteriaOptions.find((o) => o.value === bestScenario.metric)?.label || bestScenario.metric}
@@ -274,6 +298,290 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
           </button>
         </div>
       </div>
+      
+      {/* Strategy Comparison Section - Show when comparing rental vs flip */}
+      {strategyComparison.hasMixedTypes && strategyComparison.profitabilityComparison && (
+        <div className="comparison-strategy-section">
+          <h3 className="comparison-strategy-title">{strings.strategyComparisonKeyDifferences}</h3>
+          
+          <div className="comparison-strategy-grid">
+            <div className="comparison-strategy-card">
+              <h4>{strings.strategyComparisonCashflowVsMargin}</h4>
+              {strategyComparison.keyDifferences.cashflowVsMargin.rental && (
+                <div className="comparison-strategy-metric">
+                  <span className="comparison-strategy-label">{strings.strategyComparisonRentalCashflow}:</span>
+                  <span className="comparison-strategy-value">
+                    {currencyFormatter.format(strategyComparison.keyDifferences.cashflowVsMargin.rental.annualCashflow)}
+                  </span>
+                  <span className="comparison-strategy-note">
+                    ({percentFormatter.format(strategyComparison.keyDifferences.cashflowVsMargin.rental.netYield)} {strings.netYield})
+                  </span>
+                </div>
+              )}
+              {strategyComparison.keyDifferences.cashflowVsMargin.flip && (
+                <div className="comparison-strategy-metric">
+                  <span className="comparison-strategy-label">{strings.strategyComparisonFlipMargin}:</span>
+                  <span className="comparison-strategy-value">
+                    {percentFormatter.format(strategyComparison.keyDifferences.cashflowVsMargin.flip.margin / 100)}
+                  </span>
+                  <span className="comparison-strategy-note">
+                    ({currencyFormatter.format(strategyComparison.keyDifferences.cashflowVsMargin.flip.totalProfit)} {strings.mbBeneficesNets || 'profit'})
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="comparison-strategy-card">
+              <h4>{strings.strategyComparisonHoldingPeriod}</h4>
+              <div className="comparison-strategy-metric">
+                <span className="comparison-strategy-label">{strings.strategyComparisonRentalOngoing}</span>
+              </div>
+              {strategyComparison.keyDifferences.holdingPeriod.flip && (
+                <div className="comparison-strategy-metric">
+                  <span className="comparison-strategy-label">
+                    {strings.strategyComparisonFlipMonths.replace('{months}', String(strategyComparison.keyDifferences.holdingPeriod.flip))}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="comparison-strategy-card">
+              <h4>{strings.strategyComparisonProfitability}</h4>
+              {strategyComparison.profitabilityComparison.rentalAnnualizedReturn !== undefined && (
+                <div className="comparison-strategy-metric">
+                  <span className="comparison-strategy-label">{strings.strategyComparisonRentalCashflow}:</span>
+                  <span className="comparison-strategy-value">
+                    {percentFormatter.format(strategyComparison.profitabilityComparison.rentalAnnualizedReturn)}
+                  </span>
+                </div>
+              )}
+              {strategyComparison.profitabilityComparison.flipAnnualizedReturn !== undefined && (
+                <div className="comparison-strategy-metric">
+                  <span className="comparison-strategy-label">{strings.strategyComparisonAnnualizedReturn} (Flip):</span>
+                  <span className="comparison-strategy-value">
+                    {percentFormatter.format(strategyComparison.profitabilityComparison.flipAnnualizedReturn)}
+                  </span>
+                </div>
+              )}
+              {strategyComparison.profitabilityComparison.moreProfitable && (
+                <div className="comparison-strategy-metric comparison-strategy-highlight">
+                  <span className="comparison-strategy-label">{strings.strategyComparisonMoreProfitable}:</span>
+                  <span className="comparison-strategy-value">
+                    {strategyComparison.profitabilityComparison.moreProfitable === 'rental' 
+                      ? strings.sectionInvestissementLocatif 
+                      : strings.sectionMarchandDeBiens}
+                  </span>
+                </div>
+              )}
+              {strategyComparison.profitabilityComparison.explanation && (
+                <div className="comparison-strategy-explanation">
+                  {strategyComparison.profitabilityComparison.explanation}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tax Regime Comparison Section - Show when comparing different tax regimes */}
+      {taxRegimeComparison.hasDifferentRegimes && taxRegimeComparison.regimes.length > 0 && (() => {
+        // Find max number of years across all regimes
+        const maxYears = Math.max(...taxRegimeComparison.regimes.map((r) => r.yearlyTaxData.length))
+        const years = Array.from({ length: maxYears }, (_, i) => i + 1)
+        
+        // Check if there are SCI IS simulations
+        const hasSciIsSimulations = taxRegimeComparison.regimes.some((r) => r.taxRegime === 'sci_is')
+        
+        return (
+          <div className="comparison-strategy-section">
+            <h3 className="comparison-strategy-title">{strings.taxRegimeComparisonTitle}</h3>
+            
+            {taxRegimeComparison.bestRegime && taxRegimeComparison.taxSavings && (
+              <div className="comparison-tax-highlight">
+                <div className="comparison-tax-best">
+                  <span className="comparison-tax-label">{strings.taxRegimeComparisonBestRegime}:</span>
+                  <span className="comparison-tax-value">{taxRegimeComparison.bestRegime.taxRegimeLabel}</span>
+                </div>
+                {taxRegimeComparison.taxSavings.savings > 0 && (
+                  <div className="comparison-tax-savings">
+                    <span className="comparison-tax-savings-amount">
+                      {strings.taxRegimeComparisonSavingsAmount.replace(
+                        '{amount}',
+                        currencyFormatter.format(taxRegimeComparison.taxSavings.savings),
+                      )}
+                    </span>
+                    <span className="comparison-tax-savings-percent">
+                      {strings.taxRegimeComparisonSavingsPercent.replace(
+                        '{percent}',
+                        taxRegimeComparison.taxSavings.savingsPercent.toFixed(1),
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Flat tax note */}
+            <div className="comparison-tax-flat-tax-note">
+              <p>{strings.taxRegimeComparisonFlatTaxNote}</p>
+            </div>
+
+            {/* SCI IS Flat Tax Checkbox */}
+            {hasSciIsSimulations && (
+              <div className="comparison-tax-sci-is-options">
+                {taxRegimeComparison.regimes
+                  .filter((r) => r.taxRegime === 'sci_is')
+                  .map((regime) => (
+                    <label key={regime.simulationId} className="comparison-tax-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={sciIsWithdrawFlatTax[regime.simulationId] || false}
+                        onChange={(e) => {
+                          setSciIsWithdrawFlatTax((prev) => ({
+                            ...prev,
+                            [regime.simulationId]: e.target.checked,
+                          }))
+                        }}
+                        className="comparison-tax-checkbox"
+                      />
+                      <span className="comparison-tax-checkbox-text">
+                        {strings.taxRegimeComparisonSciIsWithdrawFlatTax.replace(
+                          '{simulation}',
+                          regime.simulationName,
+                        )}
+                      </span>
+                    </label>
+                  ))}
+              </div>
+            )}
+
+            {/* Flat tax calculation detail (when option enabled for SCI IS) */}
+            {taxRegimeComparison.regimes.filter((r) => r.flatTaxDetail).map((regime) => {
+              const d = regime.flatTaxDetail!
+              const sumAnnual = d.annualAccumulated.reduce((s, a) => s + a.amount, 0)
+              return (
+                <div key={regime.simulationId} className="comparison-tax-flat-tax-detail">
+                  <h4 className="comparison-tax-flat-tax-detail-title">
+                    {strings.taxRegimeComparisonFlatTaxDetailTitle} – {regime.simulationName}
+                  </h4>
+                  <p className="comparison-tax-flat-tax-detail-intro">
+                    {strings.taxRegimeComparisonFlatTaxAccumulatedPerYear}:
+                  </p>
+                  <ul className="comparison-tax-flat-tax-detail-list">
+                    {d.annualAccumulated.map((a) => (
+                      <li key={a.year}>
+                        {strings.taxRegimeComparisonFlatTaxYear.replace('{year}', String(a.year))}: {currencyFormatter.format(a.cfBeforeTax)} − {currencyFormatter.format(a.corporateTax)} = {currencyFormatter.format(a.amount)}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="comparison-tax-flat-tax-detail-steps">
+                    <div className="comparison-tax-flat-tax-detail-row">
+                      <span>{strings.taxRegimeComparisonFlatTaxSumAnnual}</span>
+                      <span>{currencyFormatter.format(sumAnnual)}</span>
+                    </div>
+                    <div className="comparison-tax-flat-tax-detail-row">
+                      <span>{strings.taxRegimeComparisonFlatTaxResaleNet}</span>
+                      <span>{currencyFormatter.format(d.resalePrice)} − {currencyFormatter.format(d.crdAtResale)} − {currencyFormatter.format(d.corporateTaxOnGain)} = {currencyFormatter.format(d.resaleNet)}</span>
+                    </div>
+                    <div className="comparison-tax-flat-tax-detail-row comparison-tax-flat-tax-detail-total">
+                      <span>{strings.taxRegimeComparisonFlatTaxTotalAccumulated}</span>
+                      <span>{currencyFormatter.format(d.totalAccumulated)}</span>
+                    </div>
+                    <div className="comparison-tax-flat-tax-detail-row">
+                      <span>{strings.taxRegimeComparisonFlatTaxRate}</span>
+                      <span>{(d.flatTaxRate * 100).toFixed(1)} %</span>
+                    </div>
+                    <div className="comparison-tax-flat-tax-detail-row">
+                      <span>{strings.taxRegimeComparisonFlatTaxAmount}</span>
+                      <span>{currencyFormatter.format(d.totalAccumulated)} × {(d.flatTaxRate * 100).toFixed(1)} % = {currencyFormatter.format(d.flatTaxAmount)}</span>
+                    </div>
+                    <div className="comparison-tax-flat-tax-detail-row">
+                      <span>{strings.taxRegimeComparisonFlatTaxCorporateOnGain}</span>
+                      <span>{currencyFormatter.format(d.corporateTaxOnGain)}</span>
+                    </div>
+                    <div className="comparison-tax-flat-tax-detail-row comparison-tax-flat-tax-detail-total">
+                      <span>{strings.taxRegimeComparisonFlatTaxTotalResaleTax}</span>
+                      <span>{currencyFormatter.format(d.totalResaleTax)}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Yearly Tax Comparison Table */}
+            <div className="comparison-tax-yearly-section">
+              <h4 className="comparison-tax-yearly-title">{strings.taxRegimeComparisonYearlyTaxes}</h4>
+            
+            <div className="comparison-tax-yearly-table-wrapper">
+              <table className="comparison-tax-yearly-table">
+                <thead>
+                  <tr>
+                    <th className="comparison-tax-regime-header">{strings.taxRegimeComparisonRegime}</th>
+                    {years.map((year) => (
+                      <th key={year} className="comparison-tax-year-header">
+                        {strings.taxRegimeComparisonYear} {year}
+                      </th>
+                    ))}
+                    <th className="comparison-tax-total-header">{strings.taxRegimeComparisonTotalTaxOverPeriod}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taxRegimeComparison.regimes.map((regime) => {
+                    const isBest = taxRegimeComparison.bestRegime?.simulationId === regime.simulationId
+                    return (
+                      <tr
+                        key={regime.simulationId}
+                        className={isBest ? 'comparison-tax-row-best' : ''}
+                      >
+                        <td className="comparison-tax-regime-cell">
+                          <div>
+                            <div className="comparison-tax-regime-name">{regime.taxRegimeLabel}</div>
+                            <div className="comparison-tax-regime-sim-name">{regime.simulationName}</div>
+                          </div>
+                        </td>
+                        {years.map((year) => {
+                          const yearData = regime.yearlyTaxData.find((y) => y.year === year)
+                          if (!yearData) {
+                            return (
+                              <td key={year} className="comparison-tax-year-cell">
+                                -
+                              </td>
+                            )
+                          }
+                          return (
+                            <td key={year} className="comparison-tax-year-cell">
+                              <div className="comparison-tax-year-amount">
+                                {currencyFormatter.format(yearData.totalTax)}
+                              </div>
+                              {yearData.resaleTax !== undefined && yearData.resaleTax > 0 && (
+                                <div className="comparison-tax-year-resale">
+                                  <span className="comparison-tax-year-resale-label">
+                                    {strings.taxRegimeComparisonResaleTax}:
+                                  </span>
+                                  <span className="comparison-tax-year-resale-value">
+                                    {currencyFormatter.format(yearData.resaleTax)}
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+                          )
+                        })}
+                        <td className="comparison-tax-total-cell">
+                          <div className="comparison-tax-total-value">
+                            {currencyFormatter.format(regime.totalTaxOverPeriod)}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            </div>
+          </div>
+        )
+      })()}
+
       <div className="comparison-grid" style={{ gridTemplateColumns: `repeat(${simulations.length}, 1fr)` }}>
         {calculatedResults.map((sim, index) => {
           const isBest = bestScenario?.bestSimulationIds.includes(sim.id) ?? false
@@ -309,6 +617,21 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
               <div className="comparison-column-content">
                 {sim.type === 'rental' && sim.calculated && 'grossYield' in sim.calculated ? (
                   <>
+                    {/* Tax Regime Badge */}
+                    {(() => {
+                      const original = simulations.find((s) => s.id === sim.id)
+                      if (original && original.type === 'rental') {
+                        const rentalData = original.data as SimulationFormValues
+                        const taxRegimeLabel = getTaxRegimeLabel(rentalData.taxRegime, strings)
+                        return (
+                          <div className="comparison-tax-regime-badge">
+                            <span className="comparison-tax-regime-label">{strings.taxRegimeLabel}:</span>
+                            <span className="comparison-tax-regime-value">{taxRegimeLabel}</span>
+                          </div>
+                        )
+                      }
+                      return null
+                    })()}
                     <ResultTile
                       label={strings.grossYield}
                       value={percentFormatter.format(sim.calculated.grossYield)}
@@ -324,14 +647,6 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
                       value={currencyFormatter.format(sim.calculated.annualCashflow)}
                       variant={sim.calculated.annualCashflow > 0 ? 'positive' : 'negative'}
                     />
-                    <ResultTile
-                      label={strings.totalCost}
-                      value={currencyFormatter.format(sim.calculated.totalCost)}
-                    />
-                    <ResultTile
-                      label={strings.loanAmount}
-                      value={currencyFormatter.format(sim.calculated.loanAmount)}
-                    />
                     {sim.calculated.annualTax !== undefined && (
                       <ResultTile
                         label={strings.estimatedAnnualTax}
@@ -346,6 +661,14 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
                         variant={sim.calculated.annualCashflowAfterTax > 0 ? 'positive' : 'negative'}
                       />
                     )}
+                    <ResultTile
+                      label={strings.totalCost}
+                      value={currencyFormatter.format(sim.calculated.totalCost)}
+                    />
+                    <ResultTile
+                      label={strings.loanAmount}
+                      value={currencyFormatter.format(sim.calculated.loanAmount)}
+                    />
                     {sim.calculated.monthlyCashflow !== undefined && (
                       <ResultTile
                         label={strings.monthlyCashflow}
@@ -380,14 +703,21 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
                       label={strings.mbReventeLogic || 'Revente logique'}
                       value={currencyFormatter.format(sim.calculated.totalResale)}
                     />
-                    {sim.calculated.financialCost !== undefined && (
-                      <ResultTile
-                        label={strings.mbFinancialCost || 'Coût financier'}
-                        value={currencyFormatter.format(sim.calculated.financialCost)}
-                      />
-                    )}
-                  </>
-                ) : (
+                  {sim.calculated.financialCost !== undefined && (
+                    <ResultTile
+                      label={strings.mbFinancialCost || 'Coût financier'}
+                      value={currencyFormatter.format(sim.calculated.financialCost)}
+                    />
+                  )}
+                  {sim.calculated.annualizedReturn !== undefined && sim.calculated.annualizedReturn > 0 && (
+                    <ResultTile
+                      label={strings.strategyComparisonAnnualizedReturn || 'Rentabilité annualisée'}
+                      value={percentFormatter.format(sim.calculated.annualizedReturn / 100)}
+                      variant={sim.calculated.annualizedReturn > 0 ? 'positive' : 'negative'}
+                    />
+                  )}
+                </>
+              ) : (
                   <div className="comparison-error">Unable to calculate results</div>
                 )}
               </div>
