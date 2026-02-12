@@ -10,7 +10,7 @@ export type TaxRegime =
   | 'sci_is'
   | 'bailleur_prive'
 
-export type AppSection = 'investissement_locatif' | 'marchand_de_biens'
+export type AppSection = 'investissement_locatif' | 'marchand_de_biens' | 'comparison'
 
 /**
  * Simulation type mapping for clarity

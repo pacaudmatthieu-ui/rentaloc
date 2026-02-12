@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   RENTAL_SIMULATION: 'rentaloc_rental_simulation',
   PROPERTY_FLIPPING_SIMULATION: 'rentaloc_property_flipping_simulation',
   USER_LANGUAGE: 'rentaloc_user_language',
+  COMPARISON_LIST: 'rentaloc_comparison_list',
 } as const
 
 /**
@@ -89,5 +90,72 @@ export function loadUserLanguage(): string | null {
   } catch (error) {
     console.error('Error loading user language from localStorage:', error)
     return null
+  }
+}
+
+/**
+ * Save comparison list metadata to localStorage
+ */
+export function saveComparisonList(comparisonIds: string[]): void {
+  try {
+    const serialized = JSON.stringify(comparisonIds)
+    localStorage.setItem(STORAGE_KEYS.COMPARISON_LIST, serialized)
+  } catch (error) {
+    console.error('Error saving comparison list to localStorage:', error)
+  }
+}
+
+/**
+ * Load comparison list metadata from localStorage
+ */
+export function loadComparisonList(): string[] {
+  try {
+    const serialized = localStorage.getItem(STORAGE_KEYS.COMPARISON_LIST)
+    if (!serialized) {
+      return []
+    }
+    return JSON.parse(serialized) as string[]
+  } catch (error) {
+    console.error('Error loading comparison list from localStorage:', error)
+    return []
+  }
+}
+
+/**
+ * Save a comparison simulation to localStorage
+ */
+export function saveComparisonSimulation(id: string, data: unknown): void {
+  try {
+    const serialized = JSON.stringify(data)
+    localStorage.setItem(`rentaloc_comparison_${id}`, serialized)
+  } catch (error) {
+    console.error(`Error saving comparison simulation ${id} to localStorage:`, error)
+  }
+}
+
+/**
+ * Load a comparison simulation from localStorage
+ */
+export function loadComparisonSimulation<T>(id: string): T | null {
+  try {
+    const serialized = localStorage.getItem(`rentaloc_comparison_${id}`)
+    if (!serialized) {
+      return null
+    }
+    return JSON.parse(serialized) as T
+  } catch (error) {
+    console.error(`Error loading comparison simulation ${id} from localStorage:`, error)
+    return null
+  }
+}
+
+/**
+ * Remove a comparison simulation from localStorage
+ */
+export function removeComparisonSimulation(id: string): void {
+  try {
+    localStorage.removeItem(`rentaloc_comparison_${id}`)
+  } catch (error) {
+    console.error(`Error removing comparison simulation ${id} from localStorage:`, error)
   }
 }

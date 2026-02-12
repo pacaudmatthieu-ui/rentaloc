@@ -8,6 +8,7 @@ import { INITIAL_VALUES } from '../model/types'
 import type { SimulationFormValues } from '../model/types'
 import { validateInvestissementData } from '../model/validation'
 import { saveRentalSimulation } from '../../../shared/utils/storage'
+import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import {
   calculateResults,
   computeIRRByYearData,
@@ -39,6 +40,15 @@ interface RentalPanelPageProps {
 }
 
 export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: RentalPanelPageProps) {
+  const comparisonStore = useComparisonStore()
+  const [comparisonButtonState, setComparisonButtonState] = useState<'idle' | 'success' | 'error'>('idle')
+  const [comparisonError, setComparisonError] = useState<string | null>(null)
+  
+  // Initialize comparison store on mount
+  useEffect(() => {
+    comparisonStore.initialize()
+  }, [comparisonStore])
+  
   // Initialize with provided initial values, saved values, or default values
   // Priority: initialValues (from localStorage) > INITIAL_VALUES (defaults)
   const [values, setValues] = useState<SimulationFormValues>(() => {
@@ -66,6 +76,11 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
       setValues(initialValues)
     }
   }, [initialValues])
+
+  // Check if current simulation is already in comparison
+  const isInComparison = useMemo(() => {
+    return comparisonStore.isInComparison('rental', values)
+  }, [comparisonStore, values])
 
   // Keep ref in sync with current values
   useEffect(() => {
@@ -434,6 +449,32 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
           validateData={validateInvestissementData}
           strings={strings}
           pdfContentRef={pdfRef}
+          extraButton={
+            <button
+              type="button"
+              className={`export-import-btn ${isInComparison ? 'export-import-btn-disabled' : ''} ${comparisonButtonState === 'success' ? 'export-import-btn-success' : ''}`}
+              onClick={() => {
+                if (isInComparison) return
+                const result = comparisonStore.addToComparison('rental', values)
+                if (result.success) {
+                  setComparisonButtonState('success')
+                  setComparisonError(null)
+                  setTimeout(() => setComparisonButtonState('idle'), 2000)
+                } else {
+                  setComparisonButtonState('error')
+                  setComparisonError(result.error === 'already_in_comparison' ? strings.alreadyInComparison : strings.maxComparisonReached)
+                  setTimeout(() => {
+                    setComparisonButtonState('idle')
+                    setComparisonError(null)
+                  }, 3000)
+                }
+              }}
+              disabled={isInComparison}
+              title={isInComparison ? strings.alreadyInComparison : comparisonError || strings.addToComparison}
+            >
+              {isInComparison ? strings.addedToComparison : comparisonButtonState === 'success' ? strings.addedToComparison : strings.addToComparison}
+            </button>
+          }
         />
         <SortableSectionList
           sections={sections}

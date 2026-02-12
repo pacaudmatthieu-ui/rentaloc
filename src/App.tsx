@@ -4,6 +4,7 @@ import type { Locale } from './shared/types'
 import { STRINGS } from './shared/i18n/strings'
 import { RentalPanelPage } from './panels/rental-investment'
 import { FlipPanelPage } from './panels/property-flip'
+import { ComparisonPanelPage } from './panels/comparison'
 import type { AppSection } from './shared/types'
 import { getSimulationType } from './shared/types'
 import {
@@ -50,10 +51,11 @@ function App() {
     if (appSection === 'investissement_locatif') {
       const saved = loadRentalSimulation<SimulationFormValues>()
       setRentalInitialValues(saved)
-    } else {
+    } else if (appSection === 'marchand_de_biens') {
       const saved = loadPropertyFlippingSimulation<MarchandDeBiensValues>()
       setPropertyFlippingInitialValues(saved)
     }
+    // Comparison panel doesn't need to load simulation data
   }, [appSection])
 
   // Handle section switching with data persistence
@@ -92,6 +94,13 @@ function App() {
             >
               {strings.sectionMarchandDeBiens}
             </button>
+            <button
+              type="button"
+              className={`section-tab ${appSection === 'comparison' ? 'section-tab-active' : ''}`}
+              onClick={() => handleSectionChange('comparison')}
+            >
+              {strings.comparisonPanel}
+            </button>
           </div>
         </div>
         <div className="language-switcher">
@@ -114,7 +123,12 @@ function App() {
         </div>
       </header>
 
-      {appSection === 'marchand_de_biens' ? (
+      {appSection === 'comparison' ? (
+        <ComparisonPanelPage
+          locale={locale}
+          strings={STRINGS[locale]}
+        />
+      ) : appSection === 'marchand_de_biens' ? (
         <FlipPanelPage
           locale={locale}
           strings={STRINGS[locale]}

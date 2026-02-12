@@ -7,6 +7,7 @@ import type { ApartmentItem, MarchandDeBiensValues } from '../model/types'
 import { MB_INITIAL } from '../model/types'
 import { validateMarchandData } from '../model/validation'
 import { savePropertyFlippingSimulation } from '../../../shared/utils/storage'
+import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import { MargeVatTable } from './sections/MargeVatTable'
 import { MbFiscalResultTable } from './sections/MbFiscalResultTable'
 import { ReventeTable } from './sections/ReventeTable'
@@ -30,6 +31,15 @@ interface FlipPanelPageProps {
 }
 
 export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: FlipPanelPageProps) {
+  const comparisonStore = useComparisonStore()
+  const [comparisonButtonState, setComparisonButtonState] = useState<'idle' | 'success' | 'error'>('idle')
+  const [comparisonError, setComparisonError] = useState<string | null>(null)
+  
+  // Initialize comparison store on mount
+  useEffect(() => {
+    comparisonStore.initialize()
+  }, [comparisonStore])
+  
   // Initialize with provided initial values, saved values, or default values
   // Priority: initialValues (from localStorage) > MB_INITIAL (defaults)
   const [values, setValues] = useState<MarchandDeBiensValues>(() => {
@@ -80,6 +90,11 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
       valuesRef.current = values
     }
   }, [values, valuesRef])
+
+  // Check if current simulation is already in comparison
+  const isInComparison = useMemo(() => {
+    return comparisonStore.isInComparison('property-flipping', values)
+  }, [comparisonStore, values])
 
   // Save values to localStorage whenever they change
   useEffect(() => {
@@ -370,6 +385,32 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
         }}
         validateData={validateMarchandData}
         strings={strings}
+        extraButton={
+          <button
+            type="button"
+            className={`export-import-btn ${isInComparison ? 'export-import-btn-disabled' : ''} ${comparisonButtonState === 'success' ? 'export-import-btn-success' : ''}`}
+            onClick={() => {
+              if (isInComparison) return
+              const result = comparisonStore.addToComparison('property-flipping', values)
+              if (result.success) {
+                setComparisonButtonState('success')
+                setComparisonError(null)
+                setTimeout(() => setComparisonButtonState('idle'), 2000)
+              } else {
+                setComparisonButtonState('error')
+                setComparisonError(result.error === 'already_in_comparison' ? strings.alreadyInComparison : strings.maxComparisonReached)
+                setTimeout(() => {
+                  setComparisonButtonState('idle')
+                  setComparisonError(null)
+                }, 3000)
+              }
+            }}
+            disabled={isInComparison}
+            title={isInComparison ? strings.alreadyInComparison : comparisonError || strings.addToComparison}
+          >
+            {isInComparison ? strings.addedToComparison : comparisonButtonState === 'success' ? strings.addedToComparison : strings.addToComparison}
+          </button>
+        }
       />
       <SortableSectionList
         sections={sections}
