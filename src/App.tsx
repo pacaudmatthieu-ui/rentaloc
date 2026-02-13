@@ -10,8 +10,11 @@ import { getSimulationType } from './shared/types'
 import {
   loadRentalSimulation,
   loadPropertyFlippingSimulation,
+  saveRentalSimulation,
+  savePropertyFlippingSimulation,
   saveUserLanguage,
   loadUserLanguage,
+  saveCurrentSimulationComparisonId,
 } from './shared/utils/storage'
 import type { SimulationFormValues } from './panels/rental-investment/model/types'
 import type { MarchandDeBiensValues } from './panels/property-flip/model/types'
@@ -71,6 +74,27 @@ function App() {
     setAppSection(newSection)
   }
 
+  // Handle opening simulation from comparison panel
+  const handleOpenSimulation = (simulationData: SimulationFormValues | MarchandDeBiensValues, type: 'rental' | 'property-flipping', comparisonId?: string) => {
+    if (type === 'rental') {
+      const rentalData = simulationData as SimulationFormValues
+      saveRentalSimulation(rentalData)
+      setRentalInitialValues(rentalData)
+      if (comparisonId) {
+        saveCurrentSimulationComparisonId(comparisonId)
+      }
+      setAppSection('investissement_locatif')
+    } else {
+      const flipData = simulationData as MarchandDeBiensValues
+      savePropertyFlippingSimulation(flipData)
+      setPropertyFlippingInitialValues(flipData)
+      if (comparisonId) {
+        saveCurrentSimulationComparisonId(comparisonId)
+      }
+      setAppSection('marchand_de_biens')
+    }
+  }
+
   const strings = STRINGS[locale]
 
   return (
@@ -127,6 +151,7 @@ function App() {
         <ComparisonPanelPage
           locale={locale}
           strings={STRINGS[locale]}
+          onOpenSimulation={handleOpenSimulation}
         />
       ) : appSection === 'marchand_de_biens' ? (
         <FlipPanelPage

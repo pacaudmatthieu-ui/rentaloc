@@ -17,19 +17,24 @@ import {
 } from '../lib/exportComparison'
 import { compareStrategies } from '../lib/compareStrategies'
 import { compareTaxRegimes, getTaxRegimeLabel } from '../lib/compareTaxRegimes'
+import { saveCurrentSimulationComparisonId } from '../../../shared/utils/storage'
 
 interface ComparisonPanelPageProps {
   locale: Locale
   strings: Record<string, string>
+  onOpenSimulation?: (data: SimulationFormValues | MarchandDeBiensValues, type: 'rental' | 'property-flipping', comparisonId?: string) => void
 }
 
-export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProps) {
+export function ComparisonPanelPage({ locale, strings, onOpenSimulation }: ComparisonPanelPageProps) {
   const comparisonStore = useComparisonStore()
   const scrollRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  // Initialize store on mount
+  // Initialize store on mount and reload when component becomes visible
   useEffect(() => {
     comparisonStore.initialize()
+    // Clear stored comparison ID when returning to comparison panel
+    // This ensures we don't keep stale references
+    saveCurrentSimulationComparisonId(null)
   }, [comparisonStore])
 
   const simulations = comparisonStore.simulations
@@ -515,14 +520,34 @@ export function ComparisonPanelPage({ locale, strings }: ComparisonPanelPageProp
                 <span className={`comparison-type-badge comparison-type-${sim.type}`}>
                   {sim.type === 'rental' ? strings.sectionInvestissementLocatif : strings.sectionMarchandDeBiens}
                 </span>
-                <button
-                  type="button"
-                  className="comparison-remove-btn"
-                  onClick={() => comparisonStore.removeFromComparison(sim.id)}
-                  title={strings.removeFromComparison}
-                >
-                  ×
-                </button>
+                <div className="comparison-column-header-actions">
+                  {onOpenSimulation && (
+                    <button
+                      type="button"
+                      className="comparison-open-btn"
+                      onClick={() => {
+                        const original = simulations.find((s) => s.id === sim.id)
+                        if (original) {
+                          onOpenSimulation(original.data, sim.type, sim.id)
+                        }
+                      }}
+                      title={strings.openSimulation || 'Open in panel'}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 3h4v1H4v8h8V9h1v4H3V3z" fill="currentColor"/>
+                        <path d="M11 2h3v3h-1V3.707L7.707 8.707l-.707-.707L12.293 3H11V2z" fill="currentColor"/>
+                      </svg>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="comparison-remove-btn"
+                    onClick={() => comparisonStore.removeFromComparison(sim.id)}
+                    title={strings.removeFromComparison}
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
               <div className="comparison-column-content">
                 {sim.type === 'rental' && sim.calculated && 'grossYield' in sim.calculated ? (

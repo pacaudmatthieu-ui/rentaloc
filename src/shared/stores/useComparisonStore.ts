@@ -7,6 +7,8 @@ import {
   saveComparisonSimulation,
   loadComparisonSimulation,
   removeComparisonSimulation,
+  loadCurrentSimulationComparisonId,
+  saveCurrentSimulationComparisonId,
 } from '../utils/storage'
 import type { SimulationFormValues } from '../../panels/rental-investment/model/types'
 import type { MarchandDeBiensValues } from '../../panels/property-flip/model/types'
@@ -22,6 +24,8 @@ interface ComparisonStore {
   removeFromComparison: (id: string) => void
   clearComparison: () => void
   isInComparison: (type: SimulationType, data: SimulationFormValues | MarchandDeBiensValues) => boolean
+  updateSimulationData: (type: SimulationType, data: SimulationFormValues | MarchandDeBiensValues) => void
+  findSimulationByData: (type: SimulationType, data: SimulationFormValues | MarchandDeBiensValues) => ComparisonSimulation | undefined
 }
 
 /**
@@ -115,7 +119,7 @@ export const useComparisonStore = create<ComparisonStore>((set, get) => ({
       state.initialize()
     }
     
-    // Check if already in comparison (by data hash)
+    // Check if already in comparison (by data hash or stored ID)
     const dataHash = createDataHash(type, data)
     const existing = state.simulations.find((sim) => {
       const simHash = createDataHash(sim.type, sim.data)
@@ -153,6 +157,9 @@ export const useComparisonStore = create<ComparisonStore>((set, get) => ({
     // Update store
     set({ simulations: [...state.simulations, newSimulation] })
     
+    // Clear stored comparison ID when adding new simulation (user is adding a different one)
+    saveCurrentSimulationComparisonId(null)
+    
     return { success: true }
   },
 
@@ -179,16 +186,91 @@ export const useComparisonStore = create<ComparisonStore>((set, get) => ({
     set({ simulations: [] })
   },
 
-  isInComparison: (type, data) => {
+  findSimulationByData: (type, data) => {
     const state = get()
     if (!state.initialized) {
       state.initialize()
     }
     
+    // First, try to find by stored comparison ID (for simulations opened from comparison)
+    const storedComparisonId = loadCurrentSimulationComparisonId()
+    if (storedComparisonId) {
+      const byId = state.simulations.find((sim) => sim.id === storedComparisonId && sim.type === type)
+      if (byId) return byId
+    }
+    
+    // Then try exact hash match
     const dataHash = createDataHash(type, data)
-    return state.simulations.some((sim) => {
+    const exactMatch = state.simulations.find((sim) => {
       const simHash = createDataHash(sim.type, sim.data)
       return simHash === dataHash
     })
+    
+    if (exactMatch) return exactMatch
+    
+    // If no exact match, try to find by comparing data directly
+    // This handles modified simulations where hash changed
+    const currentDataStr = JSON.stringify(data)
+    return state.simulations.find((sim) => {
+      if (sim.type !== type) return false
+      const simDataStr = JSON.stringify(sim.data)
+      return simDataStr === currentDataStr
+    })
+  },
+
+  isInComparison: (type, data) => {
+    const found = get().findSimulationByData(type, data)
+    return found !== undefined
+  },
+
+  updateSimulationData: (type, data) => {
+    const state = get()
+    if (!state.initialized) {
+      state.initialize()
+    }
+    
+    // First, try to find by stored comparison ID (for simulations opened from comparison)
+    const storedComparisonId = loadCurrentSimulationComparisonId()
+    let foundSim: ComparisonSimulation | undefined
+    
+    if (storedComparisonId) {
+      foundSim = state.simulations.find((sim) => sim.id === storedComparisonId && sim.type === type)
+    }
+    
+    // If not found by ID, try to find by data matching
+    if (!foundSim) {
+      foundSim = state.findSimulationByData(type, data)
+    }
+    
+    if (!foundSim) {
+      // No matching simulation found - this simulation is not in comparison
+      return
+    }
+    
+    // Check if data actually changed
+    const currentDataStr = JSON.stringify(data)
+    const simDataStr = JSON.stringify(foundSim.data)
+    
+    if (currentDataStr === simDataStr) {
+      // No changes, nothing to update
+      return
+    }
+    
+    // Update the found simulation
+    const updatedSim = {
+      ...foundSim,
+      data,
+      previewMetrics: calculatePreviewMetrics(type, data),
+    }
+    
+    // Save to localStorage
+    saveComparisonSimulation(foundSim.id, updatedSim)
+    
+    // Update store
+    const updated = state.simulations.map((sim) => 
+      sim.id === foundSim.id ? updatedSim : sim
+    )
+    
+    set({ simulations: updated })
   },
 }))

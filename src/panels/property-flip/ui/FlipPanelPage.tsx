@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type { Locale } from '../../../shared/types'
 import { FormField, FormFieldReadOnly, SortableSectionList } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
@@ -6,7 +6,7 @@ import { ExportImportPanel } from '../../../features/export-json'
 import type { ApartmentItem, MarchandDeBiensValues } from '../model/types'
 import { MB_INITIAL } from '../model/types'
 import { validateMarchandData } from '../model/validation'
-import { savePropertyFlippingSimulation } from '../../../shared/utils/storage'
+import { savePropertyFlippingSimulation, loadCurrentSimulationComparisonId } from '../../../shared/utils/storage'
 import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import { MargeVatTable } from './sections/MargeVatTable'
 import { MbFiscalResultTable } from './sections/MbFiscalResultTable'
@@ -91,15 +91,40 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
     }
   }, [values, valuesRef])
 
-  // Check if current simulation is already in comparison
-  const isInComparison = useMemo(() => {
-    return comparisonStore.isInComparison('property-flipping', values)
-  }, [comparisonStore, values])
-
   // Save values to localStorage whenever they change
   useEffect(() => {
     savePropertyFlippingSimulation(values)
   }, [values])
+
+  // Check if current simulation is already in comparison
+  // Use stored comparison ID or data matching
+  const isInComparison = useMemo(() => {
+    // First check if we have a stored comparison ID (simulation opened from comparison)
+    const storedComparisonId = loadCurrentSimulationComparisonId()
+    if (storedComparisonId) {
+      const state = comparisonStore.simulations
+      const found = state.find((sim) => sim.id === storedComparisonId && sim.type === 'property-flipping')
+      if (found) return true
+    }
+    // Fallback to data matching
+    return comparisonStore.isInComparison('property-flipping', values)
+  }, [comparisonStore, values])
+
+  // Use ref to track last updated values to prevent infinite loops
+  const lastUpdatedValuesRef = useRef<string>('')
+  
+  // Update comparison store if this simulation is in comparison
+  // Use separate effect with ref check to avoid infinite loops
+  useEffect(() => {
+    if (isInComparison) {
+      const currentValuesStr = JSON.stringify(values)
+      // Only update if values actually changed
+      if (lastUpdatedValuesRef.current !== currentValuesStr) {
+        lastUpdatedValuesRef.current = currentValuesStr
+        comparisonStore.updateSimulationData('property-flipping', values)
+      }
+    }
+  }, [values, isInComparison, comparisonStore])
 
   const notaryFees = useMemo(() => {
     const price = Number(values.purchasePrice) || 0

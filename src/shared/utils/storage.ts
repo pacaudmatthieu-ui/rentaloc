@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   PROPERTY_FLIPPING_SIMULATION: 'rentaloc_property_flipping_simulation',
   USER_LANGUAGE: 'rentaloc_user_language',
   COMPARISON_LIST: 'rentaloc_comparison_list',
+  CURRENT_SIMULATION_COMPARISON_ID: 'rentaloc_current_simulation_comparison_id',
 } as const
 
 /**
@@ -157,5 +158,32 @@ export function removeComparisonSimulation(id: string): void {
     localStorage.removeItem(`rentaloc_comparison_${id}`)
   } catch (error) {
     console.error(`Error removing comparison simulation ${id} from localStorage:`, error)
+  }
+}
+
+/**
+ * Save the comparison ID for the current simulation being edited
+ */
+export function saveCurrentSimulationComparisonId(id: string | null): void {
+  try {
+    if (id === null) {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_SIMULATION_COMPARISON_ID)
+    } else {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_SIMULATION_COMPARISON_ID, id)
+    }
+  } catch (error) {
+    console.error('Error saving current simulation comparison ID:', error)
+  }
+}
+
+/**
+ * Load the comparison ID for the current simulation being edited
+ */
+export function loadCurrentSimulationComparisonId(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.CURRENT_SIMULATION_COMPARISON_ID)
+  } catch (error) {
+    console.error('Error loading current simulation comparison ID:', error)
+    return null
   }
 }

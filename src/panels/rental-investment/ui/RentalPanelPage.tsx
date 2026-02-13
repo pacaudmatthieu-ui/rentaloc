@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
 import { FormField, FormFieldReadOnly, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
@@ -7,7 +7,7 @@ import { ExportImportPanel } from '../../../features/export-json'
 import { INITIAL_VALUES } from '../model/types'
 import type { SimulationFormValues } from '../model/types'
 import { validateInvestissementData } from '../model/validation'
-import { saveRentalSimulation } from '../../../shared/utils/storage'
+import { saveRentalSimulation, loadCurrentSimulationComparisonId } from '../../../shared/utils/storage'
 import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import {
   calculateResults,
@@ -77,11 +77,6 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
     }
   }, [initialValues])
 
-  // Check if current simulation is already in comparison
-  const isInComparison = useMemo(() => {
-    return comparisonStore.isInComparison('rental', values)
-  }, [comparisonStore, values])
-
   // Keep ref in sync with current values
   useEffect(() => {
     if (valuesRef) {
@@ -93,6 +88,36 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
   useEffect(() => {
     saveRentalSimulation(values)
   }, [values])
+
+  // Check if current simulation is already in comparison
+  // Use stored comparison ID or data matching
+  const isInComparison = useMemo(() => {
+    // First check if we have a stored comparison ID (simulation opened from comparison)
+    const storedComparisonId = loadCurrentSimulationComparisonId()
+    if (storedComparisonId) {
+      const state = comparisonStore.simulations
+      const found = state.find((sim) => sim.id === storedComparisonId && sim.type === 'rental')
+      if (found) return true
+    }
+    // Fallback to data matching
+    return comparisonStore.isInComparison('rental', values)
+  }, [comparisonStore, values])
+
+  // Use ref to track last updated values to prevent infinite loops
+  const lastUpdatedValuesRef = useRef<string>('')
+  
+  // Update comparison store if this simulation is in comparison
+  // Use separate effect with ref check to avoid infinite loops
+  useEffect(() => {
+    if (isInComparison) {
+      const currentValuesStr = JSON.stringify(values)
+      // Only update if values actually changed
+      if (lastUpdatedValuesRef.current !== currentValuesStr) {
+        lastUpdatedValuesRef.current = currentValuesStr
+        comparisonStore.updateSimulationData('rental', values)
+      }
+    }
+  }, [values, isInComparison, comparisonStore])
 
   const results = useMemo(() => calculateResults(values), [values])
   const chartData = useMemo(() => computeYearlyChartData(values), [values])
