@@ -237,10 +237,11 @@ export function compareTaxRegimes(
   const hasDifferentRegimes = uniqueRegimes.size > 1 || propertyFlippingSimulations.length > 0
 
   // Find best regime (lowest total tax over period)
+  // Always calculate even if regimes are the same
   let bestRegime: TaxRegimeComparisonResult['bestRegime'] | undefined
   let taxSavings: TaxRegimeComparisonResult['taxSavings'] | undefined
 
-  if (hasDifferentRegimes && allRegimes.length > 0) {
+  if (allRegimes.length > 0) {
     // Find regime with lowest total tax over period
     const lowestTaxRegime = allRegimes.reduce((best, current) =>
       current.totalTaxOverPeriod < best.totalTaxOverPeriod ? current : best,

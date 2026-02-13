@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
 import { FormField, FormFieldReadOnly, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
@@ -123,7 +123,7 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
   const chartData = useMemo(() => computeYearlyChartData(values), [values])
   const tableData = useMemo(() => computeYearlyTableData(values), [values])
   const loanChartsData = useMemo(() => computeLoanChartsData(values), [values])
-  const irrByYearData = useMemo(() => computeIRRByYearData(values), [values])
+  const irrByYearData = useMemo(() => computeIRRByYearData(values, true), [values])
 
   const currencyFormatter = useMemo(
     () =>

@@ -279,6 +279,8 @@ export const STRINGS: Record<Locale, Record<string, string>> = {
     taxRegimeComparisonCumulativeTax: 'Cumulative Tax',
     taxRegimeComparisonTotalTaxOverPeriod: 'Total Tax Over Period',
     taxRegimeComparisonPropertyFlipping: 'Property Flipping',
+    taxRegimeComparisonNoSavings: 'No tax savings difference',
+    taxRegimeComparisonSameRegime: 'All simulations use the same tax regime',
   },
   fr: {
     title: "Simulateur d'investissement locatif",
@@ -558,5 +560,7 @@ export const STRINGS: Record<Locale, Record<string, string>> = {
     taxRegimeComparisonCumulativeTax: 'Impôts cumulés',
     taxRegimeComparisonTotalTaxOverPeriod: 'Total impôts sur la période',
     taxRegimeComparisonPropertyFlipping: 'Marchand de biens',
+    taxRegimeComparisonNoSavings: 'Aucune différence d\'économies fiscales',
+    taxRegimeComparisonSameRegime: 'Toutes les simulations utilisent le même régime fiscal',
   },
 }

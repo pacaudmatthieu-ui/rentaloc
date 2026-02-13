@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { ResultTile } from '../../../shared/ui'
 import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
-import { calculateResults } from '../../rental-investment/lib/calculations'
+import { calculateResults, computeIRRByYearData } from '../../rental-investment/lib/calculations'
 import type { SimulationFormValues } from '../../rental-investment/model/types'
 import type { MarchandDeBiensValues } from '../../property-flip/model/types'
 import {
@@ -18,6 +18,7 @@ import {
 import { compareStrategies } from '../lib/compareStrategies'
 import { compareTaxRegimes, getTaxRegimeLabel } from '../lib/compareTaxRegimes'
 import { saveCurrentSimulationComparisonId } from '../../../shared/utils/storage'
+import { ComparisonIRRChart, type ComparisonIRRDataPoint } from '../../../shared/ui'
 
 interface ComparisonPanelPageProps {
   locale: Locale
@@ -181,6 +182,83 @@ export function ComparisonPanelPage({ locale, strings, onOpenSimulation }: Compa
   const taxRegimeComparison = useMemo(() => {
     return compareTaxRegimes(calculatedResults, simulations, strings)
   }, [calculatedResults, simulations, strings])
+
+  // Calculate IRR data for comparison chart (only for rental simulations)
+  const comparisonIRRData = useMemo(() => {
+    // Use simulations directly to get raw data, not calculatedResults
+    const rentalSimulations = simulations.filter((sim) => sim.type === 'rental')
+    
+    if (rentalSimulations.length === 0) {
+      return { data: [], simulationNames: [], simulationKeys: [], colors: [] }
+    }
+
+    // Calculate IRR data for each rental simulation
+    const irrDataBySimulation = rentalSimulations.map((sim) => {
+      try {
+        const irrData = computeIRRByYearData(sim.data as SimulationFormValues)
+        return {
+          name: sim.name,
+          data: irrData,
+        }
+      } catch {
+        return {
+          name: sim.name,
+          data: [],
+        }
+      }
+    })
+
+    // Find the maximum year across all simulations
+    const maxYear = Math.max(
+      ...irrDataBySimulation.map((sim) => 
+        sim.data.length > 0 ? Math.max(...sim.data.map((d) => d.year)) : 0
+      ),
+      0
+    )
+
+    if (maxYear === 0) {
+      return { data: [], simulationNames: [], simulationKeys: [], colors: [] }
+    }
+
+    // Transform data to Recharts format: one object per year with properties for each simulation
+    const transformedData: ComparisonIRRDataPoint[] = []
+    // Map simulation data with their IDs and names
+    const simulationEntries = irrDataBySimulation.map((sim, index) => ({
+      id: rentalSimulations[index].id,
+      name: sim.name,
+      data: sim.data,
+    }))
+    
+    // Colors for each simulation line
+    const colors = [
+      '#a78bfa', // purple
+      '#38bdf8', // sky blue
+      '#f59e0b', // amber
+      '#34d399', // emerald
+      '#f87171', // red
+      '#60a5fa', // blue
+    ]
+
+    for (let year = 1; year <= maxYear; year++) {
+      const dataPoint: ComparisonIRRDataPoint = { year }
+      
+      simulationEntries.forEach((entry) => {
+        const yearData = entry.data.find((d) => d.year === year)
+        // Use simulation ID as key for the data point (matches simulationKeys)
+        // This ensures each simulation has its own line in the chart
+        dataPoint[entry.id] = yearData ? yearData.irr : undefined
+      })
+      
+      transformedData.push(dataPoint)
+    }
+
+    return {
+      data: transformedData,
+      simulationNames: simulationEntries.map((entry) => entry.name),
+      simulationKeys: simulationEntries.map((entry) => entry.id),
+      colors: colors.slice(0, simulationEntries.length),
+    }
+  }, [simulations])
 
   // Criteria options based on simulation types
   const criteriaOptions = useMemo(() => {
@@ -387,116 +465,6 @@ export function ComparisonPanelPage({ locale, strings, onOpenSimulation }: Compa
         </div>
       )}
 
-      {/* Tax Regime Comparison Section - Show when comparing different tax regimes */}
-      {taxRegimeComparison.hasDifferentRegimes && taxRegimeComparison.regimes.length > 0 && (() => {
-        // Find max number of years across all regimes
-        const maxYears = Math.max(...taxRegimeComparison.regimes.map((r) => r.yearlyTaxData.length))
-        const years = Array.from({ length: maxYears }, (_, i) => i + 1)
-        
-        return (
-          <div className="comparison-strategy-section">
-            <h3 className="comparison-strategy-title">{strings.taxRegimeComparisonTitle}</h3>
-            
-            {taxRegimeComparison.bestRegime && taxRegimeComparison.taxSavings && (
-              <div className="comparison-tax-highlight">
-                <div className="comparison-tax-best">
-                  <span className="comparison-tax-label">{strings.taxRegimeComparisonBestRegime}:</span>
-                  <span className="comparison-tax-value">{taxRegimeComparison.bestRegime.taxRegimeLabel}</span>
-                </div>
-                {taxRegimeComparison.taxSavings.savings > 0 && (
-                  <div className="comparison-tax-savings">
-                    <span className="comparison-tax-savings-amount">
-                      {strings.taxRegimeComparisonSavingsAmount.replace(
-                        '{amount}',
-                        currencyFormatter.format(taxRegimeComparison.taxSavings.savings),
-                      )}
-                    </span>
-                    <span className="comparison-tax-savings-percent">
-                      {strings.taxRegimeComparisonSavingsPercent.replace(
-                        '{percent}',
-                        taxRegimeComparison.taxSavings.savingsPercent.toFixed(1),
-                      )}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-
-            {/* Yearly Tax Comparison Table */}
-            <div className="comparison-tax-yearly-section">
-              <h4 className="comparison-tax-yearly-title">{strings.taxRegimeComparisonYearlyTaxes}</h4>
-            
-            <div className="comparison-tax-yearly-table-wrapper">
-              <table className="comparison-tax-yearly-table">
-                <thead>
-                  <tr>
-                    <th className="comparison-tax-regime-header">{strings.taxRegimeComparisonRegime}</th>
-                    {years.map((year) => (
-                      <th key={year} className="comparison-tax-year-header">
-                        {strings.taxRegimeComparisonYear} {year}
-                      </th>
-                    ))}
-                    <th className="comparison-tax-total-header">{strings.taxRegimeComparisonTotalTaxOverPeriod}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {taxRegimeComparison.regimes.map((regime) => {
-                    const isBest = taxRegimeComparison.bestRegime?.simulationId === regime.simulationId
-                    return (
-                      <tr
-                        key={regime.simulationId}
-                        className={isBest ? 'comparison-tax-row-best' : ''}
-                      >
-                        <td className="comparison-tax-regime-cell">
-                          <div>
-                            <div className="comparison-tax-regime-name">{regime.taxRegimeLabel}</div>
-                            <div className="comparison-tax-regime-sim-name">{regime.simulationName}</div>
-                          </div>
-                        </td>
-                        {years.map((year) => {
-                          const yearData = regime.yearlyTaxData.find((y) => y.year === year)
-                          if (!yearData) {
-                            return (
-                              <td key={year} className="comparison-tax-year-cell">
-                                -
-                              </td>
-                            )
-                          }
-                          return (
-                            <td key={year} className="comparison-tax-year-cell">
-                              <div className="comparison-tax-year-amount">
-                                {currencyFormatter.format(yearData.totalTax)}
-                              </div>
-                              {yearData.resaleTax !== undefined && yearData.resaleTax > 0 && (
-                                <div className="comparison-tax-year-resale">
-                                  <span className="comparison-tax-year-resale-label">
-                                    {strings.taxRegimeComparisonResaleTax}:
-                                  </span>
-                                  <span className="comparison-tax-year-resale-value">
-                                    {currencyFormatter.format(yearData.resaleTax)}
-                                  </span>
-                                </div>
-                              )}
-                            </td>
-                          )
-                        })}
-                        <td className="comparison-tax-total-cell">
-                          <div className="comparison-tax-total-value">
-                            {currencyFormatter.format(regime.totalTaxOverPeriod)}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-            </div>
-          </div>
-        )
-      })()}
-
       <div className="comparison-grid" style={{ gridTemplateColumns: `repeat(${simulations.length}, 1fr)` }}>
         {calculatedResults.map((sim, index) => {
           const isBest = bestScenario?.bestSimulationIds.includes(sim.id) ?? false
@@ -678,6 +646,141 @@ export function ComparisonPanelPage({ locale, strings, onOpenSimulation }: Compa
           )
         })}
       </div>
+
+      {/* IRR Comparison Chart - Show when there are rental simulations */}
+      {comparisonIRRData.data.length > 0 && comparisonIRRData.simulationNames.length > 0 && (
+        <div className="comparison-strategy-section">
+          <div className="loan-chart-card loan-chart-card-single loan-chart-card-irr">
+            <ComparisonIRRChart
+              data={comparisonIRRData.data}
+              simulationNames={comparisonIRRData.simulationNames}
+              simulationKeys={comparisonIRRData.simulationKeys}
+              colors={comparisonIRRData.colors}
+              percentFormatter={percentFormatter}
+              yearLabel={strings.tableYear || 'Année'}
+              irrLabel={strings.loanChartIrr || 'TRI par durée de détention'}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Tax Regime Comparison Section - Always show if there are rental simulations */}
+      {taxRegimeComparison.regimes.length > 0 && (() => {
+        // Find max number of years across all regimes
+        const maxYears = Math.max(...taxRegimeComparison.regimes.map((r) => r.yearlyTaxData.length))
+        const years = Array.from({ length: maxYears }, (_, i) => i + 1)
+        
+        return (
+          <div className="comparison-strategy-section">
+            <h3 className="comparison-strategy-title">{strings.taxRegimeComparisonTitle}</h3>
+            
+            {taxRegimeComparison.bestRegime && taxRegimeComparison.taxSavings && (
+              <div className="comparison-tax-highlight">
+                <div className="comparison-tax-best">
+                  <span className="comparison-tax-label">{strings.taxRegimeComparisonBestRegime}:</span>
+                  <span className="comparison-tax-value">{taxRegimeComparison.bestRegime.taxRegimeLabel}</span>
+                </div>
+                {taxRegimeComparison.taxSavings.savings > 0 ? (
+                  <div className="comparison-tax-savings">
+                    <span className="comparison-tax-savings-amount">
+                      {strings.taxRegimeComparisonSavingsAmount.replace(
+                        '{amount}',
+                        currencyFormatter.format(taxRegimeComparison.taxSavings.savings),
+                      )}
+                    </span>
+                    <span className="comparison-tax-savings-percent">
+                      {strings.taxRegimeComparisonSavingsPercent.replace(
+                        '{percent}',
+                        taxRegimeComparison.taxSavings.savingsPercent.toFixed(1),
+                      )}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="comparison-tax-savings">
+                    <span className="comparison-tax-savings-amount">
+                      {taxRegimeComparison.hasDifferentRegimes 
+                        ? strings.taxRegimeComparisonNoSavings || 'No tax savings difference'
+                        : strings.taxRegimeComparisonSameRegime || 'All simulations use the same tax regime'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+
+            {/* Yearly Tax Comparison Table */}
+            <div className="comparison-tax-yearly-section">
+              <h4 className="comparison-tax-yearly-title">{strings.taxRegimeComparisonYearlyTaxes}</h4>
+            
+            <div className="comparison-tax-yearly-table-wrapper">
+              <table className="comparison-tax-yearly-table">
+                <thead>
+                  <tr>
+                    <th className="comparison-tax-regime-header">{strings.taxRegimeComparisonRegime}</th>
+                    {years.map((year) => (
+                      <th key={year} className="comparison-tax-year-header">
+                        {strings.taxRegimeComparisonYear} {year}
+                      </th>
+                    ))}
+                    <th className="comparison-tax-total-header">{strings.taxRegimeComparisonTotalTaxOverPeriod}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taxRegimeComparison.regimes.map((regime) => {
+                    const isBest = taxRegimeComparison.bestRegime?.simulationId === regime.simulationId
+                    return (
+                      <tr
+                        key={regime.simulationId}
+                        className={isBest ? 'comparison-tax-row-best' : ''}
+                      >
+                        <td className="comparison-tax-regime-cell">
+                          <div>
+                            <div className="comparison-tax-regime-name">{regime.taxRegimeLabel}</div>
+                            <div className="comparison-tax-regime-sim-name">{regime.simulationName}</div>
+                          </div>
+                        </td>
+                        {years.map((year) => {
+                          const yearData = regime.yearlyTaxData.find((y) => y.year === year)
+                          if (!yearData) {
+                            return (
+                              <td key={year} className="comparison-tax-year-cell">
+                                -
+                              </td>
+                            )
+                          }
+                          return (
+                            <td key={year} className="comparison-tax-year-cell">
+                              <div className="comparison-tax-year-amount">
+                                {currencyFormatter.format(yearData.totalTax)}
+                              </div>
+                              {yearData.resaleTax !== undefined && yearData.resaleTax > 0 && (
+                                <div className="comparison-tax-year-resale">
+                                  <span className="comparison-tax-year-resale-label">
+                                    {strings.taxRegimeComparisonResaleTax}:
+                                  </span>
+                                  <span className="comparison-tax-year-resale-value">
+                                    {currencyFormatter.format(yearData.resaleTax)}
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+                          )
+                        })}
+                        <td className="comparison-tax-total-cell">
+                          <div className="comparison-tax-total-value">
+                            {currencyFormatter.format(regime.totalTaxOverPeriod)}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            </div>
+          </div>
+        )
+      })()}
     </main>
   )
 }

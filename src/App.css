@@ -804,6 +804,23 @@
   min-width: 12rem;
 }
 
+.chart-tooltip.irr-tooltip {
+  z-index: 100000;
+  position: relative;
+}
+
+/* Ensure Recharts tooltip wrapper is above panels */
+.recharts-tooltip-wrapper {
+  z-index: 100000 !important;
+}
+
+/* Specifically for IRR chart tooltip */
+.loan-chart-card-irr .recharts-tooltip-wrapper {
+  z-index: 100000 !important;
+  /* Center tooltip vertically on cursor - offset upward by approximately half tooltip height */
+  transform: translateY(-50%) !important;
+}
+
 .chart-tooltip-title {
   font-weight: 600;
   color: #e5e7eb;
