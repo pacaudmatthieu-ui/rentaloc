@@ -165,7 +165,6 @@ export function LoanChartsSection({
                     currencyFormatter={currencyFormatter}
                     percentFormatter={percentFormatter}
                     yearLabel={yearLabel}
-                    allData={irrData}
                   />
                 )}
                 contentStyle={{

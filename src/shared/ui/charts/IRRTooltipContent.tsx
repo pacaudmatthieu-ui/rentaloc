@@ -2,7 +2,7 @@ import type { IRRChartPoint } from './types'
 
 export type IRRTooltipContentProps = {
   active?: boolean
-  payload?: Array<{
+  payload?: ReadonlyArray<{
     value?: number
     payload?: IRRChartPoint
   }>
@@ -10,7 +10,6 @@ export type IRRTooltipContentProps = {
   currencyFormatter: Intl.NumberFormat
   percentFormatter: Intl.NumberFormat
   yearLabel: string
-  allData?: IRRChartPoint[]
 }
 
 export function IRRTooltipContent({
@@ -20,7 +19,6 @@ export function IRRTooltipContent({
   currencyFormatter,
   percentFormatter,
   yearLabel,
-  allData,
 }: IRRTooltipContentProps) {
   if (!active || !payload || !payload[0] || !payload[0].payload) {
     return null
