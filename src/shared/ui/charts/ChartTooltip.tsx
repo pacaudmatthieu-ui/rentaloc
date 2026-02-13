@@ -15,6 +15,10 @@ export type ChartTooltipStrings = {
   carryforward: string
   tax: string
   saleTax?: string
+  /** Label pour l’IS sur plus-value (revente SCI IS) */
+  corporateTaxOnGain?: string
+  /** Label pour la flat tax (PFU) */
+  flatTax?: string
 }
 
 interface ChartTooltipContentProps {
@@ -110,7 +114,19 @@ export function ChartTooltipContent({
               <span>{currencyFormatter.format(b.tax)}</span>
             </div>
           )}
-          {b.saleTax != null && b.saleTax > 0 && (
+          {b.corporateTaxOnGain != null && b.corporateTaxOnGain > 0 && (
+            <div className="chart-tooltip-row">
+              <span>{tooltipStrings.corporateTaxOnGain ?? 'IS sur plus-value'}</span>
+              <span>{currencyFormatter.format(b.corporateTaxOnGain)}</span>
+            </div>
+          )}
+          {b.flatTax != null && b.flatTax > 0 && (
+            <div className="chart-tooltip-row">
+              <span>{tooltipStrings.flatTax ?? 'Flat tax (PFU)'}</span>
+              <span>{currencyFormatter.format(b.flatTax)}</span>
+            </div>
+          )}
+          {b.saleTax != null && b.saleTax > 0 && (b.flatTax == null || b.flatTax === 0) && (
             <div className="chart-tooltip-row">
               <span>{tooltipStrings.saleTax ?? 'Impôt revente'}</span>
               <span>{currencyFormatter.format(b.saleTax)}</span>

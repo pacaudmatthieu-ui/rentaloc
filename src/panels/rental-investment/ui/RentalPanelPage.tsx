@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
 import { FormField, FormFieldReadOnly, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
@@ -7,6 +7,8 @@ import { ExportImportPanel } from '../../../features/export-json'
 import { INITIAL_VALUES } from '../model/types'
 import type { SimulationFormValues } from '../model/types'
 import { validateInvestissementData } from '../model/validation'
+import { saveRentalSimulation, loadCurrentSimulationComparisonId } from '../../../shared/utils/storage'
+import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import {
   calculateResults,
   computeIRRByYearData,
@@ -33,17 +35,95 @@ const RENTAL_GRID_LAYOUT = [2, 3, 2, 1, 1, 1] as const
 interface RentalPanelPageProps {
   locale: Locale
   strings: Record<string, string>
+  initialValues?: SimulationFormValues | null
+  valuesRef?: React.MutableRefObject<SimulationFormValues | null>
 }
 
-export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
-  const [values, setValues] = useState<SimulationFormValues>(INITIAL_VALUES)
+export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: RentalPanelPageProps) {
+  const comparisonStore = useComparisonStore()
+  const [comparisonButtonState, setComparisonButtonState] = useState<'idle' | 'success' | 'error'>('idle')
+  const [comparisonError, setComparisonError] = useState<string | null>(null)
+  
+  // Initialize comparison store on mount
+  useEffect(() => {
+    comparisonStore.initialize()
+  }, [comparisonStore])
+  
+  // Initialize with provided initial values, saved values, or default values
+  // Priority: initialValues (from localStorage) > INITIAL_VALUES (defaults)
+  const [values, setValues] = useState<SimulationFormValues>(() => {
+    try {
+      // Use provided initial values if available (from localStorage)
+      if (initialValues && typeof initialValues === 'object') {
+        return initialValues
+      }
+      // Fallback to default INITIAL_VALUES
+      if (!INITIAL_VALUES || typeof INITIAL_VALUES !== 'object') {
+        console.error('INITIAL_VALUES is invalid, using empty defaults')
+        return {} as SimulationFormValues
+      }
+      return INITIAL_VALUES
+    } catch (error) {
+      console.error('Error initializing RentalPanelPage:', error)
+      return {} as SimulationFormValues
+    }
+  })
   const pdfRef = useRef<HTMLDivElement>(null)
+
+  // Update values when initialValues prop changes (when switching back to this simulation type)
+  useEffect(() => {
+    if (initialValues && typeof initialValues === 'object') {
+      setValues(initialValues)
+    }
+  }, [initialValues])
+
+  // Keep ref in sync with current values
+  useEffect(() => {
+    if (valuesRef) {
+      valuesRef.current = values
+    }
+  }, [values, valuesRef])
+
+  // Save values to localStorage whenever they change
+  useEffect(() => {
+    saveRentalSimulation(values)
+  }, [values])
+
+  // Check if current simulation is already in comparison
+  // Use stored comparison ID or data matching
+  const isInComparison = useMemo(() => {
+    // First check if we have a stored comparison ID (simulation opened from comparison)
+    const storedComparisonId = loadCurrentSimulationComparisonId()
+    if (storedComparisonId) {
+      const state = comparisonStore.simulations
+      const found = state.find((sim) => sim.id === storedComparisonId && sim.type === 'rental')
+      if (found) return true
+    }
+    // Fallback to data matching
+    return comparisonStore.isInComparison('rental', values)
+  }, [comparisonStore, values])
+
+  // Use ref to track last updated values to prevent infinite loops
+  const lastUpdatedValuesRef = useRef<string>('')
+  
+  // Update comparison store if this simulation is in comparison
+  // Use separate effect with ref check to avoid infinite loops
+  useEffect(() => {
+    if (isInComparison) {
+      const currentValuesStr = JSON.stringify(values)
+      // Only update if values actually changed
+      if (lastUpdatedValuesRef.current !== currentValuesStr) {
+        lastUpdatedValuesRef.current = currentValuesStr
+        comparisonStore.updateSimulationData('rental', values)
+      }
+    }
+  }, [values, isInComparison, comparisonStore])
 
   const results = useMemo(() => calculateResults(values), [values])
   const chartData = useMemo(() => computeYearlyChartData(values), [values])
   const tableData = useMemo(() => computeYearlyTableData(values), [values])
   const loanChartsData = useMemo(() => computeLoanChartsData(values), [values])
-  const irrByYearData = useMemo(() => computeIRRByYearData(values), [values])
+  const irrByYearData = useMemo(() => computeIRRByYearData(values, true), [values])
 
   const currencyFormatter = useMemo(
     () =>
@@ -194,6 +274,7 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
         id: 'taxation',
         title: strings.sectionTaxation,
         description: strings.taxDescription,
+        className: 'section-allow-tooltip-overflow',
         content: (
           <div className="form-card-body">
             <label className="form-field">
@@ -218,6 +299,66 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
                 <span>{strings.feesAmortizeYear1}</span>
               </label>
             )}
+            {values.taxRegime === 'sci_is' && (() => {
+              const flatTaxDetail = tableData.find((r) => r.flatTaxDetail)?.flatTaxDetail
+              return (
+                <div className="form-field-checkbox-with-pfu-tooltip">
+                  <label className="form-field form-field-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={!!values.sciIsWithdrawFlatTax}
+                      onChange={(e) => setValues((prev) => ({ ...prev, sciIsWithdrawFlatTax: e.target.checked }))}
+                    />
+                    <span>{strings.sciIsWithdrawFlatTax}</span>
+                  </label>
+                  {flatTaxDetail && (
+                    <div className="pfu-detail-tooltip">
+                      <div className="pfu-detail-tooltip-content">
+                        <h4 className="pfu-detail-tooltip-title">{strings.flatTaxDetailTitle}</h4>
+                        <p className="pfu-detail-tooltip-intro">{strings.flatTaxAccumulatedPerYear}:</p>
+                        <ul className="pfu-detail-tooltip-list">
+                          {flatTaxDetail.annualAccumulated.map((a) => (
+                            <li key={a.year}>
+                              {strings.flatTaxYear.replace('{year}', String(a.year))}: {currencyFormatter.format(a.cfBeforeTax)} − {currencyFormatter.format(a.corporateTax)} = {currencyFormatter.format(a.amount)}
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="pfu-detail-tooltip-steps">
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxSumAnnual}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.annualAccumulated.reduce((s, a) => s + a.amount, 0))}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxResaleNet}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.resalePrice)} − {currencyFormatter.format(flatTaxDetail.crdAtResale)} − {currencyFormatter.format(flatTaxDetail.corporateTaxOnGain)} = {currencyFormatter.format(flatTaxDetail.resaleNet)}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row pfu-detail-tooltip-total">
+                            <span>{strings.flatTaxTotalAccumulated}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.totalAccumulated)}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxRate}</span>
+                            <span>{(flatTaxDetail.flatTaxRate * 100).toFixed(1)} %</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxAmount}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.totalAccumulated)} × {(flatTaxDetail.flatTaxRate * 100).toFixed(1)} % = {currencyFormatter.format(flatTaxDetail.flatTaxAmount)}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row">
+                            <span>{strings.flatTaxCorporateOnGain}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.corporateTaxOnGain)}</span>
+                          </div>
+                          <div className="pfu-detail-tooltip-row pfu-detail-tooltip-total">
+                            <span>{strings.flatTaxTotalResaleTax}</span>
+                            <span>{currencyFormatter.format(flatTaxDetail.totalResaleTax)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         ),
       },
@@ -279,6 +420,8 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
                 carryforward: strings.chartChargeCarryforward,
                 tax: strings.chartChargeTax,
                 saleTax: strings.chartChargeSaleTax,
+                corporateTaxOnGain: strings.chartChargeCorporateOnGain,
+                flatTax: strings.chartChargeFlatTax,
               }}
             />
           </div>
@@ -389,11 +532,38 @@ export function RentalPanelPage({ locale, strings }: RentalPanelPageProps) {
               deferralType: d.deferralType ?? 'none',
               resaleHoldingMonths: d.resaleHoldingMonths ?? '',
               resalePrice: d.resalePrice ?? '',
+              sciIsWithdrawFlatTax: d.sciIsWithdrawFlatTax ?? false,
             })
           }}
           validateData={validateInvestissementData}
           strings={strings}
           pdfContentRef={pdfRef}
+          extraButton={
+            <button
+              type="button"
+              className={`export-import-btn ${isInComparison ? 'export-import-btn-disabled' : ''} ${comparisonButtonState === 'success' ? 'export-import-btn-success' : ''}`}
+              onClick={() => {
+                if (isInComparison) return
+                const result = comparisonStore.addToComparison('rental', values)
+                if (result.success) {
+                  setComparisonButtonState('success')
+                  setComparisonError(null)
+                  setTimeout(() => setComparisonButtonState('idle'), 2000)
+                } else {
+                  setComparisonButtonState('error')
+                  setComparisonError(result.error === 'already_in_comparison' ? strings.alreadyInComparison : strings.maxComparisonReached)
+                  setTimeout(() => {
+                    setComparisonButtonState('idle')
+                    setComparisonError(null)
+                  }, 3000)
+                }
+              }}
+              disabled={isInComparison}
+              title={isInComparison ? strings.alreadyInComparison : comparisonError || strings.addToComparison}
+            >
+              {isInComparison ? strings.addedToComparison : comparisonButtonState === 'success' ? strings.addedToComparison : strings.addToComparison}
+            </button>
+          }
         />
         <SortableSectionList
           sections={sections}

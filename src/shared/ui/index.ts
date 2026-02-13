@@ -1,6 +1,6 @@
 export { FormField, FormFieldReadOnly } from './FormField'
 export { ResultTile } from './ResultTile'
 export { BreakdownRow } from './BreakdownRow'
-export { CashflowChart, ChartTooltipContent, type ChartTooltipStrings, LoanChartsSection } from './charts'
+export { CashflowChart, ChartTooltipContent, type ChartTooltipStrings, LoanChartsSection, ComparisonIRRChart, type ComparisonIRRDataPoint } from './charts'
 export { CollapsibleSection } from './CollapsibleSection'
 export { SortableSectionList, type SortableSection } from './SortableSectionList'

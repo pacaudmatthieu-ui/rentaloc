@@ -10,7 +10,8 @@ import {
 } from '../../../../entities/finance/vat'
 
 const MB_IS_RATE = 0.25
-const MB_FLAT_TAX_RATE = 0.30
+// Flat tax (PFU) : 31,4% depuis le 1er janvier 2026 (12,8% IR + 18,6% prélèvements sociaux)
+const MB_FLAT_TAX_RATE = 0.314
 
 type VatRegimeForFiscal = 'marge' | 'total'
 
@@ -111,9 +112,10 @@ export function MbFiscalResultTable({
   const flatTaxeL = beneficeImposableL * MB_FLAT_TAX_RATE
   const flatTaxeO = beneficeImposableO * MB_FLAT_TAX_RATE
 
-  const beneficesEnPocheP = beneficeImposableP - flatTaxeP
-  const beneficesEnPocheL = beneficeImposableL - flatTaxeL
-  const beneficesEnPocheO = beneficeImposableO - flatTaxeO
+  // Bénéfices en poche = Bénéfices nets - Flat taxe
+  const beneficesEnPocheP = beneficesNetsP - flatTaxeP
+  const beneficesEnPocheL = beneficesNetsL - flatTaxeL
+  const beneficesEnPocheO = beneficesNetsO - flatTaxeO
 
   const linesBeneficeP =
     vatRegime === 'marge'
@@ -268,7 +270,7 @@ export function MbFiscalResultTable({
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 30% = ${currencyFormatter.format(beneficeImposableP)} × 0.30 = ${currencyFormatter.format(flatTaxeP)}`,
+                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableP)} × 0.314 = ${currencyFormatter.format(flatTaxeP)}`,
                 ]}
               >
                 {currencyFormatter.format(flatTaxeP)}
@@ -277,7 +279,7 @@ export function MbFiscalResultTable({
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficeImposableL)} × 0.30 = ${currencyFormatter.format(flatTaxeL)}`,
+                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableL)} × 0.314 = ${currencyFormatter.format(flatTaxeL)}`,
                 ]}
               >
                 {currencyFormatter.format(flatTaxeL)}
@@ -286,7 +288,7 @@ export function MbFiscalResultTable({
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficeImposableO)} × 0.30 = ${currencyFormatter.format(flatTaxeO)}`,
+                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableO)} × 0.314 = ${currencyFormatter.format(flatTaxeO)}`,
                 ]}
               >
                 {currencyFormatter.format(flatTaxeO)}
@@ -298,7 +300,8 @@ export function MbFiscalResultTable({
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbBeneficesEnPoche} = ${strings.mbBeneficeImposable} − ${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficeImposableP)} − ${currencyFormatter.format(flatTaxeP)} = ${currencyFormatter.format(beneficesEnPocheP)}`,
+                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableP)} × 0.314 = ${currencyFormatter.format(flatTaxeP)}`,
+                  `${strings.mbBeneficesEnPoche} = ${strings.mbBeneficesNets} − ${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficesNetsP)} − ${currencyFormatter.format(flatTaxeP)} = ${currencyFormatter.format(beneficesEnPocheP)}`,
                 ]}
               >
                 {currencyFormatter.format(beneficesEnPocheP)}
@@ -307,7 +310,8 @@ export function MbFiscalResultTable({
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbBeneficesEnPoche} = ${currencyFormatter.format(beneficeImposableL)} − ${currencyFormatter.format(flatTaxeL)} = ${currencyFormatter.format(beneficesEnPocheL)}`,
+                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableL)} × 0.314 = ${currencyFormatter.format(flatTaxeL)}`,
+                  `${strings.mbBeneficesEnPoche} = ${strings.mbBeneficesNets} − ${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficesNetsL)} − ${currencyFormatter.format(flatTaxeL)} = ${currencyFormatter.format(beneficesEnPocheL)}`,
                 ]}
               >
                 {currencyFormatter.format(beneficesEnPocheL)}
@@ -316,7 +320,8 @@ export function MbFiscalResultTable({
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbBeneficesEnPoche} = ${currencyFormatter.format(beneficeImposableO)} − ${currencyFormatter.format(flatTaxeO)} = ${currencyFormatter.format(beneficesEnPocheO)}`,
+                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableO)} × 0.314 = ${currencyFormatter.format(flatTaxeO)}`,
+                  `${strings.mbBeneficesEnPoche} = ${strings.mbBeneficesNets} − ${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficesNetsO)} − ${currencyFormatter.format(flatTaxeO)} = ${currencyFormatter.format(beneficesEnPocheO)}`,
                 ]}
               >
                 {currencyFormatter.format(beneficesEnPocheO)}

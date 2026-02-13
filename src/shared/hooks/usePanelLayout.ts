@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 
-const STORAGE_PREFIX = 'simu_renta_panel_'
+const STORAGE_PREFIX = 'rentaloc_panel_'
 
 export interface PanelLayoutState {
   order: string[]

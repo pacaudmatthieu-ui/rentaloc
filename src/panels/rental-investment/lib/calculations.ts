@@ -446,15 +446,46 @@ function computeIRR(cashFlows: number[], maxIterations = 100): number | null {
   return Math.abs(npv(r)) < 1e-6 ? r : null
 }
 
+export type IRRDetail = {
+  year: number
+  irr: number
+  cashFlows: number[]
+  breakdown?: {
+    initialInvestment: number
+    annualCashflows: Array<{
+      year: number
+      revenue: number
+      charges: number
+      loanPayments: number
+      tax: number
+      cashflow: number
+    }>
+    saleProceeds: number
+    saleTax: number
+    loanBalance: number
+  }
+}
+
 export function computeIRRByYearData(
   values: SimulationFormValues,
-): { year: number; irr: number }[] {
-  const resaleHoldingMonths = Math.max(0, toNumber(values.resaleHoldingMonths ?? '0'))
-  const resalePrice = toNumber(values.resalePrice ?? '0')
-  const hasResale = resalePrice > 0 && resaleHoldingMonths > 0
-  if (!hasResale) return []
-
+  includeDetails = false,
+): { year: number; irr: number; details?: IRRDetail['breakdown'] }[] {
   const purchasePrice = toNumber(values.purchasePrice)
+  const loanDurationMonths = Math.max(toNumber(values.loanDurationMonths), 1)
+  
+  // Use default values if resale not specified:
+  // - Resale price = purchase price (no capital gain/loss)
+  // - Holding period = loan duration
+  const resalePrice = toNumber(values.resalePrice ?? '0')
+  const resaleHoldingMonthsInput = toNumber(values.resaleHoldingMonths ?? '0')
+  
+  // If resale not specified, use defaults
+  const effectiveResalePrice = resalePrice > 0 ? resalePrice : purchasePrice
+  const effectiveResaleHoldingMonths = resaleHoldingMonthsInput > 0 ? resaleHoldingMonthsInput : loanDurationMonths
+  
+  // Always calculate IRR (even with default values)
+  const resaleHoldingMonths = Math.max(1, effectiveResaleHoldingMonths)
+
   const notaryFees = purchasePrice * 0.08
   const agencyFees = toNumber(values.agencyFees)
   const renovationBudget = toNumber(values.renovationBudget)
@@ -462,7 +493,6 @@ export function computeIRRByYearData(
   const ownFunds = toNumber(values.ownFunds)
   const interestRate = toNumber(values.interestRate) / 100
   const insuranceRate = toNumber(values.insuranceRate) / 100
-  const loanDurationMonths = Math.max(toNumber(values.loanDurationMonths), 1)
   const deferralMonths = Math.max(0, Math.min(toNumber(values.deferralMonths ?? '0'), loanDurationMonths - 1))
   const deferralType = (values.deferralType || 'none') as 'none' | 'partial' | 'total'
   const monthlyRent = toNumber(values.monthlyRent)
@@ -509,27 +539,104 @@ export function computeIRRByYearData(
   const tmiPlusSocial = marginalTaxRate + socialChargesRate
 
   const numYears = Math.max(1, Math.ceil(resaleHoldingMonths / 12))
-  const data: { year: number; irr: number }[] = []
+  const data: { year: number; irr: number; details?: IRRDetail['breakdown'] }[] = []
 
   for (let saleYear = 1; saleYear <= numYears; saleYear++) {
+    // Initial cash flow: own funds invested (negative = outflow)
     const cashFlows: number[] = [-ownFunds]
     let totalDepreciationTaken = 0
     let deficitCarryforward = 0
 
-    for (let y = 0; y < saleYear; y++) {
+    // Check if sale happens immediately after purchase (saleYear = 1 means sale at end of year 0)
+    const isImmediateSale = saleYear === 1
+
+    // Store breakdown details for tooltip
+    let breakdown: IRRDetail['breakdown'] | undefined = undefined
+    
+    // For immediate sale, simplify the calculation
+    if (isImmediateSale) {
+      // No rental income, no charges, no loan payments (we repay full loan at sale)
+      // Only calculate sale proceeds
+      // For immediate sale: VNC = totalCost (no depreciation taken)
+      const vnc = totalCost // Value net comptable = total cost (no depreciation)
+      const taxableGain = Math.max(0, effectiveResalePrice - vnc)
+      
+      let saleTax = 0
+      if (taxRegime !== 'none' && taxableGain > 0) {
+        switch (taxRegime) {
+          case 'sci_is':
+            saleTax = taxableGain * corporateTaxRate
+            break
+          case 'reel_foncier':
+          case 'lmnp_reel':
+          case 'sci_ir':
+          case 'micro_foncier':
+          case 'lmnp_micro_bic':
+          case 'bailleur_prive':
+            saleTax = taxableGain * tmiPlusSocial
+            break
+          default:
+            saleTax = 0
+        }
+      }
+      
+      // For immediate sale, repay full loan amount
+      // Cashflow = sale price - sale tax - loan balance
+      const cashflowAtSale = effectiveResalePrice - saleTax - loanAmount
+      cashFlows.push(cashflowAtSale)
+      
+      if (includeDetails) {
+        breakdown = {
+          initialInvestment: -ownFunds,
+          annualCashflows: [],
+          saleProceeds: effectiveResalePrice,
+          saleTax,
+          loanBalance: loanAmount,
+        }
+      }
+    } else {
+      // Normal case: calculate year by year
+      const annualBreakdown: IRRDetail['breakdown'] = {
+        initialInvestment: -ownFunds,
+        annualCashflows: [],
+        saleProceeds: 0,
+        saleTax: 0,
+        loanBalance: 0,
+      }
+      
+      for (let y = 0; y < saleYear; y++) {
       const interestThisYear = schedule.interestPerYear[y] ?? 0
-      const creditThisYear =
-        (schedule.paymentPerYear[y] ?? 0) + monthlyInsurance * 12
-      const revenue =
-        annualRentEffectiveBase * Math.pow(1 + rentRevaluationRate, y)
-      const annualManagementY = revenue * annualManagementPercent
-      const annualChargesY =
-        annualPropertyTax +
-        annualNonRecoverableCharges +
-        annualManagementY +
-        annualMaintenance +
-        annualInsurancePNO +
-        otherAnnualExpenses
+      
+      // For immediate sale (year 0), we don't pay full year's loan payments
+      // We only pay interest accrued until sale, then repay the full loan balance
+      let creditThisYear = 0
+      if (isImmediateSale && y === 0) {
+        // For immediate sale: only pay interest for a very short period (approximate as 0)
+        // The full loan balance will be repaid at sale
+        creditThisYear = 0
+      } else {
+        creditThisYear = (schedule.paymentPerYear[y] ?? 0) + monthlyInsurance * 12
+      }
+      
+      // For immediate sale (year 0), no rental income or annual charges should be considered
+      // Only the sale proceeds matter
+      let revenue = 0
+      let annualManagementY = 0
+      let annualChargesY = 0
+      
+      if (!isImmediateSale || y > 0) {
+        // Normal case: calculate rental income and charges
+        revenue =
+          annualRentEffectiveBase * Math.pow(1 + rentRevaluationRate, y)
+        annualManagementY = revenue * annualManagementPercent
+        annualChargesY =
+          annualPropertyTax +
+          annualNonRecoverableCharges +
+          annualManagementY +
+          annualMaintenance +
+          annualInsurancePNO +
+          otherAnnualExpenses
+      }
 
       const depreciationY = computeDepreciationForYear(
         purchasePrice,
@@ -645,7 +752,7 @@ export function computeIRRByYearData(
         const saleTax =
           taxRegime !== 'none'
             ? computeSaleTaxAtResale(
-                resalePrice,
+                effectiveResalePrice,
                 totalCost,
                 totalDepreciationTaken,
                 taxRegime,
@@ -653,20 +760,68 @@ export function computeIRRByYearData(
                 tmiPlusSocial,
               )
             : 0
-        const crd =
-          y < schedule.loanDurationYears - 1
-            ? schedule.balanceEndOfYear[y] ?? 0
-            : 0
-        annualCashflow += resalePrice - saleTax - crd
+        
+        // For immediate sale, the loan balance is the full loan amount (no payments made yet)
+        // For other sales, use the balance at end of year
+        const crd = isImmediateSale && y === 0
+          ? loanAmount  // Full loan amount for immediate sale
+          : (y < schedule.loanDurationYears - 1
+              ? schedule.balanceEndOfYear[y] ?? 0
+              : 0)
+        
+        // For immediate sale: cashflow = sale proceeds - sale tax - full loan balance
+        // For other sales: cashflow = sale proceeds - sale tax - remaining loan balance
+        // The creditThisYear (loan payments) are already subtracted in cfBeforeTax for non-immediate sales
+        annualCashflow += effectiveResalePrice - saleTax - crd
+        
+        if (includeDetails) {
+          annualBreakdown.saleProceeds = effectiveResalePrice
+          annualBreakdown.saleTax = saleTax
+          annualBreakdown.loanBalance = crd
+        }
+      }
+      
+      if (includeDetails) {
+        annualBreakdown.annualCashflows.push({
+          year: y + 1,
+          revenue,
+          charges: annualChargesY,
+          loanPayments: creditThisYear,
+          tax,
+          cashflow: annualCashflow,
+        })
       }
 
       cashFlows.push(annualCashflow)
+      }
+      
+      if (includeDetails) {
+        breakdown = annualBreakdown
+      }
     }
 
-    const irr = computeIRR(cashFlows)
+    // For immediate sale with only 2 cash flows, calculate IRR manually if computeIRR fails
+    let irr: number | null = null
+    if (isImmediateSale && cashFlows.length === 2) {
+      // Simple case: -CF0 + CF1/(1+r) = 0 => r = CF1/CF0 - 1
+      const cf0 = cashFlows[0] // Should be negative (ownFunds)
+      const cf1 = cashFlows[1] // Sale proceeds
+      if (cf0 < 0 && cf1 !== 0) {
+        irr = cf1 / Math.abs(cf0) - 1
+        // Clamp to reasonable range
+        if (irr < -0.99) irr = -0.99
+        if (irr > 10) irr = null
+      } else {
+        irr = computeIRR(cashFlows)
+      }
+    } else {
+      irr = computeIRR(cashFlows)
+    }
+    
     data.push({
       year: saleYear,
       irr: irr != null ? irr * 100 : 0,
+      details: includeDetails ? breakdown : undefined,
     })
   }
 
@@ -741,6 +896,8 @@ export function computeYearlyChartData(
   const data: YearlyChartPoint[] = []
   let deficitCarryforward = 0
   let totalDepreciationForChart = 0
+  const sciIsWithdrawFlatTax = !!values.sciIsWithdrawFlatTax
+  let sumAnnualAccumulatedForFlatTax = 0
 
   for (let y = 0; y < chartNumYears; y++) {
     const interestThisYear = schedule.interestPerYear[y] ?? 0
@@ -880,6 +1037,11 @@ export function computeYearlyChartData(
       )
     }
 
+    if (taxRegime === 'sci_is' && sciIsWithdrawFlatTax) {
+      const cfBeforeTax = revenue - annualChargesY - annualLoanAndInsurance
+      sumAnnualAccumulatedForFlatTax += cfBeforeTax - tax
+    }
+
     const crdAtSale =
       hasResale &&
       y === chartResaleYearIndex &&
@@ -914,6 +1076,52 @@ export function computeYearlyChartData(
     })
   }
 
+  // SCI IS : appliquer flat tax sur l'argent accumulé au graphique aussi
+  if (
+    taxRegime === 'sci_is' &&
+    hasResale &&
+    sciIsWithdrawFlatTax &&
+    data.length > 0 &&
+    chartResaleYearIndex >= 0
+  ) {
+    const FLAT_TAX_RATE = 0.314
+    const resalePoint = data[chartResaleYearIndex]
+    const crdAtResale =
+      chartResaleYearIndex < schedule.loanDurationYears - 1
+        ? schedule.balanceEndOfYear[chartResaleYearIndex] ?? 0
+        : 0
+    const corporateTaxOnGain = computeSaleTaxAtResale(
+      resalePrice,
+      totalCost,
+      totalDepreciationForChart,
+      taxRegime,
+      corporateTaxRate,
+      tmiPlusSocial,
+    )
+    const resaleNet = resalePrice - crdAtResale - corporateTaxOnGain
+    const totalAccumulated = sumAnnualAccumulatedForFlatTax + resaleNet
+    const flatTaxAmount = totalAccumulated * FLAT_TAX_RATE
+    const totalResaleTax = corporateTaxOnGain + flatTaxAmount
+
+    const oldSaleTax = resalePoint.chargesBreakdown?.saleTax ?? 0
+    const totalChargesDelta = totalResaleTax - oldSaleTax
+    const currentTotalCharges = -resalePoint.charges
+    const newTotalCharges = currentTotalCharges + totalChargesDelta
+    const newCashflow = resalePoint.revenue - newTotalCharges
+
+    data[chartResaleYearIndex] = {
+      ...resalePoint,
+      charges: -newTotalCharges,
+      cashflow: newCashflow,
+      chargesBreakdown: {
+        ...resalePoint.chargesBreakdown!,
+        saleTax: totalResaleTax,
+        corporateTaxOnGain,
+        flatTax: flatTaxAmount,
+      },
+    }
+  }
+
   return data
 }
 
@@ -944,6 +1152,18 @@ function computeSaleTaxAtResale(
   }
 }
 
+export type FlatTaxDetail = {
+  annualAccumulated: { year: number; amount: number; cfBeforeTax: number; corporateTax: number }[]
+  resaleNet: number
+  resalePrice: number
+  crdAtResale: number
+  corporateTaxOnGain: number
+  totalAccumulated: number
+  flatTaxRate: number
+  flatTaxAmount: number
+  totalResaleTax: number
+}
+
 export type YearlyTableRow = {
   year: number
   credit: number
@@ -960,6 +1180,8 @@ export type YearlyTableRow = {
   cashDispo: number
   saleTax: number
   resalePrice: number
+  /** Détail du calcul PFU (si SCI IS + option retrait activée et année de revente) */
+  flatTaxDetail?: FlatTaxDetail
 }
 
 export function computeYearlyTableData(
@@ -1201,6 +1423,52 @@ export function computeYearlyTableData(
       saleTax,
       resalePrice: hasResale && y === resaleYearIndex ? resalePrice : 0,
     })
+  }
+
+  // SCI IS : option flat tax (PFU) sur l'argent accumulé (comme si on n'avait pas touché au bien)
+  const sciIsWithdrawFlatTax = !!values.sciIsWithdrawFlatTax
+  if (
+    taxRegime === 'sci_is' &&
+    hasResale &&
+    sciIsWithdrawFlatTax &&
+    data.length > 0
+  ) {
+    const FLAT_TAX_RATE = 0.314
+    // Calculer le détail pour le tooltip
+    const annualAccumulated = data.map((row) => ({
+      year: row.year,
+      amount: row.cfBeforeTax - row.tax,
+      cfBeforeTax: row.cfBeforeTax,
+      corporateTax: row.tax,
+    }))
+    const sumAnnualAccumulated = annualAccumulated.reduce((s, a) => s + a.amount, 0)
+    const resaleRow = data[resaleYearIndex]
+    const corporateTaxOnGain = resaleRow.saleTax
+    const resaleNet = resalePrice - (resaleRow.crd ?? 0) - corporateTaxOnGain
+    const totalAccumulated = sumAnnualAccumulated + resaleNet
+    const flatTaxAmount = totalAccumulated * FLAT_TAX_RATE
+    const totalResaleTax = corporateTaxOnGain + flatTaxAmount
+
+    resaleRow.saleTax = totalResaleTax
+    resaleRow.cashDispo =
+      resaleRow.cfBeforeTax -
+      resaleRow.tax -
+      totalResaleTax +
+      resalePrice -
+      (resaleYearIndex < schedule.loanDurationYears - 1 ? (resaleRow.crd ?? 0) : 0)
+    
+    // Ajouter le détail PFU pour le tooltip
+    resaleRow.flatTaxDetail = {
+      annualAccumulated,
+      resaleNet,
+      resalePrice,
+      crdAtResale: resaleRow.crd ?? 0,
+      corporateTaxOnGain,
+      totalAccumulated,
+      flatTaxRate: FLAT_TAX_RATE,
+      flatTaxAmount,
+      totalResaleTax,
+    }
   }
 
   return data

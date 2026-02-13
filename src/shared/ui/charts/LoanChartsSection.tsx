@@ -8,6 +8,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { IRRTooltipContent } from './IRRTooltipContent'
+import type { IRRChartPoint } from './types'
 
 export type LoanChartPoint = {
   year: number
@@ -16,10 +18,7 @@ export type LoanChartPoint = {
   ltv: number
 }
 
-export type IRRChartPoint = {
-  year: number
-  irr: number
-}
+export type { IRRChartPoint } from './types'
 
 export type LoanChartsSectionProps = {
   data: LoanChartPoint[]
@@ -160,14 +159,27 @@ export function LoanChartsSection({
                 tickFormatter={(v) => percentFormatter.format(v / 100)}
               />
               <Tooltip
-                formatter={(value: number | undefined) => percentFormatter.format((value ?? 0) / 100)}
-                labelFormatter={(label) => `${yearLabel} ${label}`}
+                content={(props) => (
+                  <IRRTooltipContent
+                    {...props}
+                    currencyFormatter={currencyFormatter}
+                    percentFormatter={percentFormatter}
+                    yearLabel={yearLabel}
+                  />
+                )}
                 contentStyle={{
                   background: '#0f172a',
                   border: '1px solid rgba(148, 163, 184, 0.5)',
                   borderRadius: '8px',
                   fontSize: '0.8rem',
+                  padding: '0.75rem',
+                  zIndex: 100000,
                 }}
+                wrapperStyle={{
+                  zIndex: 100000,
+                  transform: 'translateY(-50%)', // Center vertically on cursor
+                }}
+                allowEscapeViewBox={{ x: true, y: true }}
               />
               <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
               <Line

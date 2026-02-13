@@ -89,6 +89,11 @@
   overflow: hidden;
 }
 
+/* Permet au tooltip PFU de dépasser la section (z-index + overflow) */
+.collapsible-section.section-allow-tooltip-overflow {
+  overflow: visible;
+}
+
 .collapsible-section-header {
   display: flex;
   align-items: flex-start;
@@ -799,6 +804,23 @@
   min-width: 12rem;
 }
 
+.chart-tooltip.irr-tooltip {
+  z-index: 100000;
+  position: relative;
+}
+
+/* Ensure Recharts tooltip wrapper is above panels */
+.recharts-tooltip-wrapper {
+  z-index: 100000 !important;
+}
+
+/* Specifically for IRR chart tooltip */
+.loan-chart-card-irr .recharts-tooltip-wrapper {
+  z-index: 100000 !important;
+  /* Center tooltip vertically on cursor - offset upward by approximately half tooltip height */
+  transform: translateY(-50%) !important;
+}
+
 .chart-tooltip-title {
   font-weight: 600;
   color: #e5e7eb;
@@ -899,6 +921,228 @@
 
 .yearly-table-num {
   font-variant-numeric: tabular-nums;
+}
+
+/* PFU detail tooltip on checkbox (Fiscalité section) */
+.form-field-checkbox-with-pfu-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.form-field-checkbox-with-pfu-tooltip .pfu-detail-tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  width: max-content;
+  max-width: 90vw;
+}
+
+.form-field-checkbox-with-pfu-tooltip:hover .pfu-detail-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pfu-detail-tooltip-content {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  min-width: 500px;
+  max-width: 600px;
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  position: relative;
+}
+
+.pfu-detail-tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 1.5rem;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(148, 163, 184, 0.4);
+}
+
+.pfu-detail-tooltip-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+.pfu-detail-tooltip-intro {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.pfu-detail-tooltip-list {
+  margin: 0 0 1rem;
+  padding-left: 1.5rem;
+  font-size: 0.8rem;
+  color: #bfdbfe;
+  line-height: 1.6;
+}
+
+.pfu-detail-tooltip-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.pfu-detail-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  color: #e5e7eb;
+}
+
+.pfu-detail-tooltip-row span:first-child {
+  color: #9ca3af;
+  flex-shrink: 0;
+  min-width: 200px;
+}
+
+.pfu-detail-tooltip-row span:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+}
+
+.pfu-detail-tooltip-row.pfu-detail-tooltip-total {
+  font-weight: 600;
+  color: #93c5fd;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.yearly-table-sale-tax-cell {
+  position: relative;
+}
+
+.yearly-table-sale-tax-with-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.yearly-table-sale-tax-value {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(148, 163, 184, 0.5);
+}
+
+.yearly-table-flat-tax-tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  width: max-content;
+  max-width: 90vw;
+}
+
+.yearly-table-sale-tax-with-tooltip:hover .yearly-table-flat-tax-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.yearly-table-flat-tax-tooltip-content {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  min-width: 500px;
+  max-width: 600px;
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  position: relative;
+}
+
+.yearly-table-flat-tax-tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(148, 163, 184, 0.4);
+}
+
+.yearly-table-flat-tax-tooltip-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+.yearly-table-flat-tax-tooltip-intro {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.yearly-table-flat-tax-tooltip-list {
+  margin: 0 0 1rem;
+  padding-left: 1.5rem;
+  font-size: 0.8rem;
+  color: #bfdbfe;
+  line-height: 1.6;
+}
+
+.yearly-table-flat-tax-tooltip-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.yearly-table-flat-tax-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  color: #e5e7eb;
+}
+
+.yearly-table-flat-tax-tooltip-row span:first-child {
+  color: #9ca3af;
+  flex-shrink: 0;
+  min-width: 200px;
+}
+
+.yearly-table-flat-tax-tooltip-row span:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+}
+
+.yearly-table-flat-tax-tooltip-row.yearly-table-flat-tax-tooltip-total {
+  font-weight: 600;
+  color: #93c5fd;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .yearly-table tbody tr:hover {
@@ -1089,5 +1333,618 @@
 
   .results-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.export-import-btn-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.export-import-btn-success {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #86efac;
+}
+
+/* Comparison Panel Styles */
+.comparison-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.comparison-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.comparison-header > div:first-child {
+  flex: 1;
+}
+
+.comparison-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.comparison-best-reason {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.comparison-strategy-indicator {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: #60a5fa;
+  font-weight: 500;
+}
+
+.comparison-header-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.comparison-criteria-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 200px;
+}
+
+.comparison-criteria-selector .field-label {
+  font-size: 0.85rem;
+  color: #e5e7eb;
+}
+
+.comparison-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #9ca3af;
+}
+
+.comparison-empty h2 {
+  margin: 0 0 0.5rem;
+  color: #e5e7eb;
+}
+
+.comparison-empty p {
+  margin: 0;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.comparison-grid {
+  display: grid;
+  gap: 1.5rem;
+  overflow-x: auto;
+}
+
+.comparison-column {
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.1rem;
+  background: radial-gradient(circle at top left, #020617, #020617);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  overflow: hidden;
+  min-width: 280px;
+  max-height: 80vh;
+}
+
+.comparison-column-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.5);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  position: relative;
+}
+
+.comparison-column-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.comparison-column-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.comparison-best-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.comparison-column-best {
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+.comparison-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.comparison-type-rental {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.comparison-type-property-flipping {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c4b5fd;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.comparison-column-header-actions {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.comparison-open-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.comparison-open-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+.comparison-open-btn svg {
+  width: 100%;
+  height: 100%;
+}
+
+.comparison-remove-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.comparison-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.comparison-column-content {
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.comparison-error {
+  color: #ef4444;
+  padding: 1rem;
+  text-align: center;
+}
+
+/* Strategy Comparison Section */
+.comparison-strategy-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 1.1rem;
+  background: radial-gradient(circle at top left, #020617, #020617);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.comparison-strategy-title {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.comparison-strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.comparison-strategy-card {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.comparison-strategy-card h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+.comparison-strategy-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.comparison-strategy-metric:last-child {
+  margin-bottom: 0;
+}
+
+.comparison-strategy-label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.comparison-strategy-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.comparison-strategy-note {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.comparison-strategy-highlight {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.comparison-strategy-highlight .comparison-strategy-value {
+  color: #86efac;
+}
+
+.comparison-strategy-explanation {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  font-size: 0.85rem;
+  color: #bfdbfe;
+  line-height: 1.5;
+}
+
+/* Tax Regime Comparison Styles */
+.comparison-tax-highlight {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.comparison-tax-best {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.comparison-tax-label {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.comparison-tax-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #86efac;
+}
+
+.comparison-tax-savings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.comparison-tax-savings-amount {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #86efac;
+}
+
+.comparison-tax-savings-percent {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.comparison-tax-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comparison-tax-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.5);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+.comparison-tax-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  transition: all 0.15s ease;
+}
+
+.comparison-tax-row:hover {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.comparison-tax-row-best {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.comparison-tax-regime {
+  font-size: 0.9rem;
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+.comparison-tax-amount,
+.comparison-tax-cashflow {
+  font-size: 0.9rem;
+  color: #bfdbfe;
+  font-variant-numeric: tabular-nums;
+}
+
+.comparison-tax-row-best .comparison-tax-regime {
+  color: #86efac;
+  font-weight: 600;
+}
+
+.comparison-tax-regime-badge {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comparison-tax-regime-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.comparison-tax-regime-value {
+  font-size: 0.85rem;
+  color: #93c5fd;
+  font-weight: 500;
+}
+
+.comparison-tax-yearly-section {
+  margin-top: 1.5rem;
+}
+
+.comparison-tax-yearly-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #93c5fd;
+}
+
+/* Yearly Tax Comparison Table */
+.comparison-tax-yearly-table-wrapper {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.comparison-tax-yearly-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.comparison-tax-yearly-table thead {
+  background: rgba(15, 23, 42, 0.7);
+  border-bottom: 2px solid rgba(148, 163, 184, 0.3);
+}
+
+.comparison-tax-yearly-table th {
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  color: #93c5fd;
+  border-right: 1px solid rgba(148, 163, 184, 0.2);
+  white-space: nowrap;
+}
+
+.comparison-tax-yearly-table th:last-child {
+  border-right: none;
+}
+
+.comparison-tax-regime-header {
+  text-align: left;
+  min-width: 200px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.comparison-tax-year-header {
+  min-width: 120px;
+}
+
+.comparison-tax-total-header {
+  min-width: 150px;
+  font-weight: 700;
+}
+
+.comparison-tax-yearly-table tbody tr {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  transition: background-color 0.15s ease;
+}
+
+.comparison-tax-yearly-table tbody tr:hover {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.comparison-tax-yearly-table tbody tr.comparison-tax-row-best {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.comparison-tax-yearly-table td {
+  padding: 0.75rem;
+  color: #e5e7eb;
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  font-variant-numeric: tabular-nums;
+  vertical-align: top;
+}
+
+.comparison-tax-yearly-table td:last-child {
+  border-right: none;
+}
+
+.comparison-tax-regime-cell {
+  background: rgba(15, 23, 42, 0.4);
+  font-weight: 500;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.comparison-tax-yearly-table tbody tr.comparison-tax-row-best .comparison-tax-regime-cell {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.comparison-tax-regime-name {
+  font-size: 0.9rem;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.comparison-tax-regime-sim-name {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+.comparison-tax-year-cell {
+  text-align: center;
+  color: #bfdbfe;
+}
+
+.comparison-tax-year-amount {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #e5e7eb;
+  margin-bottom: 0.25rem;
+}
+
+.comparison-tax-year-resale {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.comparison-tax-year-resale-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #6b7280;
+  margin-bottom: 0.1rem;
+}
+
+.comparison-tax-year-resale-value {
+  display: block;
+  color: #bfdbfe;
+  font-weight: 500;
+}
+
+.comparison-tax-total-cell {
+  text-align: center;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.comparison-tax-total-value {
+  font-size: 1rem;
+  color: #93c5fd;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .comparison-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .comparison-column {
+    max-height: none;
+  }
+
+  .comparison-strategy-grid {
+    grid-template-columns: 1fr;
   }
 }

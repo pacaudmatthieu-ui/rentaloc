@@ -10,6 +10,10 @@ export type ChargesBreakdown = {
   carryforwardUsed: number
   tax: number
   saleTax?: number
+  /** IS sur plus-value (année revente, quand PFU appliqué) */
+  corporateTaxOnGain?: number
+  /** Flat tax PFU (année revente, quand option activée) */
+  flatTax?: number
 }
 
 export type YearlyChartPoint = {

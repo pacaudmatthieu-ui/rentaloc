@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { FormField, FormFieldReadOnly, SortableSectionList } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
@@ -6,6 +6,8 @@ import { ExportImportPanel } from '../../../features/export-json'
 import type { ApartmentItem, MarchandDeBiensValues } from '../model/types'
 import { MB_INITIAL } from '../model/types'
 import { validateMarchandData } from '../model/validation'
+import { savePropertyFlippingSimulation, loadCurrentSimulationComparisonId } from '../../../shared/utils/storage'
+import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import { MargeVatTable } from './sections/MargeVatTable'
 import { MbFiscalResultTable } from './sections/MbFiscalResultTable'
 import { ReventeTable } from './sections/ReventeTable'
@@ -24,11 +26,105 @@ const FLIP_GRID_LAYOUT = [3, 1, 1, 1] as const
 interface FlipPanelPageProps {
   locale: Locale
   strings: Record<string, string>
+  initialValues?: MarchandDeBiensValues | null
+  valuesRef?: React.MutableRefObject<MarchandDeBiensValues | null>
 }
 
-export function FlipPanelPage({ locale, strings }: FlipPanelPageProps) {
-  const [values, setValues] = useState<MarchandDeBiensValues>(MB_INITIAL)
+export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: FlipPanelPageProps) {
+  const comparisonStore = useComparisonStore()
+  const [comparisonButtonState, setComparisonButtonState] = useState<'idle' | 'success' | 'error'>('idle')
+  const [comparisonError, setComparisonError] = useState<string | null>(null)
+  
+  // Initialize comparison store on mount
+  useEffect(() => {
+    comparisonStore.initialize()
+  }, [comparisonStore])
+  
+  // Initialize with provided initial values, saved values, or default values
+  // Priority: initialValues (from localStorage) > MB_INITIAL (defaults)
+  const [values, setValues] = useState<MarchandDeBiensValues>(() => {
+    try {
+      // Use provided initial values if available (from localStorage)
+      if (initialValues && typeof initialValues === 'object') {
+        return initialValues
+      }
+      // Fallback to default MB_INITIAL
+      if (!MB_INITIAL || typeof MB_INITIAL !== 'object') {
+        console.error('MB_INITIAL is invalid, using empty defaults')
+        return {
+          purchasePrice: '',
+          agencyFees: '',
+          renovationBudget: '',
+          apartments: [],
+          apportPercent: '',
+          ratePerYear: '',
+          durationMonths: '',
+        }
+      }
+      return MB_INITIAL
+    } catch (error) {
+      console.error('Error initializing FlipPanelPage:', error)
+      return {
+        purchasePrice: '',
+        agencyFees: '',
+        renovationBudget: '',
+        apartments: [],
+        apportPercent: '',
+        ratePerYear: '',
+        durationMonths: '',
+      }
+    }
+  })
   const pdfRef = useRef<HTMLDivElement>(null)
+
+  // Update values when initialValues prop changes (when switching back to this simulation type)
+  useEffect(() => {
+    if (initialValues && typeof initialValues === 'object') {
+      setValues(initialValues)
+    }
+  }, [initialValues])
+
+  // Keep ref in sync with current values
+  useEffect(() => {
+    if (valuesRef) {
+      valuesRef.current = values
+    }
+  }, [values, valuesRef])
+
+  // Save values to localStorage whenever they change
+  useEffect(() => {
+    savePropertyFlippingSimulation(values)
+  }, [values])
+
+  // Check if current simulation is already in comparison
+  // Use stored comparison ID or data matching
+  const isInComparison = useMemo(() => {
+    // First check if we have a stored comparison ID (simulation opened from comparison)
+    const storedComparisonId = loadCurrentSimulationComparisonId()
+    if (storedComparisonId) {
+      const state = comparisonStore.simulations
+      const found = state.find((sim) => sim.id === storedComparisonId && sim.type === 'property-flipping')
+      if (found) return true
+    }
+    // Fallback to data matching
+    return comparisonStore.isInComparison('property-flipping', values)
+  }, [comparisonStore, values])
+
+  // Use ref to track last updated values to prevent infinite loops
+  const lastUpdatedValuesRef = useRef<string>('')
+  
+  // Update comparison store if this simulation is in comparison
+  // Use separate effect with ref check to avoid infinite loops
+  useEffect(() => {
+    if (isInComparison) {
+      const currentValuesStr = JSON.stringify(values)
+      // Only update if values actually changed
+      if (lastUpdatedValuesRef.current !== currentValuesStr) {
+        lastUpdatedValuesRef.current = currentValuesStr
+        comparisonStore.updateSimulationData('property-flipping', values)
+      }
+    }
+  }, [values, isInComparison, comparisonStore])
 
   const notaryFees = useMemo(() => {
     const price = Number(values.purchasePrice) || 0
@@ -314,6 +410,32 @@ export function FlipPanelPage({ locale, strings }: FlipPanelPageProps) {
         }}
         validateData={validateMarchandData}
         strings={strings}
+        extraButton={
+          <button
+            type="button"
+            className={`export-import-btn ${isInComparison ? 'export-import-btn-disabled' : ''} ${comparisonButtonState === 'success' ? 'export-import-btn-success' : ''}`}
+            onClick={() => {
+              if (isInComparison) return
+              const result = comparisonStore.addToComparison('property-flipping', values)
+              if (result.success) {
+                setComparisonButtonState('success')
+                setComparisonError(null)
+                setTimeout(() => setComparisonButtonState('idle'), 2000)
+              } else {
+                setComparisonButtonState('error')
+                setComparisonError(result.error === 'already_in_comparison' ? strings.alreadyInComparison : strings.maxComparisonReached)
+                setTimeout(() => {
+                  setComparisonButtonState('idle')
+                  setComparisonError(null)
+                }, 3000)
+              }
+            }}
+            disabled={isInComparison}
+            title={isInComparison ? strings.alreadyInComparison : comparisonError || strings.addToComparison}
+          >
+            {isInComparison ? strings.addedToComparison : comparisonButtonState === 'success' ? strings.addedToComparison : strings.addToComparison}
+          </button>
+        }
       />
       <SortableSectionList
         sections={sections}
