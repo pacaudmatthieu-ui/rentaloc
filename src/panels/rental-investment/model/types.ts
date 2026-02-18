@@ -35,6 +35,8 @@ export type SimulationFormValues = {
   resalePrice: string
   /** SCI IS : appliquer la flat tax (PFU) sur le retrait (argent accumulé pendant la détention) */
   sciIsWithdrawFlatTax?: boolean
+  /** Frais de notaire réduits (engagement de revente) : 3 % au lieu de 8 % */
+  reducedNotaryFees?: boolean
 }
 
 export type SimulationResults = {
@@ -86,4 +88,5 @@ export const INITIAL_VALUES: SimulationFormValues = {
   resaleHoldingMonths: '',
   resalePrice: '',
   sciIsWithdrawFlatTax: false,
+  reducedNotaryFees: false,
 }

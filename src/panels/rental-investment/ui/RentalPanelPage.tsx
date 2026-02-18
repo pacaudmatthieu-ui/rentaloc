@@ -165,6 +165,15 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
     }))
   }
 
+  const handleReducedNotaryFeesChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setValues((prev) => ({
+      ...prev,
+      reducedNotaryFees: event.target.checked,
+    }))
+  }
+
   const handleDeferralTypeChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
@@ -190,7 +199,11 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         content: (
           <div className="form-card-body">
             <FormField label={strings.purchasePrice} value={values.purchasePrice} onChange={handleChange('purchasePrice')} />
-            <FormFieldReadOnly label={strings.notaryFees} value={currencyFormatter.format(toNumber(values.purchasePrice) * 0.08)} />
+            <FormFieldReadOnly label={strings.notaryFees} value={currencyFormatter.format(toNumber(values.purchasePrice) * (values.reducedNotaryFees ? 0.03 : 0.08))} />
+            <label className="form-field form-field-checkbox">
+              <input type="checkbox" checked={!!values.reducedNotaryFees} onChange={handleReducedNotaryFeesChange} />
+              <span>{strings.reducedNotaryFees}</span>
+            </label>
             <FormField label={strings.agencyFees} value={values.agencyFees} onChange={handleChange('agencyFees')} />
             <FormField label={strings.renovationBudget} value={values.renovationBudget} onChange={handleChange('renovationBudget')} />
             <FormField label={strings.furnitureBudget} value={values.furnitureBudget} onChange={handleChange('furnitureBudget')} />

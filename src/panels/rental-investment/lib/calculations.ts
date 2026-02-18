@@ -10,6 +10,10 @@ import {
 import type { ChargesBreakdown, YearlyChartPoint } from '../../../shared/types/chart'
 import type { SimulationFormValues, SimulationResults } from '../model/types'
 
+function getNotaryFees(purchasePrice: number, reducedNotaryFees?: boolean): number {
+  return purchasePrice * (reducedNotaryFees ? 0.03 : 0.08)
+}
+
 export function computeDepreciationForYear(
   purchasePrice: number,
   notaryFees: number,
@@ -177,7 +181,7 @@ export function computeAmortizationSchedule(
 
 export function calculateResults(values: SimulationFormValues): SimulationResults {
   const purchasePrice = toNumber(values.purchasePrice)
-  const notaryFees = purchasePrice * 0.08
+  const notaryFees = getNotaryFees(purchasePrice, values.reducedNotaryFees)
   const agencyFees = toNumber(values.agencyFees)
   const renovationBudget = toNumber(values.renovationBudget)
   const furnitureBudget = toNumber(values.furnitureBudget)
@@ -360,7 +364,7 @@ export function computeLoanChartsData(
   values: SimulationFormValues,
 ): { year: number; principal: number; interest: number; ltv: number }[] {
   const purchasePrice = toNumber(values.purchasePrice)
-  const notaryFees = purchasePrice * 0.08
+  const notaryFees = getNotaryFees(purchasePrice, values.reducedNotaryFees)
   const agencyFees = toNumber(values.agencyFees)
   const renovationBudget = toNumber(values.renovationBudget)
   const furnitureBudget = toNumber(values.furnitureBudget)
@@ -486,7 +490,7 @@ export function computeIRRByYearData(
   // Always calculate IRR (even with default values)
   const resaleHoldingMonths = Math.max(1, effectiveResaleHoldingMonths)
 
-  const notaryFees = purchasePrice * 0.08
+  const notaryFees = getNotaryFees(purchasePrice, values.reducedNotaryFees)
   const agencyFees = toNumber(values.agencyFees)
   const renovationBudget = toNumber(values.renovationBudget)
   const furnitureBudget = toNumber(values.furnitureBudget)
@@ -832,7 +836,7 @@ export function computeYearlyChartData(
   values: SimulationFormValues,
 ): YearlyChartPoint[] {
   const purchasePrice = toNumber(values.purchasePrice)
-  const notaryFees = purchasePrice * 0.08
+  const notaryFees = getNotaryFees(purchasePrice, values.reducedNotaryFees)
   const agencyFees = toNumber(values.agencyFees)
   const renovationBudget = toNumber(values.renovationBudget)
   const furnitureBudget = toNumber(values.furnitureBudget)
@@ -1188,7 +1192,7 @@ export function computeYearlyTableData(
   values: SimulationFormValues,
 ): YearlyTableRow[] {
   const purchasePrice = toNumber(values.purchasePrice)
-  const notaryFees = purchasePrice * 0.08
+  const notaryFees = getNotaryFees(purchasePrice, values.reducedNotaryFees)
   const agencyFees = toNumber(values.agencyFees)
   const renovationBudget = toNumber(values.renovationBudget)
   const furnitureBudget = toNumber(values.furnitureBudget)
