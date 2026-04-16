@@ -1,6 +1,5 @@
 import type { LotItem } from '../../model/types'
 import {
-  computeTvaDeductible,
   VAT_RATE_TRAVAUX,
   VAT_RATE_AGENCE,
   VAT_RATE_MARGE,

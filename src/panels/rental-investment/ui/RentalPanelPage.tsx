@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
-import { FormField, FormFieldReadOnly, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
+import { FormField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
 import { INITIAL_VALUES } from '../model/types'

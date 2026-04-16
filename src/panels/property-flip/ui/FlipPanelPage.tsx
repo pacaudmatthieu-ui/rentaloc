@@ -10,7 +10,6 @@ import { savePropertyFlippingSimulation, loadCurrentSimulationComparisonId } fro
 import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import { MargeVatTable } from './sections/MargeVatTable'
 import { MbOperationResultTable, MbFiscalResultTable } from './sections/MbFiscalResultTable'
-import { ReventeTable } from './sections/ReventeTable'
 
 /** Structure par défaut : Ligne 1: Acquisition | Appartements | Financement | Ligne 2: Revente | Ligne 3: Fiscalité | Ligne 4: Résultat */
 const FLIP_DEFAULT_ORDER = [
