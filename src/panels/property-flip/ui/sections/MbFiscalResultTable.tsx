@@ -1,25 +1,32 @@
-import { useState } from 'react'
-import type { ApartmentItem } from '../../model/types'
+import type { LotItem } from '../../model/types'
 import {
-  computeTvaSurMarge,
-  computeTvaDeductible,
-  computeAResterPayer,
-  computeTvaSurTotal,
-  computeResteTvaTotal,
   VAT_RATE_TRAVAUX,
+  VAT_RATE_MARGE,
 } from '../../../../entities/finance/vat'
 
-const MB_IS_RATE = 0.25
+// IS : 15% jusqu'à 42 500 €, 25% au-delà
+const IS_TRANCHE_1_LIMIT = 42500
+const IS_TRANCHE_1_RATE = 0.15
+const IS_TRANCHE_2_RATE = 0.25
 // Flat tax (PFU) : 31,4% depuis le 1er janvier 2026 (12,8% IR + 18,6% prélèvements sociaux)
 const MB_FLAT_TAX_RATE = 0.314
 
-type VatRegimeForFiscal = 'marge' | 'total'
+function computeIS(benefice: number): { total: number; tranche1: number; tranche2: number } {
+  if (benefice <= 0) return { total: 0, tranche1: 0, tranche2: 0 }
+  const base1 = Math.min(benefice, IS_TRANCHE_1_LIMIT)
+  const base2 = Math.max(0, benefice - IS_TRANCHE_1_LIMIT)
+  const tranche1 = base1 * IS_TRANCHE_1_RATE
+  const tranche2 = base2 * IS_TRANCHE_2_RATE
+  return { total: tranche1 + tranche2, tranche1, tranche2 }
+}
 
-interface MbFiscalResultTableProps {
-  apartments: ApartmentItem[]
+interface Props {
+  apartments: LotItem[]
   totalCostForMarge: number
-  renovationBudget: number
+  travauxHT: number
+  autresChargesHT: number
   agencyFees: number
+  terrainProportion: number
   currencyFormatter: Intl.NumberFormat
   strings: Record<string, string>
 }
@@ -43,195 +50,151 @@ function FiscalTooltip({
   )
 }
 
-export function MbFiscalResultTable({
-  apartments,
-  totalCostForMarge,
-  renovationBudget,
-  agencyFees,
-  currencyFormatter,
-  strings,
-}: MbFiscalResultTableProps) {
-  const [vatRegime, setVatRegime] = useState<VatRegimeForFiscal>('marge')
+function useOperationResult(props: Props) {
+  const { apartments, totalCostForMarge, travauxHT, autresChargesHT, agencyFees, terrainProportion } = props
 
-  const totalPessimistic = apartments.reduce(
-    (s, a) => s + (Number(a.resalePessimistic) || 0),
-    0,
-  )
-  const totalLogic = apartments.reduce(
-    (s, a) => s + (Number(a.resaleLogic) || 0),
-    0,
-  )
-  const totalOptimistic = apartments.reduce(
-    (s, a) => s + (Number(a.resaleOptimistic) || 0),
+  const totalMargeLots = apartments
+    .filter((a) => a.tvaRegime === 'marge')
+    .reduce((s, a) => s + (Number(a.resalePrice) || 0), 0)
+
+  const totalTvaLots = apartments
+    .filter((a) => a.tvaRegime === 'total')
+    .reduce((s, a) => s + (Number(a.resalePrice) || 0), 0)
+
+  const totalRevente = apartments.reduce(
+    (s, a) => s + (Number(a.resalePrice) || 0),
     0,
   )
 
-  const tvaDeductible = computeTvaDeductible(renovationBudget, agencyFees)
-  const tvaSurMargeP = computeTvaSurMarge(totalPessimistic, totalCostForMarge)
-  const tvaSurMargeL = computeTvaSurMarge(totalLogic, totalCostForMarge)
-  const tvaSurMargeO = computeTvaSurMarge(totalOptimistic, totalCostForMarge)
-  const aRestoPayerP = computeAResterPayer(tvaSurMargeP, tvaDeductible)
-  const aRestoPayerL = computeAResterPayer(tvaSurMargeL, tvaDeductible)
-  const aRestoPayerO = computeAResterPayer(tvaSurMargeO, tvaDeductible)
+  const ratioMarge = terrainProportion / 100
+  const ratioTotal = totalRevente > 0 ? totalTvaLots / totalRevente : 0
+  const coutAlloueMarge = totalCostForMarge * ratioMarge
 
-  const tvaDeductibleTotal =
-    renovationBudget * (VAT_RATE_TRAVAUX / (1 + VAT_RATE_TRAVAUX))
-  const tvaSurTotalP = computeTvaSurTotal(totalPessimistic)
-  const tvaSurTotalL = computeTvaSurTotal(totalLogic)
-  const tvaSurTotalO = computeTvaSurTotal(totalOptimistic)
-  const resteP = computeResteTvaTotal(tvaSurTotalP, tvaDeductibleTotal)
-  const resteL = computeResteTvaTotal(tvaSurTotalL, tvaDeductibleTotal)
-  const resteO = computeResteTvaTotal(tvaSurTotalO, tvaDeductibleTotal)
+  const margeBrute = totalMargeLots - coutAlloueMarge
+  const tvaSurMarge = margeBrute > 0
+    ? margeBrute * (VAT_RATE_MARGE / (1 + VAT_RATE_MARGE))
+    : 0
+  const tvaTravaux = travauxHT * VAT_RATE_TRAVAUX
+  const tvaAutresCharges = autresChargesHT * 0.20
+  const tvaAgence = agencyFees * (0.20 / 1.20)
+  const tvaDeductible = tvaTravaux + tvaAutresCharges + tvaAgence
+  const aRestoPayerMarge = tvaSurMarge - tvaDeductible
 
-  const margeP = totalPessimistic - totalCostForMarge
-  const margeL = totalLogic - totalCostForMarge
-  const margeO = totalOptimistic - totalCostForMarge
+  const tvaSurTotal = totalTvaLots * (VAT_RATE_MARGE / (1 + VAT_RATE_MARGE))
+  const tvaDeductibleTotal = travauxHT * ratioTotal * VAT_RATE_TRAVAUX
+  const resteTvaTotal = Math.max(0, tvaSurTotal - tvaDeductibleTotal)
 
-  const beneficeImposableP =
-    vatRegime === 'marge'
-      ? Math.max(0, margeP - aRestoPayerP)
-      : Math.max(0, totalPessimistic - totalCostForMarge - resteP)
-  const beneficeImposableL =
-    vatRegime === 'marge'
-      ? Math.max(0, margeL - aRestoPayerL)
-      : Math.max(0, totalLogic - totalCostForMarge - resteL)
-  const beneficeImposableO =
-    vatRegime === 'marge'
-      ? Math.max(0, margeO - aRestoPayerO)
-      : Math.max(0, totalOptimistic - totalCostForMarge - resteO)
+  const totalTvaAPayer = Math.max(0, aRestoPayerMarge) + resteTvaTotal
+  const margeNetteAvantIS = totalRevente - totalCostForMarge - totalTvaAPayer
+  const beneficeImposable = Math.max(0, margeNetteAvantIS)
 
-  const impotsSocietesP = beneficeImposableP * MB_IS_RATE
-  const impotsSocietesL = beneficeImposableL * MB_IS_RATE
-  const impotsSocietesO = beneficeImposableO * MB_IS_RATE
+  return { totalRevente, totalCostForMarge, totalTvaAPayer, aRestoPayerMarge, resteTvaTotal, margeNetteAvantIS, beneficeImposable }
+}
 
-  const beneficesNetsP = beneficeImposableP - impotsSocietesP
-  const beneficesNetsL = beneficeImposableL - impotsSocietesL
-  const beneficesNetsO = beneficeImposableO - impotsSocietesO
+/** Bloc 1 : Résultat d'opération (avant impôt) */
+export function MbOperationResultTable(props: Props) {
+  const { currencyFormatter, strings } = props
+  const r = useOperationResult(props)
 
-  const flatTaxeP = beneficeImposableP * MB_FLAT_TAX_RATE
-  const flatTaxeL = beneficeImposableL * MB_FLAT_TAX_RATE
-  const flatTaxeO = beneficeImposableO * MB_FLAT_TAX_RATE
-
-  // Bénéfices en poche = Bénéfices nets - Flat taxe
-  const beneficesEnPocheP = beneficesNetsP - flatTaxeP
-  const beneficesEnPocheL = beneficesNetsL - flatTaxeL
-  const beneficesEnPocheO = beneficesNetsO - flatTaxeO
-
-  const linesBeneficeP =
-    vatRegime === 'marge'
-      ? [
-          `${strings.vatTooltipMarge} = ${strings.vatTooltipRevente} − ${strings.vatTooltipCout} = ${currencyFormatter.format(totalPessimistic)} − ${currencyFormatter.format(totalCostForMarge)} = ${currencyFormatter.format(margeP)}`,
-          `${strings.mbBeneficeImposable} = ${strings.vatTooltipMarge} − ${strings.mbAResterPayer} = ${currencyFormatter.format(margeP)} − ${currencyFormatter.format(aRestoPayerP)} = ${currencyFormatter.format(beneficeImposableP)}`,
-        ]
-      : [
-          `${strings.mbVatSurTotal} = ${strings.vatTooltipRevente} × 20% / 1.20 = ${currencyFormatter.format(totalPessimistic)} × 0.1667 = ${currencyFormatter.format(tvaSurTotalP)}`,
-          `${strings.vatTooltipDeductible} = ${strings.vatTooltipTravaux} × 10% / 1.10 = ${currencyFormatter.format(renovationBudget)} × 0.0909 = ${currencyFormatter.format(tvaDeductibleTotal)}`,
-          `${strings.mbReste} = ${strings.mbVatSurTotal} − ${strings.vatTooltipDeductible} = ${currencyFormatter.format(tvaSurTotalP)} − ${currencyFormatter.format(tvaDeductibleTotal)} = ${currencyFormatter.format(resteP)}`,
-          `${strings.mbBeneficeImposable} = ${strings.vatTooltipRevente} − ${strings.vatTooltipCout} − ${strings.mbReste} = ${currencyFormatter.format(totalPessimistic)} − ${currencyFormatter.format(totalCostForMarge)} − ${currencyFormatter.format(resteP)} = ${currencyFormatter.format(beneficeImposableP)}`,
-        ]
-  const linesBeneficeL =
-    vatRegime === 'marge'
-      ? [
-          `${strings.vatTooltipMarge} = ${currencyFormatter.format(totalLogic)} − ${currencyFormatter.format(totalCostForMarge)} = ${currencyFormatter.format(margeL)}`,
-          `${strings.mbBeneficeImposable} = ${currencyFormatter.format(margeL)} − ${currencyFormatter.format(aRestoPayerL)} = ${currencyFormatter.format(beneficeImposableL)}`,
-        ]
-      : [
-          `${strings.mbVatSurTotal} = ${currencyFormatter.format(totalLogic)} × 0.1667 = ${currencyFormatter.format(tvaSurTotalL)}`,
-          `${strings.mbReste} = ${currencyFormatter.format(tvaSurTotalL)} − ${currencyFormatter.format(tvaDeductibleTotal)} = ${currencyFormatter.format(resteL)}`,
-          `${strings.mbBeneficeImposable} = ${currencyFormatter.format(totalLogic)} − ${currencyFormatter.format(totalCostForMarge)} − ${currencyFormatter.format(resteL)} = ${currencyFormatter.format(beneficeImposableL)}`,
-        ]
-  const linesBeneficeO =
-    vatRegime === 'marge'
-      ? [
-          `${strings.vatTooltipMarge} = ${currencyFormatter.format(totalOptimistic)} − ${currencyFormatter.format(totalCostForMarge)} = ${currencyFormatter.format(margeO)}`,
-          `${strings.mbBeneficeImposable} = ${currencyFormatter.format(margeO)} − ${currencyFormatter.format(aRestoPayerO)} = ${currencyFormatter.format(beneficeImposableO)}`,
-        ]
-      : [
-          `${strings.mbVatSurTotal} = ${currencyFormatter.format(totalOptimistic)} × 0.1667 = ${currencyFormatter.format(tvaSurTotalO)}`,
-          `${strings.mbReste} = ${currencyFormatter.format(tvaSurTotalO)} − ${currencyFormatter.format(tvaDeductibleTotal)} = ${currencyFormatter.format(resteO)}`,
-          `${strings.mbBeneficeImposable} = ${currencyFormatter.format(totalOptimistic)} − ${currencyFormatter.format(totalCostForMarge)} − ${currencyFormatter.format(resteO)} = ${currencyFormatter.format(beneficeImposableO)}`,
-        ]
+  const margePercent = r.totalCostForMarge > 0
+    ? ((r.margeNetteAvantIS / r.totalCostForMarge) * 100).toFixed(1)
+    : '–'
 
   return (
-    <div className="mb-taxation-table mb-fiscal-result-table">
-      <div className="mb-fiscal-regime-selector">
-        <label className="mb-fiscal-regime-label">{strings.mbTypeTva}</label>
-        <div className="mb-fiscal-regime-options">
-          <label className="mb-fiscal-regime-option">
-            <input
-              type="radio"
-              name="vatRegime"
-              checked={vatRegime === 'marge'}
-              onChange={() => setVatRegime('marge')}
-            />
-            <span>{strings.mbVatRegimeMarge}</span>
-          </label>
-          <label className="mb-fiscal-regime-option">
-            <input
-              type="radio"
-              name="vatRegime"
-              checked={vatRegime === 'total'}
-              onChange={() => setVatRegime('total')}
-            />
-            <span>{strings.mbVatRegimeTotal}</span>
-          </label>
-        </div>
-      </div>
+    <div className="mb-taxation-table mb-operation-result-table">
       <table className="mb-vat-table">
         <thead>
           <tr>
             <th></th>
-            <th>{strings.mbReventePessimistic}</th>
-            <th>{strings.mbReventeLogic}</th>
-            <th>{strings.mbReventeOptimistic}</th>
+            <th>Montant</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="mb-vat-regime-label">{strings.vatTooltipRevente}</td>
+            <td className="mb-vat-cell">{currencyFormatter.format(r.totalRevente)}</td>
+          </tr>
+          <tr>
+            <td className="mb-vat-regime-label">{strings.vatTooltipCout}</td>
+            <td className="mb-vat-cell">{currencyFormatter.format(r.totalCostForMarge)}</td>
+          </tr>
+          <tr>
+            <td className="mb-vat-regime-label">TVA à payer</td>
+            <td className="mb-vat-cell">
+              <FiscalTooltip
+                lines={[
+                  `TVA marge : ${currencyFormatter.format(Math.max(0, r.aRestoPayerMarge))}`,
+                  `TVA total : ${currencyFormatter.format(r.resteTvaTotal)}`,
+                  `Total TVA : ${currencyFormatter.format(r.totalTvaAPayer)}`,
+                ]}
+              >
+                {currencyFormatter.format(r.totalTvaAPayer)}
+              </FiscalTooltip>
+            </td>
+          </tr>
+          <tr className="mb-vat-total-row">
+            <td className="mb-vat-regime-label">
+              <strong>{strings.mbMargeNetteAvantIS}</strong>
+            </td>
+            <td className="mb-vat-cell">
+              <FiscalTooltip
+                lines={[
+                  `= ${strings.vatTooltipRevente} − ${strings.vatTooltipCout} − TVA`,
+                  `= ${currencyFormatter.format(r.totalRevente)} − ${currencyFormatter.format(r.totalCostForMarge)} − ${currencyFormatter.format(r.totalTvaAPayer)}`,
+                  `= ${currencyFormatter.format(r.margeNetteAvantIS)}`,
+                  `Marge : ${margePercent}%`,
+                ]}
+              >
+                <strong className={r.margeNetteAvantIS >= 0 ? 'mb-revente-positive' : 'mb-revente-negative'}>
+                  {currencyFormatter.format(r.margeNetteAvantIS)}
+                </strong>
+                <span className="mb-vat-hint"> ({margePercent}%)</span>
+              </FiscalTooltip>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+/** Bloc 2 : Résultat fiscal (IS + Dividendes) */
+export function MbFiscalResultTable(props: Props) {
+  const { currencyFormatter, strings } = props
+  const r = useOperationResult(props)
+
+  const is = computeIS(r.beneficeImposable)
+  const impotsSocietes = is.total
+  const beneficesNets = r.beneficeImposable - impotsSocietes
+  const flatTaxe = beneficesNets * MB_FLAT_TAX_RATE
+  const dividendesEnPoche = beneficesNets - flatTaxe
+
+  return (
+    <div className="mb-taxation-table mb-fiscal-result-table">
+      <p className="mb-fiscal-disclaimer">{strings.mbFiscalDisclaimer}</p>
+      <table className="mb-vat-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Montant</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td className="mb-vat-regime-label">{strings.mbBeneficeImposable}</td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip lines={linesBeneficeP}>
-                {currencyFormatter.format(beneficeImposableP)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip lines={linesBeneficeL}>
-                {currencyFormatter.format(beneficeImposableL)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip lines={linesBeneficeO}>
-                {currencyFormatter.format(beneficeImposableO)}
-              </FiscalTooltip>
-            </td>
+            <td className="mb-vat-cell">{currencyFormatter.format(r.beneficeImposable)}</td>
           </tr>
           <tr>
             <td className="mb-vat-regime-label">{strings.mbImpotsSocietes}</td>
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbImpotsSocietes} = ${strings.mbBeneficeImposable} × 25% = ${currencyFormatter.format(beneficeImposableP)} × 0.25 = ${currencyFormatter.format(impotsSocietesP)}`,
+                  `Tranche 1 : ${currencyFormatter.format(Math.min(r.beneficeImposable, IS_TRANCHE_1_LIMIT))} × 15% = ${currencyFormatter.format(is.tranche1)}`,
+                  ...(r.beneficeImposable > IS_TRANCHE_1_LIMIT ? [`Tranche 2 : ${currencyFormatter.format(r.beneficeImposable - IS_TRANCHE_1_LIMIT)} × 25% = ${currencyFormatter.format(is.tranche2)}`] : []),
+                  `Total IS = ${currencyFormatter.format(impotsSocietes)}`,
                 ]}
               >
-                {currencyFormatter.format(impotsSocietesP)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip
-                lines={[
-                  `${strings.mbImpotsSocietes} = ${currencyFormatter.format(beneficeImposableL)} × 0.25 = ${currencyFormatter.format(impotsSocietesL)}`,
-                ]}
-              >
-                {currencyFormatter.format(impotsSocietesL)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip
-                lines={[
-                  `${strings.mbImpotsSocietes} = ${currencyFormatter.format(beneficeImposableO)} × 0.25 = ${currencyFormatter.format(impotsSocietesO)}`,
-                ]}
-              >
-                {currencyFormatter.format(impotsSocietesO)}
+                {currencyFormatter.format(impotsSocietes)}
               </FiscalTooltip>
             </td>
           </tr>
@@ -240,91 +203,37 @@ export function MbFiscalResultTable({
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbBeneficesNets} = ${strings.mbBeneficeImposable} − ${strings.mbImpotsSocietes} = ${currencyFormatter.format(beneficeImposableP)} − ${currencyFormatter.format(impotsSocietesP)} = ${currencyFormatter.format(beneficesNetsP)}`,
+                  `${strings.mbBeneficesNets} = ${currencyFormatter.format(r.beneficeImposable)} − ${currencyFormatter.format(impotsSocietes)} = ${currencyFormatter.format(beneficesNets)}`,
                 ]}
               >
-                {currencyFormatter.format(beneficesNetsP)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip
-                lines={[
-                  `${strings.mbBeneficesNets} = ${currencyFormatter.format(beneficeImposableL)} − ${currencyFormatter.format(impotsSocietesL)} = ${currencyFormatter.format(beneficesNetsL)}`,
-                ]}
-              >
-                {currencyFormatter.format(beneficesNetsL)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip
-                lines={[
-                  `${strings.mbBeneficesNets} = ${currencyFormatter.format(beneficeImposableO)} − ${currencyFormatter.format(impotsSocietesO)} = ${currencyFormatter.format(beneficesNetsO)}`,
-                ]}
-              >
-                {currencyFormatter.format(beneficesNetsO)}
+                {currencyFormatter.format(beneficesNets)}
               </FiscalTooltip>
             </td>
           </tr>
           <tr>
-            <td className="mb-vat-regime-label">{strings.mbFlatTaxe}</td>
+            <td className="mb-vat-regime-label">{strings.mbFlatTaxe} (PFU 31,4%)</td>
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableP)} × 0.314 = ${currencyFormatter.format(flatTaxeP)}`,
+                  `${strings.mbFlatTaxe} = ${strings.mbBeneficesNets} × 31,4%`,
+                  `= ${currencyFormatter.format(beneficesNets)} × 0,314 = ${currencyFormatter.format(flatTaxe)}`,
                 ]}
               >
-                {currencyFormatter.format(flatTaxeP)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip
-                lines={[
-                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableL)} × 0.314 = ${currencyFormatter.format(flatTaxeL)}`,
-                ]}
-              >
-                {currencyFormatter.format(flatTaxeL)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip
-                lines={[
-                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableO)} × 0.314 = ${currencyFormatter.format(flatTaxeO)}`,
-                ]}
-              >
-                {currencyFormatter.format(flatTaxeO)}
+                {currencyFormatter.format(flatTaxe)}
               </FiscalTooltip>
             </td>
           </tr>
-          <tr>
-            <td className="mb-vat-regime-label">{strings.mbBeneficesEnPoche}</td>
+          <tr className="mb-vat-total-row">
+            <td className="mb-vat-regime-label"><strong>{strings.mbDividendesEnPoche}</strong></td>
             <td className="mb-vat-cell">
               <FiscalTooltip
                 lines={[
-                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableP)} × 0.314 = ${currencyFormatter.format(flatTaxeP)}`,
-                  `${strings.mbBeneficesEnPoche} = ${strings.mbBeneficesNets} − ${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficesNetsP)} − ${currencyFormatter.format(flatTaxeP)} = ${currencyFormatter.format(beneficesEnPocheP)}`,
+                  `${strings.mbDividendesEnPoche} = ${strings.mbBeneficesNets} − ${strings.mbFlatTaxe}`,
+                  `= ${currencyFormatter.format(beneficesNets)} − ${currencyFormatter.format(flatTaxe)}`,
+                  `= ${currencyFormatter.format(dividendesEnPoche)}`,
                 ]}
               >
-                {currencyFormatter.format(beneficesEnPocheP)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip
-                lines={[
-                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableL)} × 0.314 = ${currencyFormatter.format(flatTaxeL)}`,
-                  `${strings.mbBeneficesEnPoche} = ${strings.mbBeneficesNets} − ${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficesNetsL)} − ${currencyFormatter.format(flatTaxeL)} = ${currencyFormatter.format(beneficesEnPocheL)}`,
-                ]}
-              >
-                {currencyFormatter.format(beneficesEnPocheL)}
-              </FiscalTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <FiscalTooltip
-                lines={[
-                  `${strings.mbFlatTaxe} = ${strings.mbBeneficeImposable} × 31,4% = ${currencyFormatter.format(beneficeImposableO)} × 0.314 = ${currencyFormatter.format(flatTaxeO)}`,
-                  `${strings.mbBeneficesEnPoche} = ${strings.mbBeneficesNets} − ${strings.mbFlatTaxe} = ${currencyFormatter.format(beneficesNetsO)} − ${currencyFormatter.format(flatTaxeO)} = ${currencyFormatter.format(beneficesEnPocheO)}`,
-                ]}
-              >
-                {currencyFormatter.format(beneficesEnPocheO)}
+                <strong>{currencyFormatter.format(dividendesEnPoche)}</strong>
               </FiscalTooltip>
             </td>
           </tr>

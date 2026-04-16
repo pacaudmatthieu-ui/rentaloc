@@ -1,4 +1,31 @@
-import { useEffect, useRef, useState } from 'react'
+import { Component, useEffect, useRef, useState } from 'react'
+import type { ErrorInfo, ReactNode } from 'react'
+
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null }
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('React crash:', error, info)
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ color: 'red', padding: '2rem', whiteSpace: 'pre-wrap' }}>
+          <h2>Erreur React</h2>
+          <p>{this.state.error.message}</p>
+          <pre>{this.state.error.stack}</pre>
+          <button onClick={() => this.setState({ error: null })}>Réessayer</button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 import './App.css'
 import type { Locale } from './shared/types'
 import { STRINGS } from './shared/i18n/strings'
@@ -154,12 +181,14 @@ function App() {
           onOpenSimulation={handleOpenSimulation}
         />
       ) : appSection === 'marchand_de_biens' ? (
-        <FlipPanelPage
-          locale={locale}
-          strings={STRINGS[locale]}
-          initialValues={propertyFlippingInitialValues}
-          valuesRef={propertyFlippingValuesRef}
-        />
+        <ErrorBoundary>
+          <FlipPanelPage
+            locale={locale}
+            strings={STRINGS[locale]}
+            initialValues={propertyFlippingInitialValues}
+            valuesRef={propertyFlippingValuesRef}
+          />
+        </ErrorBoundary>
       ) : (
         <RentalPanelPage
           locale={locale}

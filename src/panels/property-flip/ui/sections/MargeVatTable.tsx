@@ -1,19 +1,18 @@
-import type { ApartmentItem } from '../../model/types'
+import type { LotItem } from '../../model/types'
 import {
-  computeTvaSurMarge,
   computeTvaDeductible,
-  computeAResterPayer,
-  computeTvaSurTotal,
-  computeResteTvaTotal,
   VAT_RATE_TRAVAUX,
   VAT_RATE_AGENCE,
+  VAT_RATE_MARGE,
 } from '../../../../entities/finance/vat'
 
 interface MargeVatTableProps {
-  apartments: ApartmentItem[]
+  apartments: LotItem[]
   totalCostForMarge: number
-  renovationBudget: number
+  travauxHT: number
+  autresChargesHT: number
   agencyFees: number
+  terrainProportion: number
   currencyFormatter: Intl.NumberFormat
   strings: Record<string, string>
 }
@@ -42,220 +41,168 @@ function VatTooltip({
 export function MargeVatTable({
   apartments,
   totalCostForMarge,
-  renovationBudget,
+  travauxHT,
+  autresChargesHT,
   agencyFees,
+  terrainProportion,
   currencyFormatter,
   strings,
 }: MargeVatTableProps) {
-  const totalPessimistic = apartments.reduce(
-    (s, a) => s + (Number(a.resalePessimistic) || 0),
-    0,
-  )
-  const totalLogic = apartments.reduce(
-    (s, a) => s + (Number(a.resaleLogic) || 0),
-    0,
-  )
-  const totalOptimistic = apartments.reduce(
-    (s, a) => s + (Number(a.resaleOptimistic) || 0),
-    0,
-  )
+  const totalExonere = apartments
+    .filter((a) => a.tvaRegime === 'exonere')
+    .reduce((s, a) => s + (Number(a.resalePrice) || 0), 0)
 
-  const tvaDeductible = computeTvaDeductible(renovationBudget, agencyFees)
+  const totalMarge = apartments
+    .filter((a) => a.tvaRegime === 'marge')
+    .reduce((s, a) => s + (Number(a.resalePrice) || 0), 0)
 
-  const tvaSurMargePessimistic = computeTvaSurMarge(
-    totalPessimistic,
-    totalCostForMarge,
-  )
-  const tvaSurMargeLogic = computeTvaSurMarge(
-    totalLogic,
-    totalCostForMarge,
-  )
-  const tvaSurMargeOptimistic = computeTvaSurMarge(
-    totalOptimistic,
-    totalCostForMarge,
-  )
+  const totalTvaTotal = apartments
+    .filter((a) => a.tvaRegime === 'total')
+    .reduce((s, a) => s + (Number(a.resalePrice) || 0), 0)
 
-  const aRestoPayerPessimistic = computeAResterPayer(
-    tvaSurMargePessimistic,
-    tvaDeductible,
-  )
-  const aRestoPayerLogic = computeAResterPayer(
-    tvaSurMargeLogic,
-    tvaDeductible,
-  )
-  const aRestoPayerOptimistic = computeAResterPayer(
-    tvaSurMargeOptimistic,
-    tvaDeductible,
-  )
+  const totalRevente = totalExonere + totalMarge + totalTvaTotal
 
-  const tvaSurTotalPessimistic = computeTvaSurTotal(totalPessimistic)
-  const tvaSurTotalLogic = computeTvaSurTotal(totalLogic)
-  const tvaSurTotalOptimistic = computeTvaSurTotal(totalOptimistic)
+  // Proportion terrain (%) → ratio pour allouer le coût aux lots marge
+  const ratioMarge = terrainProportion / 100
+  const ratioTotal = totalRevente > 0 ? totalTvaTotal / totalRevente : 0
 
-  const tvaDeductibleTotal = renovationBudget * (VAT_RATE_TRAVAUX / (1 + VAT_RATE_TRAVAUX))
+  const coutAlloueMarge = totalCostForMarge * ratioMarge
+  const coutAlloueTotal = totalCostForMarge * ratioTotal
+  const coutAlloueExonere = totalCostForMarge - coutAlloueMarge - coutAlloueTotal
 
-  const restePessimistic = computeResteTvaTotal(
-    tvaSurTotalPessimistic,
-    tvaDeductibleTotal,
-  )
-  const resteLogic = computeResteTvaTotal(
-    tvaSurTotalLogic,
-    tvaDeductibleTotal,
-  )
-  const resteOptimistic = computeResteTvaTotal(
-    tvaSurTotalOptimistic,
-    tvaDeductibleTotal,
-  )
+  // TVA sur marge
+  const margeBrute = totalMarge - coutAlloueMarge
+  const tvaSurMarge = margeBrute > 0
+    ? margeBrute * (VAT_RATE_MARGE / (1 + VAT_RATE_MARGE))
+    : 0
+
+  // TVA déductible (travaux 10%, autres charges + agence 20%)
+  const tvaTravaux = travauxHT * VAT_RATE_TRAVAUX
+  const tvaAutresCharges = autresChargesHT * VAT_RATE_AGENCE
+  const tvaAgence = agencyFees * (VAT_RATE_AGENCE / (1 + VAT_RATE_AGENCE))
+  const tvaDeductible = tvaTravaux + tvaAutresCharges + tvaAgence
+  const aRestoPayerMarge = tvaSurMarge - tvaDeductible
+
+  // TVA sur prix total
+  const tvaSurTotal = totalTvaTotal * (VAT_RATE_MARGE / (1 + VAT_RATE_MARGE))
+  const tvaDeductibleTotal = travauxHT * ratioTotal * VAT_RATE_TRAVAUX
+  const resteTvaTotal = Math.max(0, tvaSurTotal - tvaDeductibleTotal)
+
+  const totalTvaAPayer = Math.max(0, aRestoPayerMarge) + resteTvaTotal
 
   const formatResto = (v: number) =>
     v < 0
-      ? {
-          text: `${strings.mbCreditTva} ${currencyFormatter.format(-v)}`,
-          isCredit: true,
-        }
+      ? { text: `${strings.mbCreditTva} ${currencyFormatter.format(-v)}`, isCredit: true }
       : { text: currencyFormatter.format(v), isCredit: false }
 
-  const tvaTravaux = renovationBudget * (VAT_RATE_TRAVAUX / (1 + VAT_RATE_TRAVAUX))
-  const tvaAgence = agencyFees * (VAT_RATE_AGENCE / (1 + VAT_RATE_AGENCE))
+  const nbExonere = apartments.filter((a) => a.tvaRegime === 'exonere').length
+  const nbMarge = apartments.filter((a) => a.tvaRegime === 'marge').length
+  const nbTotal = apartments.filter((a) => a.tvaRegime === 'total').length
 
   return (
     <div className="mb-taxation-table">
       <table className="mb-vat-table">
         <thead>
           <tr>
-            <th></th>
-            <th>{strings.mbReventePessimistic}</th>
-            <th>{strings.mbReventeLogic}</th>
-            <th>{strings.mbReventeOptimistic}</th>
+            <th>{strings.mbLotTvaRegime}</th>
+            <th>{strings.mbResalePrice}</th>
+            <th>{strings.vatTooltipCout}</th>
+            <th>TVA</th>
           </tr>
         </thead>
         <tbody>
+          {nbExonere > 0 && (
+            <tr>
+              <td className="mb-vat-regime-label">
+                {strings.mbTvaExonere}
+                <span className="mb-vat-hint"> ({nbExonere} lot{nbExonere > 1 ? 's' : ''})</span>
+              </td>
+              <td className="mb-vat-cell">{currencyFormatter.format(totalExonere)}</td>
+              <td className="mb-vat-cell">{currencyFormatter.format(coutAlloueExonere)}</td>
+              <td className="mb-vat-cell">–</td>
+            </tr>
+          )}
+
+          {nbMarge > 0 && (
+            <tr>
+              <td className="mb-vat-regime-label">
+                {strings.mbTvaMarge}
+                <span className="mb-vat-hint"> ({nbMarge} lot{nbMarge > 1 ? 's' : ''})</span>
+              </td>
+              <td className="mb-vat-cell">{currencyFormatter.format(totalMarge)}</td>
+              <td className="mb-vat-cell">
+                <VatTooltip
+                  lines={[
+                    `Proportion terrain : ${terrainProportion.toFixed(1)}%`,
+                    `${strings.vatTooltipCout} alloué = ${currencyFormatter.format(totalCostForMarge)} × ${terrainProportion.toFixed(1)}% = ${currencyFormatter.format(coutAlloueMarge)}`,
+                  ]}
+                >
+                  {currencyFormatter.format(coutAlloueMarge)}
+                </VatTooltip>
+              </td>
+              <td className="mb-vat-cell">
+                <VatTooltip
+                  lines={[
+                    `${strings.vatTooltipMarge} = ${currencyFormatter.format(totalMarge)} − ${currencyFormatter.format(coutAlloueMarge)} = ${currencyFormatter.format(margeBrute)}`,
+                    `${strings.mbVatSurMarge} = ${currencyFormatter.format(margeBrute)} × 20/120 = ${currencyFormatter.format(tvaSurMarge)}`,
+                    `${strings.vatTooltipDeductible} = Travaux (${currencyFormatter.format(tvaTravaux)}) + Charges (${currencyFormatter.format(tvaAutresCharges)}) + Agence (${currencyFormatter.format(tvaAgence)}) = ${currencyFormatter.format(tvaDeductible)}`,
+                    `${strings.mbAResterPayer} = ${currencyFormatter.format(tvaSurMarge)} − ${currencyFormatter.format(tvaDeductible)} = ${formatResto(aRestoPayerMarge).text}`,
+                  ]}
+                >
+                  <div>{strings.mbVatSurMarge}: {currencyFormatter.format(tvaSurMarge)}</div>
+                  <div className={`mb-vat-resto ${formatResto(aRestoPayerMarge).isCredit ? 'mb-vat-credit' : ''}`}>
+                    {strings.mbAResterPayer}: {formatResto(aRestoPayerMarge).text}
+                  </div>
+                </VatTooltip>
+              </td>
+            </tr>
+          )}
+
+          {nbTotal > 0 && (
+            <tr>
+              <td className="mb-vat-regime-label">
+                {strings.mbTvaTotal}
+                <span className="mb-vat-hint"> ({nbTotal} lot{nbTotal > 1 ? 's' : ''})</span>
+              </td>
+              <td className="mb-vat-cell">{currencyFormatter.format(totalTvaTotal)}</td>
+              <td className="mb-vat-cell">{currencyFormatter.format(coutAlloueTotal)}</td>
+              <td className="mb-vat-cell">
+                <VatTooltip
+                  lines={[
+                    `TVA collectée = ${currencyFormatter.format(totalTvaTotal)} × 20/120 = ${currencyFormatter.format(tvaSurTotal)}`,
+                    `TVA déductible (travaux prorata) = ${currencyFormatter.format(tvaDeductibleTotal)}`,
+                    `${strings.mbReste} = ${currencyFormatter.format(tvaSurTotal)} − ${currencyFormatter.format(tvaDeductibleTotal)} = ${currencyFormatter.format(resteTvaTotal)}`,
+                  ]}
+                >
+                  <div>TVA: {currencyFormatter.format(tvaSurTotal)}</div>
+                  <div>{strings.mbReste}: {currencyFormatter.format(resteTvaTotal)}</div>
+                </VatTooltip>
+              </td>
+            </tr>
+          )}
+
           <tr>
-            <td className="mb-vat-regime-label">
-              {strings.mbVatMarge}
-              <span className="mb-vat-hint"> ({strings.mbVatMargeHint})</span>
-            </td>
+            <td className="mb-vat-regime-label">{strings.mbVatCharge}</td>
+            <td className="mb-vat-cell" colSpan={2}>–</td>
             <td className="mb-vat-cell">
               <VatTooltip
                 lines={[
-                  `${strings.vatTooltipMarge} = ${strings.vatTooltipRevente} − ${strings.vatTooltipCout} = ${currencyFormatter.format(totalPessimistic)} − ${currencyFormatter.format(totalCostForMarge)} = ${currencyFormatter.format(totalPessimistic - totalCostForMarge)}`,
-                  `${strings.mbVatSurMarge} = ${strings.vatTooltipMarge} × 20% / 1.20 = ${currencyFormatter.format(totalPessimistic - totalCostForMarge)} × 0.1667 = ${currencyFormatter.format(tvaSurMargePessimistic)}`,
-                  `${strings.vatTooltipDeductible} = ${strings.vatTooltipTravaux} (10%) + ${strings.vatTooltipAgence} (20%) = ${currencyFormatter.format(tvaTravaux)} + ${currencyFormatter.format(tvaAgence)} = ${currencyFormatter.format(tvaDeductible)}`,
-                  `${strings.mbAResterPayer} = ${strings.mbVatSurMarge} − ${strings.vatTooltipDeductible} = ${currencyFormatter.format(tvaSurMargePessimistic)} − ${currencyFormatter.format(tvaDeductible)} = ${formatResto(aRestoPayerPessimistic).text}`,
-                ]}
-              >
-                <div>
-                  {strings.mbVatSurMarge}:{' '}
-                  {currencyFormatter.format(tvaSurMargePessimistic)}
-                </div>
-                <div
-                  className={`mb-vat-resto ${formatResto(aRestoPayerPessimistic).isCredit ? 'mb-vat-credit' : ''}`}
-                >
-                  {strings.mbAResterPayer}:{' '}
-                  {formatResto(aRestoPayerPessimistic).text}
-                </div>
-              </VatTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <VatTooltip
-                lines={[
-                  `${strings.vatTooltipMarge} = ${strings.vatTooltipRevente} − ${strings.vatTooltipCout} = ${currencyFormatter.format(totalLogic)} − ${currencyFormatter.format(totalCostForMarge)} = ${currencyFormatter.format(totalLogic - totalCostForMarge)}`,
-                  `${strings.mbVatSurMarge} = ${strings.vatTooltipMarge} × 20% / 1.20 = ${currencyFormatter.format(totalLogic - totalCostForMarge)} × 0.1667 = ${currencyFormatter.format(tvaSurMargeLogic)}`,
-                  `${strings.vatTooltipDeductible} = ${strings.vatTooltipTravaux} (10%) + ${strings.vatTooltipAgence} (20%) = ${currencyFormatter.format(tvaTravaux)} + ${currencyFormatter.format(tvaAgence)} = ${currencyFormatter.format(tvaDeductible)}`,
-                  `${strings.mbAResterPayer} = ${strings.mbVatSurMarge} − ${strings.vatTooltipDeductible} = ${currencyFormatter.format(tvaSurMargeLogic)} − ${currencyFormatter.format(tvaDeductible)} = ${formatResto(aRestoPayerLogic).text}`,
-                ]}
-              >
-                <div>
-                  {strings.mbVatSurMarge}:{' '}
-                  {currencyFormatter.format(tvaSurMargeLogic)}
-                </div>
-                <div
-                  className={`mb-vat-resto ${formatResto(aRestoPayerLogic).isCredit ? 'mb-vat-credit' : ''}`}
-                >
-                  {strings.mbAResterPayer}: {formatResto(aRestoPayerLogic).text}
-                </div>
-              </VatTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <VatTooltip
-                lines={[
-                  `${strings.vatTooltipMarge} = ${strings.vatTooltipRevente} − ${strings.vatTooltipCout} = ${currencyFormatter.format(totalOptimistic)} − ${currencyFormatter.format(totalCostForMarge)} = ${currencyFormatter.format(totalOptimistic - totalCostForMarge)}`,
-                  `${strings.mbVatSurMarge} = ${strings.vatTooltipMarge} × 20% / 1.20 = ${currencyFormatter.format(totalOptimistic - totalCostForMarge)} × 0.1667 = ${currencyFormatter.format(tvaSurMargeOptimistic)}`,
-                  `${strings.vatTooltipDeductible} = ${strings.vatTooltipTravaux} (10%) + ${strings.vatTooltipAgence} (20%) = ${currencyFormatter.format(tvaTravaux)} + ${currencyFormatter.format(tvaAgence)} = ${currencyFormatter.format(tvaDeductible)}`,
-                  `${strings.mbAResterPayer} = ${strings.mbVatSurMarge} − ${strings.vatTooltipDeductible} = ${currencyFormatter.format(tvaSurMargeOptimistic)} − ${currencyFormatter.format(tvaDeductible)} = ${formatResto(aRestoPayerOptimistic).text}`,
-                ]}
-              >
-                <div>
-                  {strings.mbVatSurMarge}:{' '}
-                  {currencyFormatter.format(tvaSurMargeOptimistic)}
-                </div>
-                <div
-                  className={`mb-vat-resto ${formatResto(aRestoPayerOptimistic).isCredit ? 'mb-vat-credit' : ''}`}
-                >
-                  {strings.mbAResterPayer}:{' '}
-                  {formatResto(aRestoPayerOptimistic).text}
-                </div>
-              </VatTooltip>
-            </td>
-          </tr>
-          <tr>
-            <td className="mb-vat-regime-label">
-              {strings.mbVatCharge}
-              <span className="mb-vat-hint"> ({strings.mbVatChargeHint})</span>
-            </td>
-            <td colSpan={3} className="mb-vat-cell mb-vat-cell-same">
-              <VatTooltip
-                lines={[
-                  `TVA ${strings.vatTooltipTravaux} = ${currencyFormatter.format(renovationBudget)} × 10% / 1.10 = ${currencyFormatter.format(tvaTravaux)}`,
-                  `TVA ${strings.vatTooltipAgence} = ${currencyFormatter.format(agencyFees)} × 20% / 1.20 = ${currencyFormatter.format(tvaAgence)}`,
-                  `${strings.vatTooltipDeductible} = ${currencyFormatter.format(tvaTravaux)} + ${currencyFormatter.format(tvaAgence)} = ${currencyFormatter.format(tvaDeductible)}`,
+                  `TVA ${strings.vatTooltipTravaux} (10%) = ${currencyFormatter.format(tvaTravaux)}`,
+                  `TVA charges (20%) = ${currencyFormatter.format(tvaAutresCharges)}`,
+                  `TVA ${strings.vatTooltipAgence} (20%) = ${currencyFormatter.format(tvaAgence)}`,
+                  `Total = ${currencyFormatter.format(tvaDeductible)}`,
                 ]}
               >
                 {currencyFormatter.format(tvaDeductible)}
               </VatTooltip>
             </td>
           </tr>
-          <tr>
-            <td className="mb-vat-regime-label">
-              {strings.mbVatTotal}
-              <span className="mb-vat-hint"> ({strings.mbVatTotalHint})</span>
-            </td>
-            <td className="mb-vat-cell">
-              <VatTooltip
-                lines={[
-                  `${strings.mbVatSurTotal} = ${strings.vatTooltipRevente} × 20% / 1.20 = ${currencyFormatter.format(totalPessimistic)} × 0.1667 = ${currencyFormatter.format(tvaSurTotalPessimistic)}`,
-                  `${strings.vatTooltipDeductible} = ${strings.vatTooltipTravaux} × 10% / 1.10 = ${currencyFormatter.format(renovationBudget)} × 0.0909 = ${currencyFormatter.format(tvaDeductibleTotal)}`,
-                  `${strings.mbReste} = ${strings.mbVatSurTotal} − ${strings.vatTooltipDeductible} = ${currencyFormatter.format(tvaSurTotalPessimistic)} − ${currencyFormatter.format(tvaDeductibleTotal)} = ${currencyFormatter.format(restePessimistic)}`,
-                ]}
-              >
-                {currencyFormatter.format(tvaSurTotalPessimistic)} →{' '}
-                {strings.mbReste} {currencyFormatter.format(restePessimistic)}
-              </VatTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <VatTooltip
-                lines={[
-                  `${strings.mbVatSurTotal} = ${strings.vatTooltipRevente} × 20% / 1.20 = ${currencyFormatter.format(totalLogic)} × 0.1667 = ${currencyFormatter.format(tvaSurTotalLogic)}`,
-                  `${strings.vatTooltipDeductible} = ${strings.vatTooltipTravaux} × 10% / 1.10 = ${currencyFormatter.format(renovationBudget)} × 0.0909 = ${currencyFormatter.format(tvaDeductibleTotal)}`,
-                  `${strings.mbReste} = ${strings.mbVatSurTotal} − ${strings.vatTooltipDeductible} = ${currencyFormatter.format(tvaSurTotalLogic)} − ${currencyFormatter.format(tvaDeductibleTotal)} = ${currencyFormatter.format(resteLogic)}`,
-                ]}
-              >
-                {currencyFormatter.format(tvaSurTotalLogic)} → {strings.mbReste}{' '}
-                {currencyFormatter.format(resteLogic)}
-              </VatTooltip>
-            </td>
-            <td className="mb-vat-cell">
-              <VatTooltip
-                lines={[
-                  `${strings.mbVatSurTotal} = ${strings.vatTooltipRevente} × 20% / 1.20 = ${currencyFormatter.format(totalOptimistic)} × 0.1667 = ${currencyFormatter.format(tvaSurTotalOptimistic)}`,
-                  `${strings.vatTooltipDeductible} = ${strings.vatTooltipTravaux} × 10% / 1.10 = ${currencyFormatter.format(renovationBudget)} × 0.0909 = ${currencyFormatter.format(tvaDeductibleTotal)}`,
-                  `${strings.mbReste} = ${strings.mbVatSurTotal} − ${strings.vatTooltipDeductible} = ${currencyFormatter.format(tvaSurTotalOptimistic)} − ${currencyFormatter.format(tvaDeductibleTotal)} = ${currencyFormatter.format(resteOptimistic)}`,
-                ]}
-              >
-                {currencyFormatter.format(tvaSurTotalOptimistic)} →{' '}
-                {strings.mbReste} {currencyFormatter.format(resteOptimistic)}
-              </VatTooltip>
-            </td>
+
+          <tr className="mb-vat-total-row">
+            <td className="mb-vat-regime-label"><strong>{strings.mbTotal}</strong></td>
+            <td className="mb-vat-cell"><strong>{currencyFormatter.format(totalRevente)}</strong></td>
+            <td className="mb-vat-cell"><strong>{currencyFormatter.format(totalCostForMarge)}</strong></td>
+            <td className="mb-vat-cell"><strong>{currencyFormatter.format(totalTvaAPayer)}</strong></td>
           </tr>
         </tbody>
       </table>

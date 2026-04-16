@@ -52,12 +52,12 @@ function calculatePreviewMetrics(
     const flipData = data as MarchandDeBiensValues
     try {
       const totalResale = flipData.apartments.reduce((sum, apt) => {
-        const resale = toNumber(apt.resaleLogic) || 0
+        const resale = toNumber(apt.resalePrice) || 0
         return sum + resale
       }, 0)
-      const totalCost = toNumber(flipData.purchasePrice) + 
-                       toNumber(flipData.agencyFees) + 
-                       toNumber(flipData.renovationBudget)
+      const totalCost = toNumber(flipData.purchasePrice) +
+                       toNumber(flipData.agencyFees) +
+                       toNumber((flipData as Record<string, unknown>).travauxHT as string ?? '0')
       const margin = totalCost > 0 ? ((totalResale - totalCost) / totalCost) * 100 : 0
       const totalProfit = totalResale - totalCost
       return {

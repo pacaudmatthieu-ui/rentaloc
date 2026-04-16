@@ -107,14 +107,14 @@ export function ComparisonPanelPage({ locale, strings, onOpenSimulation }: Compa
         const flipData = sim.data as MarchandDeBiensValues
         try {
           const totalResale = flipData.apartments.reduce((sum, apt) => {
-            const resale = parseFloat(apt.resaleLogic) || 0
+            const resale = parseFloat(apt.resalePrice) || 0
             return sum + resale
           }, 0)
           const purchasePrice = parseFloat(flipData.purchasePrice) || 0
           const notaryFees = purchasePrice * 0.03
           const agencyFees = parseFloat(flipData.agencyFees) || 0
-          const renovationBudget = parseFloat(flipData.renovationBudget) || 0
-          const amountOfOperation = purchasePrice + notaryFees + agencyFees + renovationBudget
+          const travauxHT = parseFloat(flipData.travauxHT ?? '0') || 0
+          const amountOfOperation = purchasePrice + notaryFees + agencyFees + travauxHT
           const apportPercent = parseFloat(flipData.apportPercent) || 0
           const apportAmount = amountOfOperation * (apportPercent / 100)
           const financementAmount = amountOfOperation - apportAmount
@@ -620,7 +620,7 @@ export function ComparisonPanelPage({ locale, strings, onOpenSimulation }: Compa
                     )}
                     {sim.calculated.totalResale !== undefined && (
                       <ResultTile
-                        label={strings.mbReventeLogic || 'Revente logique'}
+                        label={strings.mbResalePrice || 'Prix de revente'}
                         value={currencyFormatter.format(sim.calculated.totalResale)}
                       />
                     )}

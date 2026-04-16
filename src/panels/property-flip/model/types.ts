@@ -1,42 +1,107 @@
-export type ApartmentItem = {
+export const LOT_TYPES = [
+  'appartement-t1',
+  'appartement-t2',
+  'appartement-t3',
+  'appartement-t4',
+  'appartement-t5',
+  'maison',
+  'terrain',
+  'immeuble',
+  'local-commercial',
+  'parking',
+  'cave',
+  'garage',
+  'bureau',
+  'autre',
+] as const
+
+export type LotType = (typeof LOT_TYPES)[number]
+
+export type TvaRegime = 'exonere' | 'marge' | 'total'
+
+export type LotItem = {
   id: string
-  type: 'T1' | 'T2' | 'T3' | 'T4' | 'T5'
+  type: LotType
+  tvaRegime: TvaRegime
   superficie: string
-  resalePessimistic: string
-  resaleLogic: string
-  resaleOptimistic: string
+  resalePrice: string
+}
+
+/** @deprecated Use LotItem instead */
+export type ApartmentItem = LotItem
+
+export type ExtraChargeItem = {
+  id: string
+  label: string
+  amount: string
 }
 
 export type MarchandDeBiensValues = {
   purchasePrice: string
   agencyFees: string
-  renovationBudget: string
-  apartments: ApartmentItem[]
+  /** Frais de notaire. Vide = auto 3% du prix d'achat */
+  notaryFeesOverride: string
+  apartments: LotItem[]
+  /** Proportion du prix d'achat attribuée aux lots TVA marge (%).
+   *  Vide = auto-calculé au prorata des prix de vente. */
+  terrainProportion: string
+  // Charges HT
+  huissierFees: string
+  geometreFees: string
+  architecteFees: string
+  fraisDivers: string
+  travauxHT: string
+  /** Détail travaux par taux TVA (si déplié) */
+  travaux55: string
+  travaux10: string
+  travaux20: string
+  travauxDetailOpen: boolean
+  /** Lignes de charges supplémentaires personnalisables */
+  extraCharges: ExtraChargeItem[]
   apportPercent: string
   ratePerYear: string
   durationMonths: string
 }
 
-export function createDefaultApartment(index: number): ApartmentItem {
+export function createDefaultLot(index: number): LotItem {
+  const defaults: { type: LotType; superficie: string }[] = [
+    { type: 'appartement-t2', superficie: '45' },
+    { type: 'appartement-t3', superficie: '65' },
+    { type: 'maison', superficie: '95' },
+  ]
+  const d = defaults[index % defaults.length]
   return {
-    id: `apt-${index}-${Math.random().toString(36).slice(2, 8)}`,
-    type: index === 0 ? 'T1' : index === 1 ? 'T2' : 'T3',
-    superficie: String(25 + index * 10),
-    resalePessimistic: '',
-    resaleLogic: '',
-    resaleOptimistic: '',
+    id: `lot-${index}-${Math.random().toString(36).slice(2, 8)}`,
+    type: d.type,
+    tvaRegime: 'marge',
+    superficie: d.superficie,
+    resalePrice: '',
   }
 }
+
+/** @deprecated Use createDefaultLot instead */
+export const createDefaultApartment = createDefaultLot
 
 export const MB_INITIAL: MarchandDeBiensValues = {
   purchasePrice: '150000',
   agencyFees: '6000',
-  renovationBudget: '25000',
+  notaryFeesOverride: '',
+  terrainProportion: '',
   apartments: [
-    createDefaultApartment(0),
-    createDefaultApartment(1),
-    createDefaultApartment(2),
+    createDefaultLot(0),
+    createDefaultLot(1),
+    createDefaultLot(2),
   ],
+  huissierFees: '',
+  geometreFees: '',
+  architecteFees: '',
+  fraisDivers: '',
+  travauxHT: '25000',
+  travaux55: '',
+  travaux10: '',
+  travaux20: '',
+  travauxDetailOpen: false,
+  extraCharges: [],
   apportPercent: '20',
   ratePerYear: '8',
   durationMonths: '12',

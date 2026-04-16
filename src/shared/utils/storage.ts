@@ -63,10 +63,29 @@ export function loadPropertyFlippingSimulation<T>(): T | null {
     if (!serialized) {
       return null
     }
-    return JSON.parse(serialized) as T
+    const parsed = JSON.parse(serialized) as Record<string, unknown>
+    // Migration: old format had renovationBudget, new format has travauxHT + separate charges
+    if ('renovationBudget' in parsed && !('travauxHT' in parsed)) {
+      parsed.travauxHT = parsed.renovationBudget
+      delete parsed.renovationBudget
+      parsed.notaryFeesOverride = parsed.notaryFeesOverride ?? ''
+      parsed.huissierFees = parsed.huissierFees ?? ''
+      parsed.geometreFees = parsed.geometreFees ?? ''
+      parsed.architecteFees = parsed.architecteFees ?? ''
+      parsed.terrainProportion = parsed.terrainProportion ?? ''
+      // Migrate apartments: old resalePessimistic/Logic/Optimistic → resalePrice
+      if (Array.isArray(parsed.apartments)) {
+        parsed.apartments = (parsed.apartments as Record<string, unknown>[]).map((a) => ({
+          ...a,
+          resalePrice: a.resalePrice ?? a.resaleLogic ?? a.resalePessimistic ?? '',
+          tvaRegime: a.tvaRegime ?? 'marge',
+        }))
+      }
+      localStorage.setItem(STORAGE_KEYS.PROPERTY_FLIPPING_SIMULATION, JSON.stringify(parsed))
+    }
+    return parsed as T
   } catch (error) {
     console.error('Error loading property flipping simulation from localStorage:', error)
-    // Return null if data is corrupted or invalid
     return null
   }
 }

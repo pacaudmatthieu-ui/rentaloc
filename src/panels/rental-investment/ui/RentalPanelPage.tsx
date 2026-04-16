@@ -199,7 +199,18 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         content: (
           <div className="form-card-body">
             <FormField label={strings.purchasePrice} value={values.purchasePrice} onChange={handleChange('purchasePrice')} />
-            <FormFieldReadOnly label={strings.notaryFees} value={currencyFormatter.format(toNumber(values.purchasePrice) * (values.reducedNotaryFees ? 0.03 : 0.08))} />
+            <div className="form-field-with-hint">
+              <FormField
+                label={strings.notaryFees}
+                value={values.notaryFeesOverride ?? ''}
+                onChange={(e) => setValues((prev) => ({ ...prev, notaryFeesOverride: e.target.value }))}
+              />
+              <span className="form-field-hint">
+                {values.notaryFeesOverride
+                  ? strings.mbNotaryFeesHint
+                  : `auto : ${currencyFormatter.format(toNumber(values.purchasePrice) * (values.reducedNotaryFees ? 0.03 : 0.08))}`}
+              </span>
+            </div>
             <label className="form-field form-field-checkbox">
               <input type="checkbox" checked={!!values.reducedNotaryFees} onChange={handleReducedNotaryFeesChange} />
               <span>{strings.reducedNotaryFees}</span>

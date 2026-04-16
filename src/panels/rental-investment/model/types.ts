@@ -37,6 +37,8 @@ export type SimulationFormValues = {
   sciIsWithdrawFlatTax?: boolean
   /** Frais de notaire réduits (engagement de revente) : 3 % au lieu de 8 % */
   reducedNotaryFees?: boolean
+  /** Override frais de notaire (vide = auto) */
+  notaryFeesOverride?: string
 }
 
 export type SimulationResults = {

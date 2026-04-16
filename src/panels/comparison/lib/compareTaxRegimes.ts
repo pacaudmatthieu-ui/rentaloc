@@ -80,15 +80,15 @@ function calculatePropertyFlippingTaxes(
   flipData: MarchandDeBiensValues,
 ): { totalTax: number; vatTax: number; corporateTax: number; flatTax: number } {
   const totalResale = flipData.apartments.reduce((sum, apt) => {
-    const resale = parseFloat(apt.resaleLogic) || 0
+    const resale = parseFloat(apt.resalePrice) || 0
     return sum + resale
   }, 0)
   
   const purchasePrice = parseFloat(flipData.purchasePrice) || 0
   const notaryFees = purchasePrice * 0.03
   const agencyFees = parseFloat(flipData.agencyFees) || 0
-  const renovationBudget = parseFloat(flipData.renovationBudget) || 0
-  const amountOfOperation = purchasePrice + notaryFees + agencyFees + renovationBudget
+  const travauxHT = parseFloat(flipData.travauxHT ?? '0') || 0
+  const amountOfOperation = purchasePrice + notaryFees + agencyFees + travauxHT
   const apportPercent = parseFloat(flipData.apportPercent) || 0
   const apportAmount = amountOfOperation * (apportPercent / 100)
   const financementAmount = amountOfOperation - apportAmount
@@ -101,7 +101,7 @@ function calculatePropertyFlippingTaxes(
   const totalCostForMarge = amountOfOperation + financialCost
 
   // Calculate VAT (using marge regime as default)
-  const tvaDeductible = computeTvaDeductible(renovationBudget, agencyFees)
+  const tvaDeductible = computeTvaDeductible(travauxHT, agencyFees)
   const tvaSurMarge = computeTvaSurMarge(totalResale, totalCostForMarge)
   const aRestoPayer = computeAResterPayer(tvaSurMarge, tvaDeductible)
   const vatTax = Math.max(0, aRestoPayer)
