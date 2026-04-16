@@ -4,6 +4,7 @@ import { toNumber } from '../../../shared/lib/format'
 import { FormField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
+import { SavedSimulationsPanel } from '../../../shared/ui/SavedSimulationsPanel'
 import { INITIAL_VALUES } from '../model/types'
 import type { SimulationFormValues } from '../model/types'
 import { validateInvestissementData } from '../model/validation'
@@ -544,6 +545,14 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
   return (
     <>
       <main className="app-main app-main-sortable" ref={pdfRef}>
+        <SavedSimulationsPanel
+          type="rental"
+          currentData={values}
+          onLoad={(data) => {
+            setValues({ ...INITIAL_VALUES, ...(data as SimulationFormValues) })
+          }}
+          strings={strings}
+        />
         <ExportImportPanel
           section="investissement_locatif"
           data={values}

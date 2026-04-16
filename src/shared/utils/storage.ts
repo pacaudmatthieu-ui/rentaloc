@@ -206,3 +206,88 @@ export function loadCurrentSimulationComparisonId(): string | null {
     return null
   }
 }
+
+// ---- Named saves system ----
+
+export type SavedSimulationMeta = {
+  id: string
+  name: string
+  type: 'rental' | 'property-flipping'
+  createdAt: string
+  updatedAt: string
+}
+
+const SAVED_INDEX_KEY = 'rentaloc_saved_index'
+
+function getSavedIndex(): SavedSimulationMeta[] {
+  try {
+    const raw = localStorage.getItem(SAVED_INDEX_KEY)
+    return raw ? JSON.parse(raw) as SavedSimulationMeta[] : []
+  } catch {
+    return []
+  }
+}
+
+function setSavedIndex(index: SavedSimulationMeta[]): void {
+  localStorage.setItem(SAVED_INDEX_KEY, JSON.stringify(index))
+}
+
+export function listSavedSimulations(type?: 'rental' | 'property-flipping'): SavedSimulationMeta[] {
+  const all = getSavedIndex()
+  return type ? all.filter((s) => s.type === type) : all
+}
+
+export function saveNamedSimulation(
+  name: string,
+  type: 'rental' | 'property-flipping',
+  data: unknown,
+  existingId?: string,
+): SavedSimulationMeta {
+  const index = getSavedIndex()
+  const now = new Date().toISOString()
+
+  if (existingId) {
+    // Update existing
+    const entry = index.find((s) => s.id === existingId)
+    if (entry) {
+      entry.name = name
+      entry.updatedAt = now
+      localStorage.setItem(`rentaloc_save_${existingId}`, JSON.stringify(data))
+      setSavedIndex(index)
+      return entry
+    }
+  }
+
+  // Create new
+  const id = `save-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+  const meta: SavedSimulationMeta = { id, name, type, createdAt: now, updatedAt: now }
+  index.unshift(meta)
+  setSavedIndex(index)
+  localStorage.setItem(`rentaloc_save_${id}`, JSON.stringify(data))
+  return meta
+}
+
+export function loadNamedSimulation<T>(id: string): T | null {
+  try {
+    const raw = localStorage.getItem(`rentaloc_save_${id}`)
+    return raw ? JSON.parse(raw) as T : null
+  } catch {
+    return null
+  }
+}
+
+export function deleteNamedSimulation(id: string): void {
+  const index = getSavedIndex().filter((s) => s.id !== id)
+  setSavedIndex(index)
+  localStorage.removeItem(`rentaloc_save_${id}`)
+}
+
+export function renameNamedSimulation(id: string, newName: string): void {
+  const index = getSavedIndex()
+  const entry = index.find((s) => s.id === id)
+  if (entry) {
+    entry.name = newName
+    entry.updatedAt = new Date().toISOString()
+    setSavedIndex(index)
+  }
+}

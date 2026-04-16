@@ -10,6 +10,7 @@ import { savePropertyFlippingSimulation, loadCurrentSimulationComparisonId } fro
 import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import { MargeVatTable } from './sections/MargeVatTable'
 import { MbOperationResultTable, MbFiscalResultTable } from './sections/MbFiscalResultTable'
+import { SavedSimulationsPanel } from '../../../shared/ui/SavedSimulationsPanel'
 
 /** Structure par défaut : Ligne 1: Acquisition | Appartements | Financement | Ligne 2: Revente | Ligne 3: Fiscalité | Ligne 4: Résultat */
 const FLIP_DEFAULT_ORDER = [
@@ -598,6 +599,15 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
 
   return (
     <main className="app-main marchand-de-biens-main app-main-sortable" ref={pdfRef}>
+      <SavedSimulationsPanel
+        type="property-flipping"
+        currentData={values}
+        onLoad={(data) => {
+          const loaded = data as MarchandDeBiensValues
+          setValues({ ...MB_INITIAL, ...loaded })
+        }}
+        strings={strings}
+      />
       <ExportImportPanel
         section="marchand_de_biens"
         data={values}

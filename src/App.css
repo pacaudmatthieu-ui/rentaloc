@@ -3,11 +3,11 @@
   margin: 2.5rem auto;
   padding: 1.5rem 1.75rem 2.5rem;
   border-radius: 1.5rem;
-  background: radial-gradient(circle at top left, #111827, #020617);
+  background: radial-gradient(circle at top left, #132a1f, #0c1a14);
   color: #f9fafb;
   box-shadow:
-    0 24px 60px rgba(15, 23, 42, 0.55),
-    0 0 0 1px rgba(148, 163, 184, 0.1);
+    0 24px 60px rgba(12, 26, 20, 0.55),
+    0 0 0 1px rgba(110, 160, 130, 0.1);
 }
 
 .app-header {
@@ -40,8 +40,8 @@
 
 .language-select {
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(110, 160, 130, 0.7);
+  background: rgba(12, 26, 20, 0.8);
   padding: 0.4rem 0.9rem;
   color: #e5e7eb;
   font-size: 0.9rem;
@@ -53,12 +53,12 @@
 }
 
 .language-select:hover {
-  border-color: #38bdf8;
+  border-color: #34d399;
 }
 
 .language-select:focus-visible {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.7);
+  border-color: #34d399;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.7);
 }
 
 .app-main {
@@ -84,8 +84,8 @@
 /* Collapsible & Sortable sections */
 .collapsible-section {
   border-radius: 1.1rem;
-  background: radial-gradient(circle at top left, #020617, #020617);
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: radial-gradient(circle at top left, #081510, #081510);
+  border: 1px solid rgba(110, 160, 130, 0.3);
   overflow: hidden;
 }
 
@@ -100,12 +100,12 @@
   gap: 0.5rem;
   padding: 0.85rem 1rem;
   cursor: pointer;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(12, 26, 20, 0.5);
   transition: background 0.15s ease;
 }
 
 .collapsible-section-header:hover {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(12, 26, 20, 0.8);
 }
 
 .collapsible-section-arrow {
@@ -126,7 +126,7 @@
 }
 
 .collapsible-section-arrow:hover {
-  color: #38bdf8;
+  color: #34d399;
 }
 
 .collapsible-arrow {
@@ -156,7 +156,7 @@
 
 .collapsible-section-drag-handle:hover {
   color: #94a3b8;
-  background: rgba(148, 163, 184, 0.15);
+  background: rgba(110, 160, 130, 0.15);
 }
 
 .collapsible-section-drag-handle:active {
@@ -210,14 +210,14 @@
 }
 
 .sortable-section-item.drag-over {
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.6);
   border-radius: 1.1rem;
 }
 
 .form-card {
   border-radius: 1.1rem;
-  background: radial-gradient(circle at top left, #020617, #020617);
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: radial-gradient(circle at top left, #081510, #081510);
+  border: 1px solid rgba(110, 160, 130, 0.3);
   padding: 1rem 1.1rem 1.2rem;
 }
 
@@ -252,7 +252,7 @@
 }
 
 .form-field-checkbox input[type='checkbox'] {
-  accent-color: #38bdf8;
+  accent-color: #34d399;
   width: 1rem;
   height: 1rem;
 }
@@ -263,8 +263,8 @@
 
 .field-input {
   border-radius: 0.7rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.6);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.5rem 0.7rem;
   color: #f9fafb;
   font-size: 0.85rem;
@@ -280,16 +280,16 @@
 }
 
 .field-input:focus-visible {
-  border-color: #38bdf8;
+  border-color: #34d399;
   box-shadow:
-    0 0 0 1px rgba(56, 189, 248, 0.7),
-    0 0 20px rgba(56, 189, 248, 0.2);
-  background: #020617;
+    0 0 0 1px rgba(52, 211, 153, 0.7),
+    0 0 20px rgba(52, 211, 153, 0.2);
+  background: #081510;
 }
 
 .field-input-readonly {
   cursor: default;
-  color: #bfdbfe;
+  color: #a7f3d0;
 }
 
 .results-section {
@@ -300,12 +300,12 @@
   position: sticky;
   top: 1.5rem;
   border-radius: 1.25rem;
-  background: radial-gradient(circle at top, #0f172a, #020617);
+  background: radial-gradient(circle at top, #0c1a14, #081510);
   border: 1px solid rgba(191, 219, 254, 0.3);
   padding: 1.3rem 1.25rem 1.4rem;
   box-shadow:
-    0 20px 50px rgba(15, 23, 42, 0.8),
-    0 0 0 1px rgba(148, 163, 184, 0.2);
+    0 20px 50px rgba(12, 26, 20, 0.8),
+    0 0 0 1px rgba(110, 160, 130, 0.2);
 }
 
 .results-card h2 {
@@ -329,8 +329,8 @@
 .result-tile {
   border-radius: 0.9rem;
   padding: 0.7rem 0.75rem;
-  background: radial-gradient(circle at top left, #020617, #020617);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: radial-gradient(circle at top left, #081510, #081510);
+  border: 1px solid rgba(110, 160, 130, 0.4);
 }
 
 .result-tile-positive {
@@ -364,8 +364,8 @@
 
 .section-tab {
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(12, 26, 20, 0.8);
   color: #e5e7eb;
   padding: 0.4rem 1rem;
   font-size: 0.85rem;
@@ -374,13 +374,13 @@
 }
 
 .section-tab:hover {
-  border-color: #38bdf8;
+  border-color: #34d399;
 }
 
 .section-tab-active {
-  border-color: #38bdf8;
-  background: rgba(56, 189, 248, 0.15);
-  color: #7dd3fc;
+  border-color: #34d399;
+  background: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
 }
 
 .marchand-de-biens-main {
@@ -395,9 +395,9 @@
 
 .mb-add-apartment-btn {
   border-radius: 999px;
-  border: 1px solid rgba(56, 189, 248, 0.7);
-  background: rgba(56, 189, 248, 0.15);
-  color: #7dd3fc;
+  border: 1px solid rgba(52, 211, 153, 0.7);
+  background: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
   padding: 0.4rem 0.9rem;
   font-size: 0.85rem;
   cursor: pointer;
@@ -405,7 +405,7 @@
 }
 
 .mb-add-apartment-btn:hover {
-  background: rgba(56, 189, 248, 0.25);
+  background: rgba(52, 211, 153, 0.25);
 }
 
 .mb-no-apartments {
@@ -436,7 +436,7 @@
 .mb-travaux-detail-btn {
   background: none;
   border: none;
-  color: #38bdf8;
+  color: #34d399;
   font-size: 0.75rem;
   cursor: pointer;
   padding: 0.15rem 0.25rem;
@@ -445,17 +445,17 @@
 }
 
 .mb-travaux-detail-btn:hover {
-  color: #7dd3fc;
+  color: #6ee7b7;
 }
 
 .mb-travaux-detail {
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  border: 1px solid rgba(52, 211, 153, 0.25);
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(12, 26, 20, 0.4);
 }
 
 .mb-travaux-detail-header {
@@ -479,8 +479,8 @@
 .mb-extra-charge-label {
   flex: 1;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.4rem 0.6rem;
   color: #e5e7eb;
   font-size: 0.85rem;
@@ -493,14 +493,14 @@
 
 .mb-extra-charge-label:focus {
   outline: none;
-  border-color: #38bdf8;
+  border-color: #34d399;
 }
 
 .mb-extra-charge-amount {
   width: 7rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.4rem 0.6rem;
   color: #e5e7eb;
   font-size: 0.85rem;
@@ -509,12 +509,12 @@
 
 .mb-extra-charge-amount:focus {
   outline: none;
-  border-color: #38bdf8;
+  border-color: #34d399;
 }
 
 .mb-add-charge-btn {
   background: none;
-  border: 1px dashed rgba(148, 163, 184, 0.4);
+  border: 1px dashed rgba(110, 160, 130, 0.4);
   border-radius: 0.5rem;
   color: #9ca3af;
   font-size: 0.8rem;
@@ -525,8 +525,8 @@
 }
 
 .mb-add-charge-btn:hover {
-  border-color: #38bdf8;
-  color: #38bdf8;
+  border-color: #34d399;
+  color: #34d399;
 }
 
 /* Lot table (unified lots + resale) */
@@ -543,7 +543,7 @@
   font-size: 0.7rem;
   color: #9ca3af;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  border-bottom: 1px solid rgba(110, 160, 130, 0.3);
 }
 
 .mb-lot-row {
@@ -555,8 +555,8 @@
 
 .mb-lot-select {
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.35rem 0.5rem;
   color: #e5e7eb;
   font-size: 0.8rem;
@@ -572,8 +572,8 @@
 .mb-lot-superficie input {
   width: 3.5rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.35rem 0.4rem;
   color: #e5e7eb;
   font-size: 0.8rem;
@@ -587,8 +587,8 @@
 
 .mb-lot-price {
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.35rem 0.5rem;
   color: #e5e7eb;
   font-size: 0.8rem;
@@ -600,12 +600,12 @@
 .mb-lot-select:focus,
 .mb-lot-superficie input:focus {
   outline: none;
-  border-color: #38bdf8;
+  border-color: #34d399;
 }
 
 .mb-lot-ppm {
   font-size: 0.75rem;
-  color: #bfdbfe;
+  color: #a7f3d0;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -613,7 +613,7 @@
 .mb-lot-summary {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.3);
+  border-top: 1px solid rgba(110, 160, 130, 0.3);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -624,6 +624,162 @@
   justify-content: space-between;
   font-size: 0.85rem;
   color: #d1d5db;
+}
+
+/* Saved simulations panel */
+.saved-simulations-panel {
+  margin-bottom: 1rem;
+}
+
+.saved-sim-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.saved-sim-btn {
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
+  color: #e5e7eb;
+}
+
+.saved-sim-btn:hover {
+  border-color: #34d399;
+  color: #34d399;
+}
+
+.saved-sim-btn-save {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: #34d399;
+  color: #34d399;
+}
+
+.saved-sim-btn-confirm {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: #34d399;
+  color: #34d399;
+}
+
+.saved-sim-btn-cancel {
+  color: #9ca3af;
+}
+
+.saved-sim-feedback {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #34d399;
+  padding: 0.3rem 0.5rem;
+  background: rgba(52, 211, 153, 0.1);
+  border-radius: 0.4rem;
+  display: inline-block;
+}
+
+.saved-sim-save-form {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  align-items: center;
+}
+
+.saved-sim-name-input {
+  flex: 1;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(110, 160, 130, 0.6);
+  background: rgba(20, 40, 30, 0.95);
+  padding: 0.4rem 0.6rem;
+  color: #f9fafb;
+  font-size: 0.85rem;
+}
+
+.saved-sim-name-input:focus {
+  outline: none;
+  border-color: #34d399;
+}
+
+.saved-sim-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.saved-sim-empty {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0.25rem 0;
+}
+
+.saved-sim-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(110, 160, 130, 0.3);
+  background: rgba(20, 40, 30, 0.6);
+  gap: 0.5rem;
+}
+
+.saved-sim-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.saved-sim-name {
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-sim-date {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.saved-sim-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.saved-sim-action {
+  border: none;
+  background: none;
+  color: #a7f3d0;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.3rem;
+}
+
+.saved-sim-action:hover {
+  background: rgba(52, 211, 153, 0.15);
+}
+
+.saved-sim-action-delete {
+  color: #fca5a5;
+}
+
+.saved-sim-action-delete:hover {
+  background: rgba(252, 165, 165, 0.15);
+}
+
+.saved-sim-rename-form {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  width: 100%;
 }
 
 .mb-key-metrics {
@@ -658,8 +814,8 @@
 .mb-apartment-type {
   min-width: 8rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.4rem 0.6rem;
   color: #e5e7eb;
   font-size: 0.85rem;
@@ -668,8 +824,8 @@
 .mb-apartment-tva {
   min-width: 7rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.4rem 0.6rem;
   color: #e5e7eb;
   font-size: 0.85rem;
@@ -678,8 +834,8 @@
 .mb-apartment-superficie {
   width: 5rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.4rem 0.6rem;
   color: #e5e7eb;
   font-size: 0.85rem;
@@ -713,8 +869,8 @@
 
 .mb-revente-card {
   border-radius: 1rem;
-  background: radial-gradient(circle at top left, #020617, #020617);
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: radial-gradient(circle at top left, #081510, #081510);
+  border: 1px solid rgba(110, 160, 130, 0.3);
   padding: 1rem 1.1rem;
 }
 
@@ -737,7 +893,7 @@
   font-size: 0.7rem;
   color: #9ca3af;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  border-bottom: 1px solid rgba(110, 160, 130, 0.3);
 }
 
 .mb-revente-row {
@@ -762,13 +918,13 @@
 
 .mb-revente-cell-price {
   font-variant-numeric: tabular-nums;
-  color: #bfdbfe;
+  color: #a7f3d0;
 }
 
 .mb-revente-input {
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   padding: 0.35rem 0.5rem;
   color: #e5e7eb;
   font-size: 0.8rem;
@@ -776,25 +932,25 @@
 
 .mb-revente-input:focus {
   outline: none;
-  border-color: #38bdf8;
+  border-color: #34d399;
 }
 
 .mb-revente-total-row {
   font-weight: 600;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  border-top: 1px solid rgba(110, 160, 130, 0.4);
   margin-top: 0.25rem;
 }
 
 .mb-revente-cell-total {
-  color: #bfdbfe;
+  color: #a7f3d0;
   font-variant-numeric: tabular-nums;
 }
 
 .mb-revente-summary {
   margin-top: 0.75rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  border-top: 1px solid rgba(110, 160, 130, 0.4);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -809,7 +965,7 @@
 
 .mb-revente-summary-row span:last-child {
   font-variant-numeric: tabular-nums;
-  color: #bfdbfe;
+  color: #a7f3d0;
 }
 
 .mb-revente-positive {
@@ -833,7 +989,7 @@
 .mb-taxation-section {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  border-top: 1px solid rgba(110, 160, 130, 0.4);
 }
 
 .mb-fiscal-result-table {
@@ -869,7 +1025,7 @@
 }
 
 .mb-fiscal-regime-option input {
-  accent-color: #38bdf8;
+  accent-color: #34d399;
 }
 
 .mb-fiscal-regime-option:has(input:checked) span {
@@ -890,8 +1046,8 @@
 
 .mb-taxation-table {
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(12, 26, 20, 0.95);
+  border: 1px solid rgba(110, 160, 130, 0.4);
   overflow: visible;
 }
 
@@ -905,7 +1061,7 @@
 .mb-vat-table td {
   padding: 0.5rem 0.75rem;
   text-align: right;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: 1px solid rgba(110, 160, 130, 0.25);
 }
 
 .mb-vat-table th:first-child,
@@ -930,7 +1086,7 @@
 
 .mb-vat-cell {
   font-variant-numeric: tabular-nums;
-  color: #bfdbfe;
+  color: #a7f3d0;
 }
 
 .mb-vat-cell-same {
@@ -960,8 +1116,8 @@
   z-index: 9999;
   bottom: calc(100% + 0.5rem);
   right: 0;
-  background: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #0c1a14;
+  border: 1px solid rgba(110, 160, 130, 0.5);
   border-radius: 8px;
   padding: 0.85rem 1.1rem;
   font-size: 0.8rem;
@@ -986,7 +1142,7 @@
 .chart-section {
   margin-top: 2rem;
   padding-top: 1.75rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  border-top: 1px solid rgba(110, 160, 130, 0.4);
 }
 
 .chart-section-title {
@@ -996,8 +1152,8 @@
 
 .chart-section-content {
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(12, 26, 20, 0.95);
+  border: 1px solid rgba(110, 160, 130, 0.4);
   padding: 1.25rem;
   min-height: 420px;
 }
@@ -1008,8 +1164,8 @@
 
 .loan-chart-card {
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(12, 26, 20, 0.95);
+  border: 1px solid rgba(110, 160, 130, 0.4);
   padding: 1rem 1.25rem;
 }
 
@@ -1028,8 +1184,8 @@
 }
 
 .chart-tooltip {
-  background: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #0c1a14;
+  border: 1px solid rgba(110, 160, 130, 0.5);
   border-radius: 8px;
   padding: 0.75rem 1rem;
   font-size: 0.8rem;
@@ -1067,7 +1223,7 @@
 }
 
 .chart-tooltip-row span:last-child {
-  color: #bfdbfe;
+  color: #a7f3d0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1083,7 +1239,7 @@
 .chart-tooltip-breakdown {
   padding-left: 0.75rem;
   margin-top: 0.25rem;
-  border-left: 1px solid rgba(148, 163, 184, 0.4);
+  border-left: 1px solid rgba(110, 160, 130, 0.4);
 }
 
 .chart-tooltip-breakdown .chart-tooltip-row {
@@ -1103,7 +1259,7 @@
 .yearly-table-section {
   margin-top: 2rem;
   padding-top: 1.75rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  border-top: 1px solid rgba(110, 160, 130, 0.4);
 }
 
 .yearly-table-title {
@@ -1114,8 +1270,8 @@
 .yearly-table-wrapper {
   overflow-x: auto;
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(12, 26, 20, 0.95);
+  border: 1px solid rgba(110, 160, 130, 0.4);
 }
 
 .yearly-table {
@@ -1129,7 +1285,7 @@
 .yearly-table td {
   padding: 0.4rem 0.5rem;
   text-align: right;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: 1px solid rgba(110, 160, 130, 0.25);
 }
 
 .yearly-table th {
@@ -1143,7 +1299,7 @@
   text-align: left;
   position: sticky;
   left: 0;
-  background: rgba(15, 23, 42, 0.98);
+  background: rgba(12, 26, 20, 0.98);
   z-index: 1;
 }
 
@@ -1179,8 +1335,8 @@
 }
 
 .pfu-detail-tooltip-content {
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(12, 26, 20, 0.98);
+  border: 1px solid rgba(110, 160, 130, 0.4);
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -1200,7 +1356,7 @@
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid rgba(148, 163, 184, 0.4);
+  border-top: 8px solid rgba(110, 160, 130, 0.4);
 }
 
 .pfu-detail-tooltip-title {
@@ -1220,7 +1376,7 @@
   margin: 0 0 1rem;
   padding-left: 1.5rem;
   font-size: 0.8rem;
-  color: #bfdbfe;
+  color: #a7f3d0;
   line-height: 1.6;
 }
 
@@ -1255,7 +1411,7 @@
 .pfu-detail-tooltip-row.pfu-detail-tooltip-total {
   font-weight: 600;
   color: #93c5fd;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-top: 1px solid rgba(110, 160, 130, 0.2);
   padding-top: 0.5rem;
   margin-top: 0.25rem;
 }
@@ -1273,7 +1429,7 @@
 .yearly-table-sale-tax-value {
   text-decoration: underline;
   text-decoration-style: dotted;
-  text-decoration-color: rgba(148, 163, 184, 0.5);
+  text-decoration-color: rgba(110, 160, 130, 0.5);
 }
 
 .yearly-table-flat-tax-tooltip {
@@ -1295,8 +1451,8 @@
 }
 
 .yearly-table-flat-tax-tooltip-content {
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(12, 26, 20, 0.98);
+  border: 1px solid rgba(110, 160, 130, 0.4);
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -1317,7 +1473,7 @@
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid rgba(148, 163, 184, 0.4);
+  border-top: 8px solid rgba(110, 160, 130, 0.4);
 }
 
 .yearly-table-flat-tax-tooltip-title {
@@ -1337,7 +1493,7 @@
   margin: 0 0 1rem;
   padding-left: 1.5rem;
   font-size: 0.8rem;
-  color: #bfdbfe;
+  color: #a7f3d0;
   line-height: 1.6;
 }
 
@@ -1372,13 +1528,13 @@
 .yearly-table-flat-tax-tooltip-row.yearly-table-flat-tax-tooltip-total {
   font-weight: 600;
   color: #93c5fd;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-top: 1px solid rgba(110, 160, 130, 0.2);
   padding-top: 0.5rem;
   margin-top: 0.25rem;
 }
 
 .yearly-table tbody tr:hover {
-  background: rgba(56, 189, 248, 0.08);
+  background: rgba(52, 211, 153, 0.08);
 }
 
 .results-breakdown-title {
@@ -1388,8 +1544,8 @@
 
 .results-breakdown {
   border-radius: 0.9rem;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(12, 26, 20, 0.95);
+  border: 1px solid rgba(110, 160, 130, 0.4);
   padding: 0.7rem 0.8rem;
   display: flex;
   flex-direction: column;
@@ -1408,7 +1564,7 @@
 }
 
 .breakdown-value {
-  color: #bfdbfe;
+  color: #a7f3d0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1427,8 +1583,8 @@
 .export-import-btn {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   color: #e5e7eb;
   font-size: 0.9rem;
   cursor: pointer;
@@ -1436,8 +1592,8 @@
 }
 
 .export-import-btn:hover {
-  border-color: #38bdf8;
-  background: rgba(56, 189, 248, 0.1);
+  border-color: #34d399;
+  background: rgba(52, 211, 153, 0.1);
 }
 
 .export-import-overlay {
@@ -1452,8 +1608,8 @@
 }
 
 .export-import-modal {
-  background: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #0c1a14;
+  border: 1px solid rgba(110, 160, 130, 0.5);
   border-radius: 1rem;
   padding: 1.5rem;
   max-width: 420px;
@@ -1481,8 +1637,8 @@
 .export-import-captcha input {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(12, 26, 20, 0.95);
   color: #e5e7eb;
   font-size: 0.95rem;
 }
@@ -1516,20 +1672,20 @@
 .export-import-modal-actions button {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: rgba(20, 40, 30, 0.95);
   color: #e5e7eb;
   font-size: 0.9rem;
   cursor: pointer;
 }
 
 .export-import-modal-actions button:hover {
-  border-color: #38bdf8;
+  border-color: #34d399;
 }
 
 .export-import-confirm {
-  background: rgba(56, 189, 248, 0.2) !important;
-  border-color: #38bdf8 !important;
+  background: rgba(52, 211, 153, 0.2) !important;
+  border-color: #34d399 !important;
 }
 
 @media (min-width: 900px) {
@@ -1663,8 +1819,8 @@
   display: flex;
   flex-direction: column;
   border-radius: 1.1rem;
-  background: radial-gradient(circle at top left, #020617, #020617);
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: radial-gradient(circle at top left, #081510, #081510);
+  border: 1px solid rgba(110, 160, 130, 0.3);
   overflow: hidden;
   min-width: 280px;
   max-height: 80vh;
@@ -1675,8 +1831,8 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
-  background: rgba(15, 23, 42, 0.5);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(12, 26, 20, 0.5);
+  border-bottom: 1px solid rgba(110, 160, 130, 0.2);
   position: relative;
 }
 
@@ -1757,8 +1913,8 @@
 }
 
 .comparison-open-btn:hover {
-  background: rgba(56, 189, 248, 0.2);
-  color: #38bdf8;
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
 }
 
 .comparison-open-btn svg {
@@ -1808,8 +1964,8 @@
   margin-bottom: 2rem;
   padding: 1.5rem;
   border-radius: 1.1rem;
-  background: radial-gradient(circle at top left, #020617, #020617);
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: radial-gradient(circle at top left, #081510, #081510);
+  border: 1px solid rgba(110, 160, 130, 0.3);
 }
 
 .comparison-strategy-title {
@@ -1828,8 +1984,8 @@
 .comparison-strategy-card {
   padding: 1rem;
   border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(12, 26, 20, 0.5);
+  border: 1px solid rgba(110, 160, 130, 0.2);
 }
 
 .comparison-strategy-card h4 {
@@ -1885,7 +2041,7 @@
   background: rgba(59, 130, 246, 0.1);
   border: 1px solid rgba(59, 130, 246, 0.2);
   font-size: 0.85rem;
-  color: #bfdbfe;
+  color: #a7f3d0;
   line-height: 1.5;
 }
 
@@ -1945,7 +2101,7 @@
   gap: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(12, 26, 20, 0.5);
   font-size: 0.85rem;
   font-weight: 600;
   color: #93c5fd;
@@ -1957,14 +2113,14 @@
   gap: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: rgba(15, 23, 42, 0.3);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(12, 26, 20, 0.3);
+  border: 1px solid rgba(110, 160, 130, 0.2);
   transition: all 0.15s ease;
 }
 
 .comparison-tax-row:hover {
-  background: rgba(15, 23, 42, 0.5);
-  border-color: rgba(148, 163, 184, 0.3);
+  background: rgba(12, 26, 20, 0.5);
+  border-color: rgba(110, 160, 130, 0.3);
 }
 
 .comparison-tax-row-best {
@@ -1981,7 +2137,7 @@
 .comparison-tax-amount,
 .comparison-tax-cashflow {
   font-size: 0.9rem;
-  color: #bfdbfe;
+  color: #a7f3d0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2036,8 +2192,8 @@
 }
 
 .comparison-tax-yearly-table thead {
-  background: rgba(15, 23, 42, 0.7);
-  border-bottom: 2px solid rgba(148, 163, 184, 0.3);
+  background: rgba(12, 26, 20, 0.7);
+  border-bottom: 2px solid rgba(110, 160, 130, 0.3);
 }
 
 .comparison-tax-yearly-table th {
@@ -2045,7 +2201,7 @@
   text-align: center;
   font-weight: 600;
   color: #93c5fd;
-  border-right: 1px solid rgba(148, 163, 184, 0.2);
+  border-right: 1px solid rgba(110, 160, 130, 0.2);
   white-space: nowrap;
 }
 
@@ -2059,7 +2215,7 @@
   position: sticky;
   left: 0;
   z-index: 1;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(12, 26, 20, 0.7);
 }
 
 .comparison-tax-year-header {
@@ -2072,12 +2228,12 @@
 }
 
 .comparison-tax-yearly-table tbody tr {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  border-bottom: 1px solid rgba(110, 160, 130, 0.15);
   transition: background-color 0.15s ease;
 }
 
 .comparison-tax-yearly-table tbody tr:hover {
-  background: rgba(15, 23, 42, 0.3);
+  background: rgba(12, 26, 20, 0.3);
 }
 
 .comparison-tax-yearly-table tbody tr.comparison-tax-row-best {
@@ -2088,7 +2244,7 @@
 .comparison-tax-yearly-table td {
   padding: 0.75rem;
   color: #e5e7eb;
-  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  border-right: 1px solid rgba(110, 160, 130, 0.1);
   font-variant-numeric: tabular-nums;
   vertical-align: top;
 }
@@ -2098,12 +2254,12 @@
 }
 
 .comparison-tax-regime-cell {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(12, 26, 20, 0.4);
   font-weight: 500;
   position: sticky;
   left: 0;
   z-index: 1;
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(12, 26, 20, 0.4);
 }
 
 .comparison-tax-yearly-table tbody tr.comparison-tax-row-best .comparison-tax-regime-cell {
@@ -2124,7 +2280,7 @@
 
 .comparison-tax-year-cell {
   text-align: center;
-  color: #bfdbfe;
+  color: #a7f3d0;
 }
 
 .comparison-tax-year-amount {
@@ -2139,7 +2295,7 @@
   color: #9ca3af;
   margin-top: 0.25rem;
   padding-top: 0.25rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-top: 1px solid rgba(110, 160, 130, 0.2);
 }
 
 .comparison-tax-year-resale-label {
@@ -2151,14 +2307,14 @@
 
 .comparison-tax-year-resale-value {
   display: block;
-  color: #bfdbfe;
+  color: #a7f3d0;
   font-weight: 500;
 }
 
 .comparison-tax-total-cell {
   text-align: center;
   font-weight: 600;
-  background: rgba(15, 23, 42, 0.3);
+  background: rgba(12, 26, 20, 0.3);
 }
 
 .comparison-tax-total-value {
