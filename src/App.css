@@ -782,6 +782,37 @@
   width: 100%;
 }
 
+.saved-sim-auth-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.saved-sim-user-email {
+  font-size: 0.75rem;
+  color: #34d399;
+}
+
+.saved-sim-auth-form {
+  margin-top: 0.5rem;
+}
+
+.saved-sim-auth-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0 0 0.4rem;
+}
+
+.saved-sim-auth-sent {
+  font-size: 0.85rem;
+  color: #34d399;
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  background: rgba(52, 211, 153, 0.1);
+  border-radius: 0.4rem;
+}
+
 .mb-key-metrics {
   margin-bottom: 1rem;
 }
