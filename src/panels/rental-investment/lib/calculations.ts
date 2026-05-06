@@ -28,6 +28,18 @@ function computeIS(taxable: number): number {
   return tranche1 + tranche2
 }
 
+/**
+ * Coût d'acquisition pour le calcul de la plus-value des particuliers
+ * (sans mobilier ni frais bancaires)
+ */
+function getTotalAcquisitionCost(values: SimulationFormValues): number {
+  const purchasePrice = toNumber(values.purchasePrice)
+  const notaryFees = getNotaryFees(purchasePrice, values.reducedNotaryFees, values.notaryFeesOverride)
+  const agencyFees = toNumber(values.agencyFees)
+  const renovationBudget = toNumber(values.renovationBudget)
+  return purchasePrice + notaryFees + agencyFees + renovationBudget
+}
+
 export function computeDepreciationForYear(
   purchasePrice: number,
   notaryFees: number,
@@ -809,6 +821,8 @@ export function computeIRRByYearData(
                 taxRegime,
                 corporateTaxRate,
                 tmiPlusSocial,
+                saleYear,
+                getTotalAcquisitionCost(values),
               )
             : 0
         
@@ -1115,6 +1129,8 @@ export function computeYearlyChartData(
         taxRegime,
         corporateTaxRate,
         tmiPlusSocial,
+        chartResaleYearIndex + 1,
+        getTotalAcquisitionCost(values),
       )
     }
 
@@ -1178,6 +1194,8 @@ export function computeYearlyChartData(
       taxRegime,
       corporateTaxRate,
       tmiPlusSocial,
+      chartResaleYearIndex + 1,
+      getTotalAcquisitionCost(values),
     )
     const resaleNet = resalePrice - crdAtResale - corporateTaxOnGain
     const totalAccumulated = sumAnnualAccumulatedForFlatTax + resaleNet
@@ -1206,6 +1224,70 @@ export function computeYearlyChartData(
   return data
 }
 
+/**
+ * Plus-value immobilière des particuliers (régime PV_IM)
+ * S'applique au LMNP non-pro, réel foncier, SCI IR, micro-foncier, micro-BIC, bailleur privé.
+ *
+ * Règles :
+ * - PV brute = Prix vente − (Prix achat + Frais notaire/agence + Travaux)
+ * - IR : 19% avec abattement 6%/an de la 6e à la 21e année, 4% la 22e → exonération à 22 ans
+ * - PS : 17,2% avec abattement 1,65%/an de la 6e à la 21e, 1,60% la 22e, 9%/an de la 23e à la 30e → exonération à 30 ans
+ * - Surtaxe progressive (2% à 6%) si PV nette imposable > 50 000€
+ *
+ * Important : en LMNP non-pro, l'amortissement N'EST PAS réintégré dans la PV (différence majeure avec le LMP)
+ */
+function computePVParticuliers(
+  resalePrice: number,
+  totalAcquisitionCost: number,
+  holdingYears: number,
+): number {
+  const pvBrute = Math.max(0, resalePrice - totalAcquisitionCost)
+  if (pvBrute <= 0) return 0
+
+  // Abattement IR
+  let abattementIR = 0
+  if (holdingYears > 22) {
+    abattementIR = 1
+  } else if (holdingYears >= 6) {
+    const yearsAbove5 = holdingYears - 5
+    if (yearsAbove5 <= 16) abattementIR = yearsAbove5 * 0.06
+    else abattementIR = 16 * 0.06 + 0.04
+  }
+  const baseIR = pvBrute * (1 - abattementIR)
+  const taxIR = baseIR * 0.19
+
+  // Abattement Prélèvements Sociaux
+  let abattementPS = 0
+  if (holdingYears > 30) {
+    abattementPS = 1
+  } else if (holdingYears >= 6) {
+    const yearsAbove5 = holdingYears - 5
+    if (yearsAbove5 <= 16) abattementPS = yearsAbove5 * 0.0165
+    else if (yearsAbove5 === 17) abattementPS = 16 * 0.0165 + 0.016
+    else abattementPS = 16 * 0.0165 + 0.016 + (yearsAbove5 - 17) * 0.09
+  }
+  const basePS = pvBrute * (1 - abattementPS)
+  const taxPS = basePS * 0.172
+
+  // Surtaxe sur PV imposable IR > 50 000€
+  let surtaxe = 0
+  if (baseIR > 50000) {
+    if (baseIR <= 60000) surtaxe = (baseIR - 50000) * 0.02 - (60000 - baseIR) * 0.01
+    else if (baseIR <= 100000) surtaxe = baseIR * 0.02
+    else if (baseIR <= 110000) surtaxe = baseIR * 0.03 - (110000 - baseIR) * 0.01
+    else if (baseIR <= 150000) surtaxe = baseIR * 0.03
+    else if (baseIR <= 160000) surtaxe = baseIR * 0.04 - (160000 - baseIR) * 0.015
+    else if (baseIR <= 200000) surtaxe = baseIR * 0.04
+    else if (baseIR <= 210000) surtaxe = baseIR * 0.05 - (210000 - baseIR) * 0.02
+    else if (baseIR <= 250000) surtaxe = baseIR * 0.05
+    else if (baseIR <= 260000) surtaxe = baseIR * 0.06 - (260000 - baseIR) * 0.025
+    else surtaxe = baseIR * 0.06
+    surtaxe = Math.max(0, surtaxe)
+  }
+
+  return taxIR + taxPS + surtaxe
+}
+
 function computeSaleTaxAtResale(
   resalePrice: number,
   totalCost: number,
@@ -1213,22 +1295,36 @@ function computeSaleTaxAtResale(
   taxRegime: TaxRegime,
   corporateTaxRate: number,
   tmiPlusSocial: number,
+  holdingYears: number = 0,
+  totalAcquisitionCost: number = totalCost,
 ): number {
   if (resalePrice <= 0) return 0
-  const vnc = totalCost - totalDepreciationTaken
-  const taxableGain = Math.max(0, resalePrice - vnc)
-  if (taxableGain <= 0) return 0
+
   switch (taxRegime) {
-    case 'sci_is':
-      return taxableGain * corporateTaxRate
-    case 'reel_foncier':
+    case 'sci_is': {
+      // SCI IS : régime des plus-values professionnelles
+      // PV = Prix vente − VNC (Valeur Nette Comptable = coût - amortissements)
+      const vnc = totalCost - totalDepreciationTaken
+      const taxableGain = Math.max(0, resalePrice - vnc)
+      if (taxableGain <= 0) return 0
+      // IS à 2 tranches
+      const tranche1 = Math.min(taxableGain, 42500) * 0.15
+      const tranche2 = Math.max(0, taxableGain - 42500) * 0.25
+      return tranche1 + tranche2
+    }
     case 'lmnp_reel':
+    case 'reel_foncier':
     case 'sci_ir':
     case 'micro_foncier':
     case 'lmnp_micro_bic':
     case 'bailleur_prive':
-      return taxableGain * tmiPlusSocial
+      // Régime des plus-values immobilières des particuliers
+      // L'amortissement LMNP n'est PAS réintégré (LMNP non-pro)
+      return computePVParticuliers(resalePrice, totalAcquisitionCost, holdingYears)
     default:
+      // Fallback (should not happen for active regimes)
+      void corporateTaxRate
+      void tmiPlusSocial
       return 0
   }
 }
@@ -1503,6 +1599,8 @@ export function computeYearlyTableData(
         taxRegime,
         corporateTaxRate,
         tmiPlusSocial,
+        resaleYearIndex + 1,
+        getTotalAcquisitionCost(values),
       )
     }
 
