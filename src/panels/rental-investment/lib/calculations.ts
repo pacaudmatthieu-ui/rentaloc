@@ -291,8 +291,17 @@ export function calculateResults(values: SimulationFormValues): SimulationResult
       annualTax = Math.max(base * tmiPlusSocial, 0)
       break
     }
+    case 'lmnp_reel': {
+      // LMNP réel : l'amortissement ne peut pas créer de déficit
+      // On le plafonne au résultat avant amortissement
+      const resultBeforeDepreciation = annualRentEffective - annualCharges - annualInterestApprox
+      const depreciationUsed = Math.max(0, Math.min(depreciation.total, resultBeforeDepreciation))
+      const base = resultBeforeDepreciation - depreciationUsed
+      const taxable = Math.max(base, 0)
+      annualTax = taxable * tmiPlusSocial
+      break
+    }
     case 'reel_foncier':
-    case 'lmnp_reel':
     case 'sci_ir': {
       const base =
         annualRentEffective -
@@ -553,6 +562,7 @@ export function computeIRRByYearData(
     const cashFlows: number[] = [-ownFunds]
     let totalDepreciationTaken = 0
     let deficitCarryforward = 0
+    let depreciationReserve = 0 // Réserve d'amortissement (LMNP réel)
 
     // Check if sale happens immediately after purchase (saleYear = 1 means sale at end of year 0)
     const isImmediateSale = saleYear === 1
@@ -667,8 +677,25 @@ export function computeIRRByYearData(
           base = revenue * 0.7
           taxable = base
           break
+        case 'lmnp_reel': {
+          // LMNP réel : amortissement ne crée pas de déficit, l'excédent va en réserve
+          const resultBeforeDepreciation = revenue - annualChargesY - interestThisYear
+          if (resultBeforeDepreciation < 0) {
+            deficitCarryforward += -resultBeforeDepreciation
+            depreciationReserve += depreciationY.total
+            taxable = 0
+            base = resultBeforeDepreciation
+          } else {
+            const totalDepreciationAvailable = depreciationY.total + depreciationReserve
+            const depreciationUsed = Math.min(totalDepreciationAvailable, resultBeforeDepreciation)
+            depreciationReserve = totalDepreciationAvailable - depreciationUsed
+            base = resultBeforeDepreciation - depreciationUsed
+            taxable = Math.max(0, base - deficitCarryforward)
+            deficitCarryforward = Math.max(0, deficitCarryforward - base)
+          }
+          break
+        }
         case 'reel_foncier':
-        case 'lmnp_reel':
         case 'sci_ir':
           base =
             revenue -
@@ -902,6 +929,7 @@ export function computeYearlyChartData(
 
   const data: YearlyChartPoint[] = []
   let deficitCarryforward = 0
+  let depreciationReserve = 0 // Réserve d'amortissement (LMNP réel) - reportée sans limite
   let totalDepreciationForChart = 0
   const sciIsWithdrawFlatTax = !!values.sciIsWithdrawFlatTax
   let sumAnnualAccumulatedForFlatTax = 0
@@ -943,9 +971,34 @@ export function computeYearlyChartData(
         base = revenue * 0.7
         taxable = base
         break
+      case 'lmnp_reel': {
+        // LMNP réel : amortissement ne peut pas créer de déficit
+        // L'amortissement excédentaire est mis en réserve, reportée sans limite de durée
+        const resultBeforeDepreciation = revenue - annualChargesY - interestThisYear
+        if (resultBeforeDepreciation < 0) {
+          // Déficit créé par charges + intérêts → reportable
+          deficitCarryforward += -resultBeforeDepreciation
+          // L'amortissement de l'année part entièrement en réserve
+          depreciationReserve += depreciationY.total
+          taxable = 0
+          base = resultBeforeDepreciation
+        } else {
+          // Résultat positif avant amortissement
+          // On consomme la réserve + amortissement de l'année dans la limite du résultat
+          const totalDepreciationAvailable = depreciationY.total + depreciationReserve
+          const depreciationUsed = Math.min(totalDepreciationAvailable, resultBeforeDepreciation)
+          depreciationReserve = totalDepreciationAvailable - depreciationUsed
+          base = resultBeforeDepreciation - depreciationUsed
+          carryforwardUsed = Math.min(base, deficitCarryforward)
+          taxable = Math.max(0, base - deficitCarryforward)
+          deficitCarryforward = Math.max(0, deficitCarryforward - base)
+        }
+        break
+      }
       case 'reel_foncier':
-      case 'lmnp_reel':
       case 'sci_ir':
+        // Réel foncier / SCI IR : pas d'amortissement comptable normalement
+        // Déficit reportable 10 ans
         base =
           revenue -
           annualChargesY -
@@ -1258,6 +1311,7 @@ export function computeYearlyTableData(
 
   const data: YearlyTableRow[] = []
   let deficitCarryforward = 0
+  let depreciationReserve = 0 // Réserve d'amortissement (LMNP réel) - reportée sans limite
   let totalDepreciationTaken = 0
 
   for (let y = 0; y < numYears; y++) {
@@ -1301,9 +1355,34 @@ export function computeYearlyTableData(
         base = revenue * 0.7
         taxable = base
         break
+      case 'lmnp_reel': {
+        // LMNP réel : amortissement ne peut pas créer de déficit
+        // L'amortissement excédentaire est mis en réserve, reportée sans limite de durée
+        const resultBeforeDepreciation = revenue - annualChargesY - interestThisYear
+        if (resultBeforeDepreciation < 0) {
+          // Déficit créé par charges + intérêts → reportable
+          deficitCarryforward += -resultBeforeDepreciation
+          // L'amortissement de l'année part entièrement en réserve
+          depreciationReserve += depreciationY.total
+          taxable = 0
+          base = resultBeforeDepreciation
+        } else {
+          // Résultat positif avant amortissement
+          // On consomme la réserve + amortissement de l'année dans la limite du résultat
+          const totalDepreciationAvailable = depreciationY.total + depreciationReserve
+          const depreciationUsed = Math.min(totalDepreciationAvailable, resultBeforeDepreciation)
+          depreciationReserve = totalDepreciationAvailable - depreciationUsed
+          base = resultBeforeDepreciation - depreciationUsed
+          carryforwardUsed = Math.min(base, deficitCarryforward)
+          taxable = Math.max(0, base - deficitCarryforward)
+          deficitCarryforward = Math.max(0, deficitCarryforward - base)
+        }
+        break
+      }
       case 'reel_foncier':
-      case 'lmnp_reel':
       case 'sci_ir':
+        // Réel foncier / SCI IR : pas d'amortissement comptable normalement
+        // Déficit reportable 10 ans
         base =
           revenue -
           annualChargesY -
