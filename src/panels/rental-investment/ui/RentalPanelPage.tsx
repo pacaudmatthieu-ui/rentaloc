@@ -5,6 +5,7 @@ import { FormField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, 
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
 import { SavedSimulationsPanel } from '../../../shared/ui/SavedSimulationsPanel'
+import { TaxComparisonPanel } from './sections/TaxComparisonPanel'
 import { INITIAL_VALUES } from '../model/types'
 import type { SimulationFormValues } from '../model/types'
 import { validateInvestissementData } from '../model/validation'
@@ -26,12 +27,13 @@ const RENTAL_DEFAULT_ORDER = [
   'revenues',
   'charges',
   'taxation',
+  'tax-comparison',
   'resale',
   'chart',
   'yearly-table',
   'loan-charts',
 ]
-const RENTAL_GRID_LAYOUT = [2, 3, 2, 1, 1, 1] as const
+const RENTAL_GRID_LAYOUT = [2, 3, 2, 1, 1, 1, 1] as const
 
 interface RentalPanelPageProps {
   locale: Locale
@@ -274,6 +276,18 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
             <FormField label={strings.annualInsurancePNO} value={values.annualInsurancePNO} onChange={handleChange('annualInsurancePNO')} />
             <FormField label={strings.otherAnnualExpenses} value={values.otherAnnualExpenses} onChange={handleChange('otherAnnualExpenses')} />
           </div>
+        ),
+      },
+      {
+        id: 'tax-comparison',
+        title: strings.taxComparisonTitle,
+        description: strings.taxComparisonDescription,
+        content: (
+          <TaxComparisonPanel
+            values={values}
+            currencyFormatter={currencyFormatter}
+            strings={strings}
+          />
         ),
       },
       {
