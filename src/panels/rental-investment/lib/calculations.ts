@@ -17,6 +17,17 @@ function getNotaryFees(purchasePrice: number, reducedNotaryFees?: boolean, notar
   return purchasePrice * (reducedNotaryFees ? 0.03 : 0.08)
 }
 
+/**
+ * IS à deux tranches : 15% jusqu'à 42 500€ de bénéfice, 25% au-delà
+ * (Taux PME, valable pour les sociétés avec CA < 10M€)
+ */
+function computeIS(taxable: number): number {
+  if (taxable <= 0) return 0
+  const tranche1 = Math.min(taxable, 42500) * 0.15
+  const tranche2 = Math.max(0, taxable - 42500) * 0.25
+  return tranche1 + tranche2
+}
+
 export function computeDepreciationForYear(
   purchasePrice: number,
   notaryFees: number,
@@ -53,7 +64,7 @@ export function computeDepreciationForYear(
       break
     case 'reel_foncier':
     case 'sci_ir':
-      building = buildingBaseFull * BUILDING_DEPRECIATION_RATE
+      // Pas d'amortissement comptable en réel foncier / SCI IR (location nue)
       break
     case 'bailleur_prive':
       building = buildingBaseFull * BAILLEUR_PRIVE_BUILDING_RATE
@@ -205,7 +216,6 @@ export function calculateResults(values: SimulationFormValues): SimulationResult
   const otherAnnualExpenses = toNumber(values.otherAnnualExpenses)
   const marginalTaxRate = toNumber(values.marginalTaxRate) / 100
   const socialChargesRate = toNumber(values.socialChargesRate) / 100
-  const corporateTaxRate = toNumber(values.corporateTaxRate) / 100
   const taxRegime = values.taxRegime
 
   const loanFees = toNumber(values.loanFees)
@@ -318,13 +328,16 @@ export function calculateResults(values: SimulationFormValues): SimulationResult
       break
     }
     case 'sci_is': {
+      // SCI IS : déduction des intérêts + assurance + amortissement (pas le capital remboursé)
+      const annualInsuranceCost = monthlyInsurance * 12
       const base =
         annualRentEffective -
         annualCharges -
-        annualLoanAndInsurance -
+        annualInterestApprox -
+        annualInsuranceCost -
         depreciation.total
       const taxable = Math.max(base, 0)
-      annualTax = taxable * corporateTaxRate
+      annualTax = computeIS(taxable)
       break
     }
     case 'bailleur_prive': {
@@ -714,11 +727,14 @@ export function computeIRRByYearData(
           base = revenue * 0.5
           taxable = base
           break
-        case 'sci_is':
+        case 'sci_is': {
+          // SCI IS : déduction des intérêts + assurance + amortissement (pas le capital remboursé)
+          const annualInsuranceCostIRR = monthlyInsurance * 12
           base =
             revenue -
             annualChargesY -
-            creditThisYear -
+            interestThisYear -
+            annualInsuranceCostIRR -
             depreciationY.total
           if (base < 0) {
             deficitCarryforward += -base
@@ -728,6 +744,7 @@ export function computeIRRByYearData(
             deficitCarryforward = Math.max(0, deficitCarryforward - base)
           }
           break
+        }
         case 'bailleur_prive': {
           base =
             revenue -
@@ -761,7 +778,7 @@ export function computeIRRByYearData(
           tax = Math.max(taxable * tmiPlusSocial, 0)
           break
         case 'sci_is':
-          tax = taxable * corporateTaxRate
+          tax = computeIS(taxable)
           break
         case 'bailleur_prive': {
           const taxWithDepreciation = taxable * tmiPlusSocial
@@ -1017,11 +1034,14 @@ export function computeYearlyChartData(
         base = revenue * 0.5
         taxable = base
         break
-      case 'sci_is':
+      case 'sci_is': {
+        // SCI IS : déduction des intérêts + assurance + amortissement (pas le capital)
+        const annualInsuranceCostY = monthlyInsurance * 12
         base =
           revenue -
           annualChargesY -
-          annualLoanAndInsurance -
+          interestThisYear -
+          annualInsuranceCostY -
           depreciationY.total
         if (base < 0) {
           deficitCarryforward += -base
@@ -1032,6 +1052,7 @@ export function computeYearlyChartData(
           deficitCarryforward = Math.max(0, deficitCarryforward - base)
         }
         break
+      }
       case 'bailleur_prive': {
         base =
           revenue -
@@ -1066,7 +1087,7 @@ export function computeYearlyChartData(
         tax = Math.max(taxable * tmiPlusSocial, 0)
         break
       case 'sci_is':
-        tax = taxable * corporateTaxRate
+        tax = computeIS(taxable)
         break
       case 'bailleur_prive': {
         const taxWithDepreciation = taxable * tmiPlusSocial
@@ -1401,11 +1422,14 @@ export function computeYearlyTableData(
         base = revenue * 0.5
         taxable = base
         break
-      case 'sci_is':
+      case 'sci_is': {
+        // SCI IS : déduction des intérêts + assurance + amortissement (pas le capital remboursé)
+        const annualInsuranceCostY2 = monthlyInsurance * 12
         base =
           revenue -
           annualChargesY -
-          creditThisYear -
+          interestThisYear -
+          annualInsuranceCostY2 -
           depreciationY.total
         if (base < 0) {
           deficitCarryforward += -base
@@ -1416,6 +1440,7 @@ export function computeYearlyTableData(
           deficitCarryforward = Math.max(0, deficitCarryforward - base)
         }
         break
+      }
       case 'bailleur_prive': {
         base =
           revenue -
@@ -1450,7 +1475,7 @@ export function computeYearlyTableData(
         tax = Math.max(taxable * tmiPlusSocial, 0)
         break
       case 'sci_is':
-        tax = taxable * corporateTaxRate
+        tax = computeIS(taxable)
         break
       case 'bailleur_prive': {
         const taxWithDepreciation = taxable * tmiPlusSocial
