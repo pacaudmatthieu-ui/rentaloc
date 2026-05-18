@@ -488,6 +488,8 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
                     <th>{strings.tableTaxBase}</th>
                     <th>{strings.tableTax}</th>
                     <th>{strings.tableCarryforward}</th>
+                    <th>{strings.tableDeficitRemaining}</th>
+                    <th>{strings.tableDepreciationReserve}</th>
                     <th>{strings.tableResalePrice}</th>
                     <th>{strings.tableCashDispo}</th>
                     <th>{strings.tableSaleTax}</th>
@@ -508,6 +510,8 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
                       <td className="yearly-table-num">{currencyFormatter.format(row.taxBase)}</td>
                       <td className="yearly-table-num">{currencyFormatter.format(row.tax)}</td>
                     <td className="yearly-table-num">{currencyFormatter.format(row.carryforwardUsed)}</td>
+                    <td className="yearly-table-num">{currencyFormatter.format(row.deficitRemaining)}</td>
+                    <td className="yearly-table-num">{currencyFormatter.format(row.depreciationReserve)}</td>
                     <td className="yearly-table-num">{row.resalePrice > 0 ? currencyFormatter.format(row.resalePrice) : '–'}</td>
                     <td className="yearly-table-num">{currencyFormatter.format(row.cashDispo)}</td>
                     <td className="yearly-table-num">{currencyFormatter.format(row.saleTax)}</td>

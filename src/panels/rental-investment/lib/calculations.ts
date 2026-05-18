@@ -1354,6 +1354,10 @@ export type YearlyTableRow = {
   taxBase: number
   tax: number
   carryforwardUsed: number
+  /** Déficit reportable restant à fin d'année (cumulé non encore consommé) */
+  deficitRemaining: number
+  /** Réserve d'amortissement LMNP réel (reportée sans limite) */
+  depreciationReserve: number
   cashDispo: number
   saleTax: number
   resalePrice: number
@@ -1628,6 +1632,8 @@ export function computeYearlyTableData(
       taxBase: base,
       tax,
       carryforwardUsed,
+      deficitRemaining: deficitCarryforward,
+      depreciationReserve,
       cashDispo,
       saleTax,
       resalePrice: hasResale && y === resaleYearIndex ? resalePrice : 0,
