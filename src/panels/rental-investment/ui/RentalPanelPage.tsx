@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
-import { FormField, YearsField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList, VerdictBar } from '../../../shared/ui'
+import { FormField, YearsField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList, VerdictBar, HelpTip } from '../../../shared/ui'
 import type { VerdictKpi } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
@@ -295,8 +295,8 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               <span>{strings.reducedNotaryFees}</span>
             </label>
             <FormField label={strings.agencyFees} value={values.agencyFees} onChange={handleChange('agencyFees')} unit={strings.unitEuro} invalidMessage={inv} />
-            <FormField label={strings.renovationBudget} value={values.renovationBudget} onChange={handleChange('renovationBudget')} unit={strings.unitEuro} invalidMessage={inv} />
-            <FormField label={strings.furnitureBudget} value={values.furnitureBudget} onChange={handleChange('furnitureBudget')} unit={strings.unitEuro} invalidMessage={inv} />
+            <FormField label={strings.renovationBudget} value={values.renovationBudget} onChange={handleChange('renovationBudget')} unit={strings.unitEuro} help={strings.helpRenovation} invalidMessage={inv} />
+            <FormField label={strings.furnitureBudget} value={values.furnitureBudget} onChange={handleChange('furnitureBudget')} unit={strings.unitEuro} help={strings.helpFurniture} invalidMessage={inv} />
             <FormField label={strings.ownFunds} value={values.ownFunds} onChange={handleChange('ownFunds')} unit={strings.unitEuro} help={strings.helpOwnFunds} invalidMessage={inv} />
           </div>
         ),
@@ -328,8 +328,8 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
             {values.deferralType !== 'none' && (
               <FormField label={strings.deferralMonths} value={values.deferralMonths} onChange={handleChange('deferralMonths')} unit={strings.unitMonths} invalidMessage={inv} />
             )}
-            <FormField label={strings.loanFees} value={values.loanFees} onChange={handleChange('loanFees')} unit={strings.unitEuro} invalidMessage={inv} />
-            <FormField label={strings.guaranteeFees} value={values.guaranteeFees} onChange={handleChange('guaranteeFees')} unit={strings.unitEuro} invalidMessage={inv} />
+            <FormField label={strings.loanFees} value={values.loanFees} onChange={handleChange('loanFees')} unit={strings.unitEuro} help={strings.helpLoanFees} invalidMessage={inv} />
+            <FormField label={strings.guaranteeFees} value={values.guaranteeFees} onChange={handleChange('guaranteeFees')} unit={strings.unitEuro} help={strings.helpGuaranteeFees} invalidMessage={inv} />
           </div>
         ),
       },
@@ -352,11 +352,11 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
         description: strings.chargesDescription,
         content: (
           <div className="form-card-body">
-            <FormField label={strings.annualPropertyTax} value={values.annualPropertyTax} onChange={handleChange('annualPropertyTax')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
+            <FormField label={strings.annualPropertyTax} value={values.annualPropertyTax} onChange={handleChange('annualPropertyTax')} unit={strings.unitEuroPerYear} help={strings.helpPropertyTax} invalidMessage={inv} />
             <FormField label={strings.annualNonRecoverableCharges} value={values.annualNonRecoverableCharges} onChange={handleChange('annualNonRecoverableCharges')} unit={strings.unitEuroPerYear} help={strings.helpNonRecoverable} invalidMessage={inv} />
             <FormField label={strings.annualManagementPercent} value={values.annualManagementPercent} onChange={handleChange('annualManagementPercent')} unit={strings.unitPercent} help={strings.helpManagement} invalidMessage={inv} />
-            <FormField label={strings.annualMaintenance} value={values.annualMaintenance} onChange={handleChange('annualMaintenance')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
-            <FormField label={strings.annualInsurancePNO} value={values.annualInsurancePNO} onChange={handleChange('annualInsurancePNO')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
+            <FormField label={strings.annualMaintenance} value={values.annualMaintenance} onChange={handleChange('annualMaintenance')} unit={strings.unitEuroPerYear} help={strings.helpMaintenance} invalidMessage={inv} />
+            <FormField label={strings.annualInsurancePNO} value={values.annualInsurancePNO} onChange={handleChange('annualInsurancePNO')} unit={strings.unitEuroPerYear} help={strings.helpPNO} invalidMessage={inv} />
             <FormField label={strings.otherAnnualExpenses} value={values.otherAnnualExpenses} onChange={handleChange('otherAnnualExpenses')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
           </div>
         ),
@@ -392,6 +392,7 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               value={values.resalePrice}
               onChange={handleChange('resalePrice')}
               unit={strings.unitEuro}
+              help={strings.helpResalePrice}
               invalidMessage={inv}
             />
           </div>
@@ -492,12 +493,12 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
         content: (
           <>
             <div className="results-grid">
-              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} />
+              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} help={strings.helpCashflow} />
               <ResultTile label={strings.monthlyCashflow} value={currencyFormatter.format(results.monthlyCashflow)} variant={results.monthlyCashflow >= 0 ? 'positive' : 'negative'} />
               <ResultTile label={strings.annualCashflow} value={currencyFormatter.format(results.annualCashflow)} variant={results.annualCashflow >= 0 ? 'positive' : 'negative'} />
-              <ResultTile label={strings.grossYield} value={percentFormatter.format(results.grossYield)} />
-              <ResultTile label={strings.netYield} value={percentFormatter.format(results.netYield)} />
-              <ResultTile label={strings.cashOnCash} value={percentFormatter.format(results.cashOnCash)} />
+              <ResultTile label={strings.grossYield} value={percentFormatter.format(results.grossYield)} help={strings.helpGrossYield} />
+              <ResultTile label={strings.netYield} value={percentFormatter.format(results.netYield)} help={strings.helpNetYield} />
+              <ResultTile label={strings.cashOnCash} value={percentFormatter.format(results.cashOnCash)} help={strings.helpCashOnCash} />
               <ResultTile label={strings.annualCashflowAfterTax} value={currencyFormatter.format(results.annualCashflowAfterTax)} variant={results.annualCashflowAfterTax >= 0 ? 'positive' : 'negative'} />
             </div>
             <h3 className="results-breakdown-title">{strings.breakdownTitle}</h3>
@@ -564,19 +565,19 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
                     <th>{strings.tableCredit}</th>
                     <th>{strings.tableInterest}</th>
                     <th>{strings.tablePrincipal}</th>
-                    <th>{strings.tableCRD}</th>
+                    <th>{strings.tableCRD}<HelpTip text={strings.helpCrd} /></th>
                     <th>{strings.tableRent}</th>
                     <th>{strings.tableCharges}</th>
-                    <th>{strings.tableCF}</th>
-                    <th>{strings.tableDepreciation}</th>
-                    <th>{strings.tableTaxBase}</th>
+                    <th>{strings.tableCF}<HelpTip text={strings.helpCfBeforeTax} /></th>
+                    <th>{strings.tableDepreciation}<HelpTip text={strings.helpDepreciation} /></th>
+                    <th>{strings.tableTaxBase}<HelpTip text={strings.helpTaxBase} /></th>
                     <th>{strings.tableTax}</th>
-                    <th>{strings.tableCarryforward}</th>
-                    <th>{strings.tableDeficitRemaining}</th>
-                    <th>{strings.tableDepreciationReserve}</th>
+                    <th>{strings.tableCarryforward}<HelpTip text={strings.helpCarryforwardUsed} /></th>
+                    <th>{strings.tableDeficitRemaining}<HelpTip text={strings.helpDeficitRemaining} /></th>
+                    <th>{strings.tableDepreciationReserve}<HelpTip text={strings.helpDepreciationReserve} /></th>
                     <th>{strings.tableResalePrice}</th>
-                    <th>{strings.tableCashDispo}</th>
-                    <th>{strings.tableSaleTax}</th>
+                    <th>{strings.tableCashDispo}<HelpTip text={strings.helpCashDispo} /></th>
+                    <th>{strings.tableSaleTax}<HelpTip text={strings.helpSaleTaxCol} /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -685,12 +686,12 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
             <h3 className="simple-card-title"><span className="step-dot">2</span> {strings.simpleResultsTitle}</h3>
             <p className="simple-card-sub">{strings.simpleResultsSubtitle}</p>
             <div className="results-grid">
-              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} />
+              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} help={strings.helpCashflow} />
               <ResultTile label={strings.totalCost} value={currencyFormatter.format(results.totalCost)} />
               <ResultTile label={strings.loanAmount} value={currencyFormatter.format(results.loanAmount)} />
               <ResultTile label={strings.estimatedAnnualTax} value={currencyFormatter.format(results.annualTax)} />
-              <ResultTile label={strings.grossYield} value={percentFormatter.format(results.grossYield)} />
-              <ResultTile label={strings.netYield} value={percentFormatter.format(results.netYield)} />
+              <ResultTile label={strings.grossYield} value={percentFormatter.format(results.grossYield)} help={strings.helpGrossYield} />
+              <ResultTile label={strings.netYield} value={percentFormatter.format(results.netYield)} help={strings.helpNetYield} />
             </div>
             <h4 className="simple-projection-title">{strings.simpleProjectionTitle}</h4>
             {compactTable}
