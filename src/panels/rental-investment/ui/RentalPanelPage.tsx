@@ -5,6 +5,9 @@ import { FormField, YearsField, ResultTile, BreakdownRow, CashflowChart, LoanCha
 import type { VerdictKpi } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
+import { EmailCaptureCard } from '../../../features/lead-capture/EmailCaptureCard'
+import { buildRentalReport } from '../../../features/export-pdf/report'
+import { RENTAL_PRESETS } from '../model/presets'
 import { SavedSimulationsPanel } from '../../../shared/ui/SavedSimulationsPanel'
 import { TaxComparisonPanel } from './sections/TaxComparisonPanel'
 import { INITIAL_VALUES } from '../model/types'
@@ -200,6 +203,9 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
   }
 
   const inv = strings.invalidNumber
+
+  const pdfReportBuilder = () =>
+    buildRentalReport(values, results, tableData, strings, locale, currencyFormatter, percentFormatter)
 
   const regimeLabels: Record<string, string> = {
     none: strings.taxNone,
@@ -663,6 +669,19 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
           <section className="simple-card">
             <h3 className="simple-card-title"><span className="step-dot">1</span> {strings.simpleFormTitle}</h3>
             <p className="simple-card-sub">{strings.simpleFormSubtitle}</p>
+            <div className="preset-chips" role="group" aria-label={strings.presetsLabel}>
+              <span className="preset-chips-label">{strings.presetsLabel}</span>
+              {RENTAL_PRESETS.map((preset) => (
+                <button
+                  key={preset.key}
+                  type="button"
+                  className="preset-chip"
+                  onClick={() => setValues(preset.values)}
+                >
+                  {strings[preset.labelKey]}
+                </button>
+              ))}
+            </div>
             <FormField label={strings.purchasePrice} value={values.purchasePrice} onChange={handleChange('purchasePrice')} unit={strings.unitEuro} help={strings.helpPurchasePrice} invalidMessage={inv} />
             <FormField label={strings.monthlyRent} value={values.monthlyRent} onChange={handleChange('monthlyRent')} unit={strings.unitEuroPerMonth} help={strings.helpMonthlyRent} invalidMessage={inv} />
             <FormField label={strings.ownFunds} value={values.ownFunds} onChange={handleChange('ownFunds')} unit={strings.unitEuro} help={strings.helpOwnFunds} invalidMessage={inv} />
@@ -737,6 +756,7 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
             />
           </div>
         </section>
+        <EmailCaptureCard strings={strings} />
         <p className="results-disclaimer simple-disclaimer">{strings.disclaimer}</p>
       </main>
     )
@@ -781,6 +801,8 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
           validateData={validateInvestissementData}
           strings={strings}
           pdfContentRef={pdfRef}
+          pdfReportBuilder={pdfReportBuilder}
+          shareType="rental"
           extraButton={
             <button
               type="button"
@@ -816,6 +838,7 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
           onCollapsedChange={setCollapsed}
           gridLayout={RENTAL_GRID_LAYOUT}
         />
+        <EmailCaptureCard strings={strings} />
       </main>
     </>
   )

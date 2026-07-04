@@ -3,6 +3,8 @@ import type { Locale } from '../../../shared/types'
 import { FormField, FormFieldReadOnly, SortableSectionList, VerdictBar, HelpTip } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
+import { EmailCaptureCard } from '../../../features/lead-capture/EmailCaptureCard'
+import { buildFlipReport } from '../../../features/export-pdf/report'
 import type { LotItem, LotType, TvaRegime, MarchandDeBiensValues } from '../model/types'
 import { MB_INITIAL, LOT_TYPES } from '../model/types'
 import { computeFlipResults } from '../lib/computeFlipResults'
@@ -572,6 +574,8 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
         }}
         validateData={validateMarchandData}
         strings={strings}
+        pdfReportBuilder={() => buildFlipReport(flip, strings, locale, currencyFormatter)}
+        shareType="flip"
         extraButton={
           <button
             type="button"
@@ -649,6 +653,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
         onCollapsedChange={setCollapsed}
         gridLayout={FLIP_GRID_LAYOUT}
       />
+      <EmailCaptureCard strings={strings} />
     </main>
   )
 }
