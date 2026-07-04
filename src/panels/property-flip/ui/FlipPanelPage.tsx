@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
-import { FormField, FormFieldReadOnly, SortableSectionList, VerdictBar } from '../../../shared/ui'
+import { FormField, FormFieldReadOnly, SortableSectionList, VerdictBar, HelpTip } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
 import type { LotItem, LotType, TvaRegime, MarchandDeBiensValues } from '../model/types'
@@ -206,13 +206,14 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
         description: strings.mbAcquisitionDescription,
         content: (
           <div className="form-card-body">
-            <FormField label={strings.purchasePrice} value={values.purchasePrice} onChange={handleChange('purchasePrice')} unit={strings.unitEuro} invalidMessage={strings.invalidNumber} />
+            <FormField label={strings.purchasePrice} value={values.purchasePrice} onChange={handleChange('purchasePrice')} unit={strings.unitEuro} help={strings.helpMbPurchasePrice} invalidMessage={strings.invalidNumber} />
             <div className="form-field-with-hint">
               <FormField
                 label={strings.mbNotaryFees}
                 value={values.notaryFeesOverride}
                 onChange={handleChange('notaryFeesOverride')}
                 unit={strings.unitEuro}
+                help={strings.helpMbNotary}
                 invalidMessage={strings.invalidNumber}
               />
               <span className="form-field-hint">
@@ -221,7 +222,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                   : `${strings.mbTerrainProportionAuto}: ${currencyFormatter.format(autoNotaryFees)}`}
               </span>
             </div>
-            <FormField label={strings.agencyFees} value={values.agencyFees} onChange={handleChange('agencyFees')} unit={strings.unitEuro} invalidMessage={strings.invalidNumber} />
+            <FormField label={strings.agencyFees} value={values.agencyFees} onChange={handleChange('agencyFees')} unit={strings.unitEuro} help={strings.helpMbAgency} invalidMessage={strings.invalidNumber} />
             {hasLotsMarge && (
               <div className="form-field-with-hint">
                 <FormField
@@ -229,6 +230,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                   value={values.terrainProportion}
                   onChange={handleChange('terrainProportion')}
                   unit={strings.unitPercent}
+                  help={strings.helpMbTerrainProportion}
                   invalidMessage={strings.invalidNumber}
                 />
                 <span className="form-field-hint">
@@ -258,7 +260,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                 <div className="mb-lot-table">
                   <div className="mb-lot-header">
                     <span>{strings.mbApartmentType}</span>
-                    <span>{strings.mbLotTvaRegime}</span>
+                    <span>{strings.mbLotTvaRegime}<HelpTip text={strings.helpMbTvaRegimes} /></span>
                     <span>{strings.mbApartmentSuperficie}</span>
                     <span>{strings.mbResalePrice}</span>
                     <span>{strings.mbPricePerSqm}</span>
@@ -272,6 +274,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                       <div key={lot.id} className="mb-lot-row">
                         <select
                           className="mb-lot-select"
+                          aria-label={strings.mbApartmentType}
                           value={lot.type}
                           onChange={(e) => updateLot(lot.id, 'type', e.target.value)}
                         >
@@ -281,6 +284,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                         </select>
                         <select
                           className="mb-lot-select"
+                          aria-label={strings.mbLotTvaRegime}
                           value={lot.tvaRegime}
                           onChange={(e) => updateLot(lot.id, 'tvaRegime', e.target.value)}
                         >
@@ -292,6 +296,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                           <input
                             type="text"
                             inputMode="decimal"
+                            aria-label={strings.mbApartmentSuperficie}
                             value={lot.superficie}
                             onChange={(e) => updateLot(lot.id, 'superficie', e.target.value)}
                           />
@@ -301,6 +306,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                           type="text"
                           inputMode="decimal"
                           className="mb-lot-price"
+                          aria-label={strings.mbResalePrice}
                           placeholder="0"
                           value={lot.resalePrice}
                           onChange={(e) => updateLot(lot.id, 'resalePrice', e.target.value)}
@@ -355,7 +361,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
             <FormField label={strings.mbArchitecteFees} value={values.architecteFees} onChange={handleChange('architecteFees')} unit={strings.unitEuro} invalidMessage={strings.invalidNumber} />
             {!values.travauxDetailOpen ? (
               <div className="form-field-with-hint">
-                <FormField label={strings.mbTravauxHT} value={values.travauxHT} onChange={handleChange('travauxHT')} unit={strings.unitEuro} invalidMessage={strings.invalidNumber} />
+                <FormField label={strings.mbTravauxHT} value={values.travauxHT} onChange={handleChange('travauxHT')} unit={strings.unitEuro} help={strings.helpMbTravaux} invalidMessage={strings.invalidNumber} />
                 <button
                   type="button"
                   className="mb-travaux-detail-btn"
@@ -469,11 +475,11 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
         content: (
           <div className="form-card-body">
             <FormFieldReadOnly label={strings.mbOperationAmount} value={currencyFormatter.format(amountOfOperation)} />
-            <FormField label={strings.mbApportPercent} value={values.apportPercent} onChange={handleChange('apportPercent')} unit={strings.unitPercent} invalidMessage={strings.invalidNumber} />
+            <FormField label={strings.mbApportPercent} value={values.apportPercent} onChange={handleChange('apportPercent')} unit={strings.unitPercent} help={strings.helpMbApport} invalidMessage={strings.invalidNumber} />
             <FormFieldReadOnly label={strings.mbApportAmount} value={currencyFormatter.format(apportAmount)} />
             <FormFieldReadOnly label={strings.mbFinancementAmount} value={currencyFormatter.format(financementAmount)} />
-            <FormField label={strings.mbRatePerYear} value={values.ratePerYear} onChange={handleChange('ratePerYear')} unit={strings.unitPercent} invalidMessage={strings.invalidNumber} />
-            <FormField label={strings.mbDurationMonths} value={values.durationMonths} onChange={handleChange('durationMonths')} unit={strings.unitMonths} invalidMessage={strings.invalidNumber} />
+            <FormField label={strings.mbRatePerYear} value={values.ratePerYear} onChange={handleChange('ratePerYear')} unit={strings.unitPercent} help={strings.helpMbRate} invalidMessage={strings.invalidNumber} />
+            <FormField label={strings.mbDurationMonths} value={values.durationMonths} onChange={handleChange('durationMonths')} unit={strings.unitMonths} help={strings.helpMbDuration} invalidMessage={strings.invalidNumber} />
             <FormFieldReadOnly label={strings.mbMonthlyPayment} value={currencyFormatter.format(monthlyPayment)} />
             <FormFieldReadOnly label={strings.mbTotalPayments} value={currencyFormatter.format(financialCost)} />
           </div>
@@ -590,7 +596,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
           </button>
         }
       />
-      {values.apartments.length > 0 && totalRevente > 0 && (
+      {totalRevente > 0 ? (
         <VerdictBar
           figure={currencyFormatter.format(flip.margeNetteAvantIS)}
           figureUnit={strings.verdictMbUnit}
@@ -603,17 +609,32 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
               label: strings.mbMarginPercent,
               value: flip.margePercent != null ? `${flip.margePercent.toFixed(1)} %` : '–',
               tone: flip.margeNetteAvantIS >= 0 ? 'positive' : 'negative',
+              help: strings.helpMbMargin,
             },
             {
               label: strings.mbRoiFondsPropres,
               value: flip.roiFondsPropres != null ? `${flip.roiFondsPropres.toFixed(1)} %` : '–',
               tone: flip.margeNetteAvantIS >= 0 ? 'positive' : 'negative',
+              help: strings.helpMbRoi,
             },
             {
               label: strings.mbDividendesEnPoche,
               value: currencyFormatter.format(flip.dividendesEnPoche),
               tone: flip.dividendesEnPoche >= 0 ? 'positive' : 'negative',
+              help: strings.helpMbDividends,
             },
+          ]}
+        />
+      ) : (
+        <VerdictBar
+          figure="—"
+          figureUnit={strings.verdictMbUnit}
+          tone="neutral"
+          phrase={strings.verdictMbEmpty}
+          kpis={[
+            { label: strings.mbMarginPercent, value: '–', help: strings.helpMbMargin },
+            { label: strings.mbRoiFondsPropres, value: '–', help: strings.helpMbRoi },
+            { label: strings.mbDividendesEnPoche, value: '–', help: strings.helpMbDividends },
           ]}
         />
       )}
