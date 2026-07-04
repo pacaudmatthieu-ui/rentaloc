@@ -11,7 +11,7 @@ import {
 
 export type ComparisonIRRDataPoint = {
   year: number
-  [simulationName: string]: number | string | undefined
+  [simulationName: string]: number | string | null | undefined
 }
 
 export type ComparisonIRRChartProps = {

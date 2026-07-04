@@ -5,6 +5,7 @@ import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
 import type { LotItem, LotType, TvaRegime, MarchandDeBiensValues } from '../model/types'
 import { MB_INITIAL, LOT_TYPES } from '../model/types'
+import { computeFlipResults } from '../lib/computeFlipResults'
 import { validateMarchandData } from '../model/validation'
 import { savePropertyFlippingSimulation, loadCurrentSimulationComparisonId } from '../../../shared/utils/storage'
 import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
@@ -103,12 +104,25 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
     }
   }, [values, isInComparison, comparisonStore])
 
-  // Frais de notaire : auto 3% ou valeur manuelle
-  const autoNotaryFees = (Number(values.purchasePrice) || 0) * 0.03
-  const isNotaryManual = values.notaryFeesOverride !== ''
-  const effectiveNotaryFees = isNotaryManual
-    ? Number(values.notaryFeesOverride) || 0
-    : autoNotaryFees
+  // Moteur de calcul unique (mêmes chiffres ici, en comparaison et dans le store)
+  const flip = useMemo(() => computeFlipResults(values), [values])
+  const {
+    autoNotaryFees,
+    isNotaryManual,
+    hasLotsMarge,
+    autoTerrainProportion,
+    isTerrainProportionManual,
+    totalChargesHT,
+    tvaCharges,
+    totalChargesTTC,
+    amountOfOperation,
+    apportAmount,
+    financementAmount,
+    monthlyPayment,
+    financialCost,
+    totalRevente,
+    travauxHT,
+  } = flip
 
   const currencyFormatter = useMemo(
     () =>
@@ -119,62 +133,6 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
       }),
     [locale],
   )
-
-  // Charges HT
-  const huissierHT = Number(values.huissierFees) || 0
-  const geometreHT = Number(values.geometreFees) || 0
-  const architecteHT = Number(values.architecteFees) || 0
-  const extraChargesTotal = (values.extraCharges ?? []).reduce((s, c) => s + (Number(c.amount) || 0), 0)
-
-  // Travaux : si détail ouvert, on utilise les 3 lignes, sinon le champ global à 10%
-  const t55 = Number(values.travaux55) || 0
-  const t10 = Number(values.travaux10) || 0
-  const t20 = Number(values.travaux20) || 0
-  const travauxGlobal = Number(values.travauxHT) || 0
-  const travauxHT = values.travauxDetailOpen ? (t55 + t10 + t20) : travauxGlobal
-  const tvaTravaux = values.travauxDetailOpen
-    ? (t55 * 0.055 + t10 * 0.10 + t20 * 0.20)
-    : (travauxGlobal * 0.10)
-
-  const autresChargesHT = huissierHT + geometreHT + architecteHT + extraChargesTotal
-  const totalChargesHT = autresChargesHT + travauxHT
-  const tvaCharges = tvaTravaux + autresChargesHT * 0.20
-  const totalChargesTTC = totalChargesHT + tvaCharges
-
-  const amountOfOperation =
-    (Number(values.purchasePrice) || 0) +
-    effectiveNotaryFees +
-    (Number(values.agencyFees) || 0) +
-    totalChargesTTC
-
-  const apportAmount = amountOfOperation * ((Number(values.apportPercent) || 0) / 100)
-  const financementAmount = amountOfOperation - apportAmount
-
-  const ratePerYear = (Number(values.ratePerYear) || 0) / 100
-  const months = Math.max(Number(values.durationMonths) || 1, 1)
-
-  const annualInterest = financementAmount * ratePerYear
-  const monthlyPayment = annualInterest / 12
-  const totalPayments = monthlyPayment * months
-
-  const financialCost = totalPayments
-  const totalCostForMarge = amountOfOperation + financialCost
-
-  // Proportion terrain auto-calculée ou manuelle
-  const totalReventeAll = values.apartments.reduce((s, a) => s + (Number(a.resalePrice) || 0), 0)
-  const totalReventeMarge = values.apartments
-    .filter((a) => a.tvaRegime === 'marge')
-    .reduce((s, a) => s + (Number(a.resalePrice) || 0), 0)
-  const autoTerrainProportion = totalReventeAll > 0
-    ? (totalReventeMarge / totalReventeAll) * 100
-    : 0
-  const isTerrainProportionManual = values.terrainProportion !== ''
-  const effectiveTerrainProportion = isTerrainProportionManual
-    ? Number(values.terrainProportion) || 0
-    : autoTerrainProportion
-
-  // Est-ce qu'il y a des lots en TVA marge ?
-  const hasLotsMarge = values.apartments.some((a) => a.tvaRegime === 'marge')
 
   const handleChange =
     (field: keyof MarchandDeBiensValues) =>
@@ -276,7 +234,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                 </span>
               </div>
             )}
-            <FormFieldReadOnly label={strings.mbFinancialCost} value={currencyFormatter.format(totalPayments)} />
+            <FormFieldReadOnly label={strings.mbFinancialCost} value={currencyFormatter.format(financialCost)} />
           </div>
         ),
       },
@@ -360,19 +318,19 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
                 <div className="mb-lot-summary">
                   <div className="mb-lot-summary-row">
                     <span>{strings.mbTotal}</span>
-                    <strong>{currencyFormatter.format(totalReventeAll)}</strong>
+                    <strong>{currencyFormatter.format(totalRevente)}</strong>
                   </div>
                   <div className="mb-lot-summary-row">
                     <span>{strings.mbPlusValue}</span>
-                    <span className={totalReventeAll - totalCostForMarge >= 0 ? 'mb-revente-positive' : 'mb-revente-negative'}>
-                      {currencyFormatter.format(totalReventeAll - totalCostForMarge)}
+                    <span className={flip.margeNetteAvantIS >= 0 ? 'mb-revente-positive' : 'mb-revente-negative'}>
+                      {currencyFormatter.format(flip.margeNetteAvantIS)}
                     </span>
                   </div>
                   <div className="mb-lot-summary-row">
                     <span>{strings.mbMarge}</span>
                     <span>
-                      {totalReventeAll > 0 && totalCostForMarge > 0
-                        ? `${((totalReventeAll - totalCostForMarge) / totalCostForMarge * 100).toFixed(1)}%`
+                      {flip.margePercent != null && totalRevente > 0
+                        ? `${flip.margePercent.toFixed(1)}%`
                         : '–'}
                     </span>
                   </div>
@@ -513,7 +471,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
             <FormField label={strings.mbRatePerYear} value={values.ratePerYear} onChange={handleChange('ratePerYear')} />
             <FormField label={strings.mbDurationMonths} value={values.durationMonths} onChange={handleChange('durationMonths')} />
             <FormFieldReadOnly label={strings.mbMonthlyPayment} value={currencyFormatter.format(monthlyPayment)} />
-            <FormFieldReadOnly label={strings.mbTotalPayments} value={currencyFormatter.format(totalPayments)} />
+            <FormFieldReadOnly label={strings.mbTotalPayments} value={currencyFormatter.format(financialCost)} />
           </div>
         ),
       },
@@ -524,12 +482,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
         content:
           values.apartments.length > 0 ? (
             <MargeVatTable
-              apartments={values.apartments}
-              totalCostForMarge={totalCostForMarge}
-              travauxHT={travauxHT}
-              autresChargesHT={autresChargesHT}
-              agencyFees={Number(values.agencyFees) || 0}
-              terrainProportion={effectiveTerrainProportion}
+              results={flip}
               currencyFormatter={currencyFormatter}
               strings={strings}
             />
@@ -544,12 +497,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
         content:
           values.apartments.length > 0 ? (
             <MbOperationResultTable
-              apartments={values.apartments}
-              totalCostForMarge={totalCostForMarge}
-              travauxHT={travauxHT}
-              autresChargesHT={autresChargesHT}
-              agencyFees={Number(values.agencyFees) || 0}
-              terrainProportion={effectiveTerrainProportion}
+              results={flip}
               currencyFormatter={currencyFormatter}
               strings={strings}
             />
@@ -564,12 +512,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
         content:
           values.apartments.length > 0 ? (
             <MbFiscalResultTable
-              apartments={values.apartments}
-              totalCostForMarge={totalCostForMarge}
-              travauxHT={travauxHT}
-              autresChargesHT={autresChargesHT}
-              agencyFees={Number(values.agencyFees) || 0}
-              terrainProportion={effectiveTerrainProportion}
+              results={flip}
               currencyFormatter={currencyFormatter}
               strings={strings}
             />
@@ -583,13 +526,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
       strings,
       locale,
       currencyFormatter,
-      effectiveNotaryFees,
-      amountOfOperation,
-      apportAmount,
-      financementAmount,
-      monthlyPayment,
-      totalPayments,
-      totalCostForMarge,
+      flip,
       addLot,
       removeLot,
       updateLot,
@@ -649,24 +586,24 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
           </button>
         }
       />
-      {values.apartments.length > 0 && totalReventeAll > 0 && (
+      {values.apartments.length > 0 && totalRevente > 0 && (
         <div className="mb-key-metrics">
           <h3 className="mb-key-metrics-title">{strings.mbKeyMetrics}</h3>
           <div className="results-grid">
             <ResultTile
               label={strings.mbMargeOperation}
-              value={currencyFormatter.format(totalReventeAll - totalCostForMarge)}
-              variant={totalReventeAll - totalCostForMarge >= 0 ? 'positive' : 'negative'}
+              value={currencyFormatter.format(flip.margeNetteAvantIS)}
+              variant={flip.margeNetteAvantIS >= 0 ? 'positive' : 'negative'}
             />
             <ResultTile
               label={strings.mbMarginPercent}
-              value={totalCostForMarge > 0 ? `${((totalReventeAll - totalCostForMarge) / totalCostForMarge * 100).toFixed(1)} %` : '–'}
-              variant={totalReventeAll - totalCostForMarge >= 0 ? 'positive' : 'negative'}
+              value={flip.margePercent != null ? `${flip.margePercent.toFixed(1)} %` : '–'}
+              variant={flip.margeNetteAvantIS >= 0 ? 'positive' : 'negative'}
             />
             <ResultTile
               label={strings.mbRoiFondsPropres}
-              value={apportAmount > 0 ? `${((totalReventeAll - totalCostForMarge) / apportAmount * 100).toFixed(1)} %` : '–'}
-              variant={totalReventeAll - totalCostForMarge >= 0 ? 'positive' : 'negative'}
+              value={flip.roiFondsPropres != null ? `${flip.roiFondsPropres.toFixed(1)} %` : '–'}
+              variant={flip.margeNetteAvantIS >= 0 ? 'positive' : 'negative'}
             />
           </div>
         </div>

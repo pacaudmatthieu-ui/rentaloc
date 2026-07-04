@@ -26,6 +26,8 @@ export function IRRTooltipContent({
 
   const data = payload[0].payload as IRRChartPoint
   const details = data.details
+  // TRI non calculable (apport nul, flux non conventionnels) : afficher « — », jamais 0 %
+  const irrDisplay = data.irr != null ? percentFormatter.format(data.irr / 100) : '—'
 
   // If no details, show simple display
   if (!details) {
@@ -36,7 +38,7 @@ export function IRRTooltipContent({
         </div>
         <div className="chart-tooltip-row">
           <span>TRI</span>
-          <span>{percentFormatter.format((data.irr ?? 0) / 100)}</span>
+          <span>{irrDisplay}</span>
         </div>
       </div>
     )
@@ -46,7 +48,7 @@ export function IRRTooltipContent({
   return (
     <div className="chart-tooltip irr-tooltip">
       <div className="chart-tooltip-title">
-        {yearLabel} {label} - TRI: {percentFormatter.format((data.irr ?? 0) / 100)}
+        {yearLabel} {label} - TRI: {irrDisplay}
       </div>
       
       <div className="chart-tooltip-section">
