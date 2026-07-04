@@ -33,14 +33,18 @@ interface FlipPanelPageProps {
 }
 
 export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: FlipPanelPageProps) {
-  const comparisonStore = useComparisonStore()
+  const comparisonSimulations = useComparisonStore((s) => s.simulations)
+  const initializeComparison = useComparisonStore((s) => s.initialize)
+  const addToComparison = useComparisonStore((s) => s.addToComparison)
+  const updateSimulationData = useComparisonStore((s) => s.updateSimulationData)
+  const isInComparisonCheck = useComparisonStore((s) => s.isInComparison)
   const [comparisonButtonState, setComparisonButtonState] = useState<'idle' | 'success' | 'error'>('idle')
   const [comparisonError, setComparisonError] = useState<string | null>(null)
-  
+
   // Initialize comparison store on mount
   useEffect(() => {
-    comparisonStore.initialize()
-  }, [comparisonStore])
+    initializeComparison()
+  }, [initializeComparison])
   
   // Initialize with provided initial values merged with defaults to ensure all fields exist
   const [values, setValues] = useState<MarchandDeBiensValues>(() => {
@@ -80,13 +84,12 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
     // First check if we have a stored comparison ID (simulation opened from comparison)
     const storedComparisonId = loadCurrentSimulationComparisonId()
     if (storedComparisonId) {
-      const state = comparisonStore.simulations
-      const found = state.find((sim) => sim.id === storedComparisonId && sim.type === 'property-flipping')
+      const found = comparisonSimulations.find((sim) => sim.id === storedComparisonId && sim.type === 'property-flipping')
       if (found) return true
     }
     // Fallback to data matching
-    return comparisonStore.isInComparison('property-flipping', values)
-  }, [comparisonStore, values])
+    return isInComparisonCheck('property-flipping', values)
+  }, [comparisonSimulations, isInComparisonCheck, values])
 
   // Use ref to track last updated values to prevent infinite loops
   const lastUpdatedValuesRef = useRef<string>('')
@@ -99,10 +102,10 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
       // Only update if values actually changed
       if (lastUpdatedValuesRef.current !== currentValuesStr) {
         lastUpdatedValuesRef.current = currentValuesStr
-        comparisonStore.updateSimulationData('property-flipping', values)
+        updateSimulationData('property-flipping', values)
       }
     }
-  }, [values, isInComparison, comparisonStore])
+  }, [values, isInComparison, updateSimulationData])
 
   // Moteur de calcul unique (mêmes chiffres ici, en comparaison et dans le store)
   const flip = useMemo(() => computeFlipResults(values), [values])
@@ -575,7 +578,7 @@ export function FlipPanelPage({ locale, strings, initialValues, valuesRef }: Fli
             className={`export-import-btn ${isInComparison ? 'export-import-btn-disabled' : ''} ${comparisonButtonState === 'success' ? 'export-import-btn-success' : ''}`}
             onClick={() => {
               if (isInComparison) return
-              const result = comparisonStore.addToComparison('property-flipping', values)
+              const result = addToComparison('property-flipping', values)
               if (result.success) {
                 setComparisonButtonState('success')
                 setComparisonError(null)
