@@ -1,6 +1,9 @@
 import React, { useRef, useState } from 'react'
 import { exportToJson, validateImportPayload } from '../lib'
 import { exportPdfFromElement } from '../../export-pdf/lib'
+import { exportReport } from '../../export-pdf/report'
+import { buildShareUrl } from '../../share-link/lib'
+import type { ShareType } from '../../share-link/lib'
 import type { ExportSection } from '../lib'
 
 interface ExportImportPanelProps<T> {
@@ -11,6 +14,10 @@ interface ExportImportPanelProps<T> {
   strings: Record<string, string>
   extraButton?: React.ReactNode
   pdfContentRef?: React.RefObject<HTMLElement | null>
+  /** Rapport PDF brandé (prioritaire sur la capture d'écran de l'interface) */
+  pdfReportBuilder?: () => HTMLElement
+  /** Active le bouton « Copier le lien de partage » */
+  shareType?: ShareType
 }
 
 export function ExportImportPanel<T>({
@@ -21,9 +28,12 @@ export function ExportImportPanel<T>({
   strings,
   extraButton,
   pdfContentRef,
+  pdfReportBuilder,
+  shareType,
 }: ExportImportPanelProps<T>) {
   const [showImportModal, setShowImportModal] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  const [shareState, setShareState] = useState<'idle' | 'copied' | 'error'>('idle')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleExport = () => {
@@ -31,9 +41,24 @@ export function ExportImportPanel<T>({
   }
 
   const handleExportPdf = () => {
+    if (pdfReportBuilder) {
+      exportReport(pdfReportBuilder(), `rentaloc_etude_${Date.now()}.pdf`)
+      return
+    }
     const el = pdfContentRef?.current
     if (!el) return
     exportPdfFromElement(el, { section })
+  }
+
+  const handleShare = async () => {
+    if (!shareType) return
+    try {
+      await navigator.clipboard.writeText(buildShareUrl(shareType, data))
+      setShareState('copied')
+    } catch {
+      setShareState('error')
+    }
+    setTimeout(() => setShareState('idle'), 2500)
   }
 
   const openImportModal = () => {
@@ -83,9 +108,18 @@ export function ExportImportPanel<T>({
       <button type="button" className="export-import-btn" onClick={openImportModal}>
         {strings.importData}
       </button>
-      {pdfContentRef && (
+      {(pdfContentRef || pdfReportBuilder) && (
         <button type="button" className="export-import-btn" onClick={handleExportPdf}>
           {strings.exportPdf}
+        </button>
+      )}
+      {shareType && (
+        <button
+          type="button"
+          className={`export-import-btn ${shareState === 'copied' ? 'export-import-btn-success' : ''}`}
+          onClick={handleShare}
+        >
+          {shareState === 'copied' ? strings.shareCopied : shareState === 'error' ? strings.shareError : strings.shareLink}
         </button>
       )}
       {extraButton}

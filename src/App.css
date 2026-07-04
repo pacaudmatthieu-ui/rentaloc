@@ -3032,3 +3032,88 @@
   color: var(--text-3);
   max-width: 90ch;
 }
+
+/* ============================================================
+   PACK CROISSANCE — capture d'email, presets, chargement panneau
+   ============================================================ */
+.lead-capture-card {
+  position: relative;
+  margin-top: 1.4rem;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.10), rgba(16, 153, 107, 0.05));
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: var(--radius);
+  padding: 1.1rem 2.6rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.lead-capture-text { display: flex; flex-direction: column; gap: 0.15rem; }
+.lead-capture-text strong { font-size: 0.98rem; }
+.lead-capture-text span { font-size: 0.83rem; color: var(--text-2); }
+
+.lead-capture-form { display: flex; gap: 0.55rem; flex-wrap: wrap; }
+.lead-capture-form input {
+  flex: 1;
+  min-width: 200px;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(110, 160, 130, 0.6);
+  background: rgba(20, 40, 30, 0.95);
+  padding: 0.55rem 0.8rem;
+  color: var(--text-1);
+  font-size: 16px;
+  outline: none;
+}
+.lead-capture-form input:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.lead-capture-form button {
+  border: 0;
+  border-radius: 0.7rem;
+  background: var(--accent);
+  color: #06251a;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.55rem 1.2rem;
+  cursor: pointer;
+  min-height: 42px;
+}
+.lead-capture-form button:disabled { opacity: 0.5; cursor: default; }
+
+.lead-capture-consent { font-size: 0.68rem; color: var(--text-3); line-height: 1.45; }
+.lead-capture-error { font-size: 0.78rem; color: var(--negative); }
+.lead-capture-dismiss {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.lead-capture-dismiss:hover { color: var(--text-1); background: rgba(110, 160, 130, 0.15); }
+.lead-capture-done { align-items: flex-start; color: var(--accent); font-weight: 600; }
+
+.preset-chips { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
+.preset-chips-label { font-size: 0.76rem; color: var(--text-3); }
+.preset-chip {
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.32rem 0.85rem;
+  cursor: pointer;
+  min-height: 32px;
+}
+.preset-chip:hover, .preset-chip:focus-visible { background: rgba(52, 211, 153, 0.22); outline: none; }
+
+.app-panel-loading {
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-3);
+}

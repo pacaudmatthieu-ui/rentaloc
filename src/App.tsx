@@ -52,6 +52,7 @@ import {
 } from './shared/utils/storage'
 import type { SimulationFormValues } from './panels/rental-investment/model/types'
 import type { MarchandDeBiensValues } from './panels/property-flip/model/types'
+import { parseShareHash } from './features/share-link/lib'
 
 export type UiMode = 'simple' | 'expert'
 
@@ -82,6 +83,23 @@ function App() {
   // Refs to access current values from child components
   const rentalValuesRef = useRef<SimulationFormValues | null>(null)
   const propertyFlippingValuesRef = useRef<MarchandDeBiensValues | null>(null)
+
+  // Simulation partagée par lien (#s=…) : chargée au démarrage puis
+  // l'URL est nettoyée pour ne pas re-charger à chaque rafraîchissement
+  useEffect(() => {
+    const shared = parseShareHash(window.location.hash)
+    if (!shared) return
+    history.replaceState(null, '', window.location.pathname + window.location.search)
+    if (shared.type === 'rental') {
+      saveRentalSimulation(shared.data)
+      setRentalInitialValues(shared.data)
+      setAppSection('investissement_locatif')
+    } else {
+      savePropertyFlippingSimulation(shared.data)
+      setPropertyFlippingInitialValues(shared.data)
+      setAppSection('marchand_de_biens')
+    }
+  }, [])
 
   // Load saved data when switching sections
   useEffect(() => {
