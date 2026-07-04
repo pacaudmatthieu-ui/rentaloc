@@ -13,6 +13,7 @@ import {
 import type { SimulationFormValues } from '../../panels/rental-investment/model/types'
 import type { MarchandDeBiensValues } from '../../panels/property-flip/model/types'
 import { calculateResults } from '../../panels/rental-investment/lib/calculations'
+import { computeFlipResults } from '../../panels/property-flip/lib/computeFlipResults'
 
 interface ComparisonStore {
   simulations: ComparisonSimulation[]
@@ -48,32 +49,18 @@ function calculatePreviewMetrics(
       return undefined
     }
   } else {
-    // Property flipping - calculate margin from apartments
+    // Marchand de biens : moteur unique (mêmes chiffres que le panneau MDB)
     const flipData = data as MarchandDeBiensValues
     try {
-      const totalResale = flipData.apartments.reduce((sum, apt) => {
-        const resale = toNumber(apt.resalePrice) || 0
-        return sum + resale
-      }, 0)
-      const totalCost = toNumber(flipData.purchasePrice) +
-                       toNumber(flipData.agencyFees) +
-                       toNumber((flipData as Record<string, unknown>).travauxHT as string ?? '0')
-      const margin = totalCost > 0 ? ((totalResale - totalCost) / totalCost) * 100 : 0
-      const totalProfit = totalResale - totalCost
+      const flip = computeFlipResults(flipData)
       return {
-        margin,
-        totalProfit,
+        margin: flip.margePercent ?? 0,
+        totalProfit: flip.margeNetteAvantIS,
       }
     } catch {
       return undefined
     }
   }
-}
-
-function toNumber(value: string | undefined): number {
-  if (!value) return 0
-  const parsed = parseFloat(value)
-  return isNaN(parsed) ? 0 : parsed
 }
 
 /**

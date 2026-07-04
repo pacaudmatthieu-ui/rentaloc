@@ -4,14 +4,7 @@ import type { SimulationFormValues } from '../../rental-investment/model/types'
 import type { TaxRegime } from '../../../shared/types'
 import { computeYearlyTableData } from '../../rental-investment/lib/calculations'
 import type { MarchandDeBiensValues } from '../../property-flip/model/types'
-import {
-  computeTvaSurMarge,
-  computeTvaDeductible,
-  computeAResterPayer,
-} from '../../../entities/finance/vat'
-
-const MB_IS_RATE = 0.25
-const MB_FLAT_TAX_RATE = 0.314
+import { computeFlipResults } from '../../property-flip/lib/computeFlipResults'
 
 export interface YearlyTaxData {
   year: number
@@ -74,52 +67,17 @@ export function getTaxRegimeLabel(regime: TaxRegime, strings: Record<string, str
 }
 
 /**
- * Calculate property flipping taxes (VAT + Corporate Tax + Flat Tax)
+ * Impôts d'une opération marchand de biens (TVA nette + IS + flat tax sur
+ * les dividendes) — via le moteur de calcul unique du panneau MDB.
  */
 function calculatePropertyFlippingTaxes(
   flipData: MarchandDeBiensValues,
 ): { totalTax: number; vatTax: number; corporateTax: number; flatTax: number } {
-  const totalResale = flipData.apartments.reduce((sum, apt) => {
-    const resale = parseFloat(apt.resalePrice) || 0
-    return sum + resale
-  }, 0)
-  
-  const purchasePrice = parseFloat(flipData.purchasePrice) || 0
-  const notaryFees = purchasePrice * 0.03
-  const agencyFees = parseFloat(flipData.agencyFees) || 0
-  const travauxHT = parseFloat(flipData.travauxHT ?? '0') || 0
-  const amountOfOperation = purchasePrice + notaryFees + agencyFees + travauxHT
-  const apportPercent = parseFloat(flipData.apportPercent) || 0
-  const apportAmount = amountOfOperation * (apportPercent / 100)
-  const financementAmount = amountOfOperation - apportAmount
-  const ratePerYear = (parseFloat(flipData.ratePerYear) || 0) / 100
-  const months = Math.max(parseFloat(flipData.durationMonths) || 1, 1)
-  const annualInterest = financementAmount * ratePerYear
-  const monthlyPayment = annualInterest / 12
-  const totalPayments = monthlyPayment * months
-  const financialCost = totalPayments
-  const totalCostForMarge = amountOfOperation + financialCost
-
-  // Calculate VAT (using marge regime as default)
-  const tvaDeductible = computeTvaDeductible(travauxHT, agencyFees)
-  const tvaSurMarge = computeTvaSurMarge(totalResale, totalCostForMarge)
-  const aRestoPayer = computeAResterPayer(tvaSurMarge, tvaDeductible)
-  const vatTax = Math.max(0, aRestoPayer)
-
-  // Calculate taxable profit
-  const marge = totalResale - totalCostForMarge
-  const beneficeImposable = Math.max(0, marge - aRestoPayer)
-
-  // Corporate tax (IS)
-  const corporateTax = beneficeImposable * MB_IS_RATE
-
-  // Flat tax (PFU)
-  const flatTax = beneficeImposable * MB_FLAT_TAX_RATE
-
-  // Total tax = VAT + Corporate Tax + Flat Tax
-  const totalTax = vatTax + corporateTax + flatTax
-
-  return { totalTax, vatTax, corporateTax, flatTax }
+  const flip = computeFlipResults(flipData)
+  const vatTax = flip.tvaNette
+  const corporateTax = flip.impotsSocietes
+  const flatTax = flip.flatTax
+  return { totalTax: vatTax + corporateTax + flatTax, vatTax, corporateTax, flatTax }
 }
 
 /**
@@ -258,15 +216,15 @@ export function compareTaxRegimes(
         ? (savings / highestTaxRegime.totalTaxOverPeriod) * 100
         : 0
 
-    // Calculate cumulative savings (year by year)
+    // Écart cumulé année par année — on ne compare que les simulations qui ont
+    // réellement des données pour l'année (une durée plus courte ne vaut pas 0 € d'impôt)
     const maxYears = Math.max(...allRegimes.map((r) => r.yearlyTaxData.length))
     let cumulativeSavings = 0
     for (let year = 1; year <= maxYears; year++) {
-      const yearTaxes = allRegimes.map((r) => {
-        const yearData = r.yearlyTaxData.find((y) => y.year === year)
-        return yearData?.totalTax || 0
-      })
-      if (yearTaxes.length > 0) {
+      const yearTaxes = allRegimes
+        .map((r) => r.yearlyTaxData.find((y) => y.year === year)?.totalTax)
+        .filter((t): t is number => t !== undefined)
+      if (yearTaxes.length >= 2) {
         const minYearTax = Math.min(...yearTaxes)
         const maxYearTax = Math.max(...yearTaxes)
         cumulativeSavings += maxYearTax - minYearTax

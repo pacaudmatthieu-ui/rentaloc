@@ -1,6 +1,7 @@
 export type IRRChartPoint = {
   year: number
-  irr: number
+  /** TRI en % — null si non calculable (apport nul, flux non conventionnels) */
+  irr: number | null
   details?: {
     initialInvestment: number
     annualCashflows: Array<{

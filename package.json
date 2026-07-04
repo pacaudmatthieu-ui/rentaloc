@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "rentaloc",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,11 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.3",
-    "exceljs": "^4.4.0",
     "html2pdf.js": "^0.14.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -30,6 +30,7 @@
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vitest": "^4.1.9"
   }
 }

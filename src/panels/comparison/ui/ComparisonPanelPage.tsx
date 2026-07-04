@@ -5,6 +5,7 @@ import { useComparisonStore } from '../../../shared/stores/useComparisonStore'
 import { calculateResults, computeIRRByYearData } from '../../rental-investment/lib/calculations'
 import type { SimulationFormValues } from '../../rental-investment/model/types'
 import type { MarchandDeBiensValues } from '../../property-flip/model/types'
+import { computeFlipResults } from '../../property-flip/lib/computeFlipResults'
 import {
   detectBestScenario,
   getDefaultCriteria,
@@ -102,52 +103,27 @@ export function ComparisonPanelPage({ locale, strings, onOpenSimulation }: Compa
           return { ...sim, calculated: null }
         }
       } else {
-        // Property flipping - calculate margin and financial costs
-        // Use same calculation logic as FlipPanelPage and ReventeTable
+        // Marchand de biens : moteur de calcul unique (mêmes hypothèses et mêmes
+        // chiffres que le panneau MDB — notaire saisi, travaux détaillés, TVA…)
         const flipData = sim.data as MarchandDeBiensValues
         try {
-          const totalResale = flipData.apartments.reduce((sum, apt) => {
-            const resale = parseFloat(apt.resalePrice) || 0
-            return sum + resale
-          }, 0)
-          const purchasePrice = parseFloat(flipData.purchasePrice) || 0
-          const notaryFees = purchasePrice * 0.03
-          const agencyFees = parseFloat(flipData.agencyFees) || 0
-          const travauxHT = parseFloat(flipData.travauxHT ?? '0') || 0
-          const amountOfOperation = purchasePrice + notaryFees + agencyFees + travauxHT
-          const apportPercent = parseFloat(flipData.apportPercent) || 0
-          const apportAmount = amountOfOperation * (apportPercent / 100)
-          const financementAmount = amountOfOperation - apportAmount
-          const ratePerYear = (parseFloat(flipData.ratePerYear) || 0) / 100
-          const months = Math.max(parseFloat(flipData.durationMonths) || 1, 1)
-          const annualInterest = financementAmount * ratePerYear
-          const monthlyPayment = annualInterest / 12
-          const totalPayments = monthlyPayment * months
-          const financialCost = totalPayments
-          // totalCostForMarge is used for margin calculation (same as ReventeTable)
-          const totalCostForMarge = amountOfOperation + financialCost
-          // Calculate margin as ratio (same formula as ReventeTable line 45-48)
-          const marginRatio = totalCostForMarge > 0 
-            ? (totalResale - totalCostForMarge) / totalCostForMarge 
-            : 0
-          // Convert to percentage for display
-          const margin = marginRatio * 100
-          const totalProfit = totalResale - totalCostForMarge
-          // Calculate annualized return based on holding period
-          const holdingPeriodMonths = months
-          const annualizedReturn = holdingPeriodMonths > 0
-            ? (Math.pow(1 + marginRatio, 12 / holdingPeriodMonths) - 1) * 100
-            : 0
+          const flip = computeFlipResults(flipData)
+          const marginRatio =
+            flip.totalCostForMarge > 0 ? flip.margeNetteAvantIS / flip.totalCostForMarge : 0
+          const annualizedReturn =
+            flip.durationMonths > 0
+              ? (Math.pow(1 + marginRatio, 12 / flip.durationMonths) - 1) * 100
+              : 0
           return {
             ...sim,
             calculated: {
-              margin,
-              totalProfit,
-              totalCost: totalCostForMarge,
-              totalResale,
-              financialCost,
-              loanAmount: financementAmount,
-              monthlyPayment,
+              margin: flip.margePercent ?? 0,
+              totalProfit: flip.margeNetteAvantIS,
+              totalCost: flip.totalCostForMarge,
+              totalResale: flip.totalRevente,
+              financialCost: flip.financialCost,
+              loanAmount: flip.financementAmount,
+              monthlyPayment: flip.monthlyPayment,
               annualizedReturn,
             },
           }

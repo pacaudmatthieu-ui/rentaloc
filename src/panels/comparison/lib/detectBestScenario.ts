@@ -65,7 +65,7 @@ export function detectBestScenario(
     'annualCashflowAfterTax',
   ].includes(criteria)
 
-  const lowerIsBetter = ['totalCost', 'annualTax', 'monthlyPayment'].includes(criteria)
+  const lowerIsBetter = ['totalCost', 'annualTax', 'monthlyPayment', 'loanAmount'].includes(criteria)
 
   // Extract metric values
   const metricValues = validSimulations.map((sim) => {
