@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   USER_LANGUAGE: 'rentaloc_user_language',
   COMPARISON_LIST: 'rentaloc_comparison_list',
   CURRENT_SIMULATION_COMPARISON_ID: 'rentaloc_current_simulation_comparison_id',
+  UI_MODE: 'rentaloc_ui_mode',
 } as const
 
 /**
@@ -98,6 +99,27 @@ export function saveUserLanguage(locale: string): void {
     localStorage.setItem(STORAGE_KEYS.USER_LANGUAGE, locale)
   } catch (error) {
     console.error('Error saving user language to localStorage:', error)
+  }
+}
+
+/**
+ * Save/load the UI mode (Essentiel / Expert)
+ */
+export function saveUiMode(mode: 'simple' | 'expert'): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.UI_MODE, mode)
+  } catch (error) {
+    console.error('Error saving UI mode to localStorage:', error)
+  }
+}
+
+export function loadUiMode(): 'simple' | 'expert' | null {
+  try {
+    const v = localStorage.getItem(STORAGE_KEYS.UI_MODE)
+    return v === 'simple' || v === 'expert' ? v : null
+  } catch (error) {
+    console.error('Error loading UI mode from localStorage:', error)
+    return null
   }
 }
 

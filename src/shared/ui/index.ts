@@ -1,4 +1,7 @@
-export { FormField, FormFieldReadOnly } from './FormField'
+export { FormField, FormFieldReadOnly, isInvalidNumericInput } from './FormField'
+export { YearsField } from './YearsField'
+export { HelpTip } from './HelpTip'
+export { VerdictBar, type VerdictKpi } from './VerdictBar'
 export { ResultTile } from './ResultTile'
 export { BreakdownRow } from './BreakdownRow'
 export { CashflowChart, ChartTooltipContent, type ChartTooltipStrings, LoanChartsSection, ComparisonIRRChart, type ComparisonIRRDataPoint } from './charts'
