@@ -2454,3 +2454,486 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   REFONTE VISUELLE — header brandé, bandeau verdict, champs à
+   unités, bulles d'aide, mode Essentiel. Utilise les tokens
+   définis dans index.css (:root).
+   ============================================================ */
+
+/* ---------- Header brandé ---------- */
+.app-header {
+  flex-wrap: wrap;
+}
+
+.app-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.app-logo-mark {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #06251a;
+  letter-spacing: -0.02em;
+  box-shadow: 0 6px 18px rgba(16, 153, 107, 0.35);
+}
+
+.app-brand h1 {
+  font-size: 1.55rem;
+}
+
+.app-header .app-subtitle {
+  margin-top: 0.15rem;
+  font-size: 0.82rem;
+  color: var(--text-3);
+}
+
+.app-header-side {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.app-header-side .language-switcher {
+  min-width: auto;
+}
+
+.mode-toggle {
+  display: inline-flex;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.mode-toggle button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 1.05rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-2);
+  min-height: 34px;
+}
+
+.mode-toggle button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.mode-toggle .mode-toggle-active {
+  background: var(--accent);
+  color: #06251a;
+}
+
+/* ---------- Bandeau verdict sticky ---------- */
+.verdict-bar {
+  position: sticky;
+  top: 10px;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.3rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  margin-bottom: 1.2rem;
+  grid-column: 1 / -1;
+}
+
+.verdict-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.verdict-figure {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.verdict-positive { color: var(--accent); }
+.verdict-negative { color: var(--negative); }
+.verdict-neutral { color: var(--text-1); }
+
+.verdict-unit {
+  font-size: 0.9rem;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.verdict-phrase {
+  font-size: 0.9rem;
+  color: var(--text-2);
+  max-width: 44ch;
+  margin-top: 0.15rem;
+}
+
+.verdict-kpis {
+  margin-left: auto;
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.verdict-kpi {
+  text-align: right;
+}
+
+.verdict-kpi-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+}
+
+.verdict-kpi-label {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  justify-content: flex-end;
+}
+
+/* ---------- Champs : groupe input + unité ---------- */
+.input-group {
+  display: flex;
+  align-items: stretch;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(110, 160, 130, 0.6);
+  background: rgba(20, 40, 30, 0.95);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-group .field-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.input-group:focus-within {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.7),
+    0 0 20px rgba(52, 211, 153, 0.2);
+}
+
+.input-group .field-input:focus-visible {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.input-unit {
+  display: grid;
+  place-items: center;
+  padding: 0 0.75rem;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-left: 1px solid var(--line-soft);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.input-group-invalid {
+  border-color: var(--negative);
+}
+
+.input-group-invalid:focus-within {
+  border-color: var(--negative);
+  box-shadow: 0 0 0 1px rgba(240, 131, 122, 0.6);
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: var(--negative);
+  margin-top: 0.15rem;
+}
+
+/* Anti-zoom iOS : les champs de saisie passent à 16px */
+.field-input {
+  font-size: 16px;
+  min-height: 40px;
+}
+
+/* ---------- Bulle d'aide pédagogique ---------- */
+.help-tip {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 0.35rem;
+}
+
+.help-tip-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: help;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.help-tip-btn:hover,
+.help-tip-btn:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.help-tip-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  translate: -50% 0;
+  width: 250px;
+  max-width: 78vw;
+  background: #06120c;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--text-2);
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: normal;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  z-index: 600;
+}
+
+.help-tip:hover .help-tip-bubble,
+.help-tip-open .help-tip-bubble {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Dans le bandeau verdict (collé en haut), la bulle s'ouvre vers le bas */
+.verdict-bar .help-tip-bubble {
+  bottom: auto;
+  top: calc(100% + 8px);
+  left: auto;
+  right: 0;
+  translate: none;
+  transform: translateY(-4px);
+}
+
+.verdict-bar .help-tip:hover .help-tip-bubble,
+.verdict-bar .help-tip-open .help-tip-bubble {
+  transform: translateY(0);
+}
+
+/* ---------- Divers formulaires ---------- */
+.regime-hint {
+  margin: -0.15rem 0 0.4rem;
+  font-size: 0.78rem;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+/* ---------- Tableau annuel ---------- */
+.yearly-table-neg {
+  color: var(--negative) !important;
+}
+
+.yearly-table-pos {
+  color: var(--accent) !important;
+}
+
+.yearly-table-compact {
+  min-width: 520px !important;
+}
+
+/* ---------- Mode Essentiel ---------- */
+.simple-main {
+  display: block;
+}
+
+.simple-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.simple-card {
+  background: rgba(13, 27, 20, 0.72);
+  border: 1px solid rgba(110, 160, 130, 0.18);
+  border-radius: var(--radius);
+  padding: 1.15rem 1.25rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.simple-card-title {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.step-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.simple-card-sub {
+  margin: -0.55rem 0 0.2rem;
+  font-size: 0.8rem;
+  color: var(--text-3);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.simple-advanced-cta {
+  margin-top: 0.4rem;
+  background: none;
+  border: 1px dashed rgba(110, 160, 130, 0.45);
+  border-radius: var(--radius-s);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.simple-advanced-cta:hover,
+.simple-advanced-cta:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.simple-projection-title {
+  margin: 0.6rem 0 0.1rem;
+  font-size: 0.9rem;
+}
+
+.simple-table-note {
+  font-size: 0.76rem;
+  color: var(--text-3);
+  margin: 0.1rem 0 0;
+}
+
+.simple-chart-card {
+  margin-top: 1.2rem;
+}
+
+.simple-disclaimer {
+  margin-top: 1rem;
+}
+
+/* ---------- Erreur React conviviale ---------- */
+.app-error-fallback {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-2);
+}
+
+.app-error-fallback button {
+  margin-top: 0.8rem;
+  background: var(--accent);
+  color: #06251a;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 650;
+  padding: 0.55rem 1.4rem;
+  cursor: pointer;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .simple-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .verdict-kpis {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+
+  .verdict-figure {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .app-header-side {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

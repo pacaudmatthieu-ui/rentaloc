@@ -1,11 +1,29 @@
 :root {
+  /* ===== Design tokens RentaLoc ===== */
+  --bg: #0a1410;
+  --bg-glow: #0e1c15;
+  --surface: #101d16;
+  --surface-2: #15251c;
+  --line: #23392c;
+  --line-soft: #1b2e23;
+  --text-1: #eaf2ec;
+  --text-2: #a8bcae;
+  --text-3: #75897b;
+  --accent: #34d399;
+  --accent-deep: #10996b;
+  --accent-soft: rgba(52, 211, 153, 0.12);
+  --negative: #f0837a;
+  --negative-soft: rgba(240, 131, 122, 0.12);
+  --radius: 14px;
+  --radius-s: 9px;
+
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text',
     'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
-  color: #e5e7eb;
-  background: #0c1a14;
+  color: var(--text-1);
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

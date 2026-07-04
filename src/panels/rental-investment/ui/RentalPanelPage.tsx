@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
-import { FormField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList } from '../../../shared/ui'
+import { FormField, YearsField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList, VerdictBar } from '../../../shared/ui'
+import type { VerdictKpi } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
 import { SavedSimulationsPanel } from '../../../shared/ui/SavedSimulationsPanel'
@@ -35,40 +36,47 @@ const RENTAL_DEFAULT_ORDER = [
 ]
 const RENTAL_GRID_LAYOUT = [2, 3, 2, 1, 1, 1, 1] as const
 
+const TAX_REGIME_OPTIONS: SimulationFormValues['taxRegime'][] = [
+  'none',
+  'micro_foncier',
+  'reel_foncier',
+  'lmnp_micro_bic',
+  'lmnp_reel',
+  'sci_ir',
+  'sci_is',
+  'bailleur_prive',
+]
+
 interface RentalPanelPageProps {
   locale: Locale
   strings: Record<string, string>
   initialValues?: SimulationFormValues | null
   valuesRef?: React.MutableRefObject<SimulationFormValues | null>
+  uiMode?: 'simple' | 'expert'
+  onRequestExpertMode?: () => void
 }
 
-export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: RentalPanelPageProps) {
+export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiMode = 'expert', onRequestExpertMode }: RentalPanelPageProps) {
   const comparisonStore = useComparisonStore()
   const [comparisonButtonState, setComparisonButtonState] = useState<'idle' | 'success' | 'error'>('idle')
   const [comparisonError, setComparisonError] = useState<string | null>(null)
-  
+
   // Initialize comparison store on mount
   useEffect(() => {
     comparisonStore.initialize()
   }, [comparisonStore])
-  
+
   // Initialize with provided initial values, saved values, or default values
   // Priority: initialValues (from localStorage) > INITIAL_VALUES (defaults)
   const [values, setValues] = useState<SimulationFormValues>(() => {
     try {
-      // Use provided initial values if available (from localStorage)
       if (initialValues && typeof initialValues === 'object') {
         return initialValues
-      }
-      // Fallback to default INITIAL_VALUES
-      if (!INITIAL_VALUES || typeof INITIAL_VALUES !== 'object') {
-        console.error('INITIAL_VALUES is invalid, using empty defaults')
-        return {} as SimulationFormValues
       }
       return INITIAL_VALUES
     } catch (error) {
       console.error('Error initializing RentalPanelPage:', error)
-      return {} as SimulationFormValues
+      return INITIAL_VALUES
     }
   })
   const pdfRef = useRef<HTMLDivElement>(null)
@@ -93,28 +101,22 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
   }, [values])
 
   // Check if current simulation is already in comparison
-  // Use stored comparison ID or data matching
   const isInComparison = useMemo(() => {
-    // First check if we have a stored comparison ID (simulation opened from comparison)
     const storedComparisonId = loadCurrentSimulationComparisonId()
     if (storedComparisonId) {
       const state = comparisonStore.simulations
       const found = state.find((sim) => sim.id === storedComparisonId && sim.type === 'rental')
       if (found) return true
     }
-    // Fallback to data matching
     return comparisonStore.isInComparison('rental', values)
   }, [comparisonStore, values])
 
   // Use ref to track last updated values to prevent infinite loops
   const lastUpdatedValuesRef = useRef<string>('')
-  
-  // Update comparison store if this simulation is in comparison
-  // Use separate effect with ref check to avoid infinite loops
+
   useEffect(() => {
     if (isInComparison) {
       const currentValuesStr = JSON.stringify(values)
-      // Only update if values actually changed
       if (lastUpdatedValuesRef.current !== currentValuesStr) {
         lastUpdatedValuesRef.current = currentValuesStr
         comparisonStore.updateSimulationData('rental', values)
@@ -188,9 +190,81 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
     }))
   }
 
-  const { order, collapsed, moveSection, setCollapsed } = usePanelLayout(
-    'rental',
-    RENTAL_DEFAULT_ORDER,
+  const inv = strings.invalidNumber
+
+  const regimeLabels: Record<string, string> = {
+    none: strings.taxNone,
+    micro_foncier: strings.taxMicroFoncier,
+    reel_foncier: strings.taxReelFoncier,
+    lmnp_micro_bic: strings.taxLmnpMicro,
+    lmnp_reel: strings.taxLmnpReel,
+    sci_ir: strings.taxSciIr,
+    sci_is: strings.taxSciIs,
+    bailleur_prive: strings.taxBailleurPrive,
+  }
+
+  // ----- Bandeau verdict -----
+  const verdict = useMemo(() => {
+    const cfMonth = results.monthlyCashflowAfterTax
+    const tone: 'positive' | 'negative' | 'neutral' =
+      cfMonth >= 1 ? 'positive' : cfMonth <= -1 ? 'negative' : 'neutral'
+    const totalOutflow =
+      results.annualCharges + results.annualLoanAndInsurance + Math.max(0, results.annualTax)
+    const selfFinancing = totalOutflow > 0 ? results.annualRentEffective / totalOutflow : 1
+    const amount = currencyFormatter.format(Math.abs(cfMonth))
+    let phrase = strings.verdictBreakEven
+    if (tone === 'positive') phrase = strings.verdictPositive.replace('{amount}', amount)
+    if (tone === 'negative')
+      phrase = strings.verdictNegative
+        .replace('{amount}', amount)
+        .replace('{percent}', percentFormatter.format(Math.min(selfFinancing, 1)))
+    const lastIrr = irrByYearData.length > 0 ? irrByYearData[irrByYearData.length - 1].irr : null
+    const kpis: VerdictKpi[] = [
+      { label: strings.grossYield, value: percentFormatter.format(results.grossYield), tone: 'positive', help: strings.helpGrossYield },
+      { label: strings.netYield, value: percentFormatter.format(results.netYield), tone: 'positive', help: strings.helpNetYield },
+      {
+        label: `${strings.verdictIrrLabel} (${irrByYearData.length} ${strings.taxComparisonYears})`,
+        value: lastIrr != null ? percentFormatter.format(lastIrr / 100) : '—',
+        tone: lastIrr != null && lastIrr > 0 ? 'positive' : 'neutral',
+        help: strings.helpIrr,
+      },
+    ]
+    return {
+      figure: currencyFormatter.format(cfMonth),
+      tone,
+      phrase,
+      kpis,
+    }
+  }, [results, irrByYearData, currencyFormatter, percentFormatter, strings])
+
+  // ----- Tableau annuel (colonnes essentielles / complètes) -----
+  const compactTable = (
+    <div className="yearly-table-wrapper">
+      <table className="yearly-table yearly-table-compact">
+        <thead>
+          <tr>
+            <th>{strings.tableYear}</th>
+            <th>{strings.tableRent}</th>
+            <th>{strings.tableCharges}</th>
+            <th>{strings.tableCredit}</th>
+            <th>{strings.tableTax}</th>
+            <th>{strings.tableCashDispo}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tableData.map((row) => (
+            <tr key={row.year}>
+              <td>{row.year}</td>
+              <td className="yearly-table-num">{currencyFormatter.format(row.rent)}</td>
+              <td className="yearly-table-num">{currencyFormatter.format(row.charges)}</td>
+              <td className="yearly-table-num">{currencyFormatter.format(row.credit)}</td>
+              <td className={`yearly-table-num ${row.tax + row.saleTax < 0 ? 'yearly-table-pos' : ''}`}>{currencyFormatter.format(row.tax + row.saleTax)}</td>
+              <td className={`yearly-table-num ${row.cashDispo < 0 ? 'yearly-table-neg' : 'yearly-table-pos'}`}>{currencyFormatter.format(row.cashDispo)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 
   const sections = useMemo(
@@ -201,12 +275,14 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         description: strings.acquisitionDescription,
         content: (
           <div className="form-card-body">
-            <FormField label={strings.purchasePrice} value={values.purchasePrice} onChange={handleChange('purchasePrice')} />
+            <FormField label={strings.purchasePrice} value={values.purchasePrice} onChange={handleChange('purchasePrice')} unit={strings.unitEuro} help={strings.helpPurchasePrice} invalidMessage={inv} />
             <div className="form-field-with-hint">
               <FormField
                 label={strings.notaryFees}
                 value={values.notaryFeesOverride ?? ''}
                 onChange={(e) => setValues((prev) => ({ ...prev, notaryFeesOverride: e.target.value }))}
+                unit={strings.unitEuro}
+                invalidMessage={inv}
               />
               <span className="form-field-hint">
                 {values.notaryFeesOverride
@@ -218,10 +294,10 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
               <input type="checkbox" checked={!!values.reducedNotaryFees} onChange={handleReducedNotaryFeesChange} />
               <span>{strings.reducedNotaryFees}</span>
             </label>
-            <FormField label={strings.agencyFees} value={values.agencyFees} onChange={handleChange('agencyFees')} />
-            <FormField label={strings.renovationBudget} value={values.renovationBudget} onChange={handleChange('renovationBudget')} />
-            <FormField label={strings.furnitureBudget} value={values.furnitureBudget} onChange={handleChange('furnitureBudget')} />
-            <FormField label={strings.ownFunds} value={values.ownFunds} onChange={handleChange('ownFunds')} />
+            <FormField label={strings.agencyFees} value={values.agencyFees} onChange={handleChange('agencyFees')} unit={strings.unitEuro} invalidMessage={inv} />
+            <FormField label={strings.renovationBudget} value={values.renovationBudget} onChange={handleChange('renovationBudget')} unit={strings.unitEuro} invalidMessage={inv} />
+            <FormField label={strings.furnitureBudget} value={values.furnitureBudget} onChange={handleChange('furnitureBudget')} unit={strings.unitEuro} invalidMessage={inv} />
+            <FormField label={strings.ownFunds} value={values.ownFunds} onChange={handleChange('ownFunds')} unit={strings.unitEuro} help={strings.helpOwnFunds} invalidMessage={inv} />
           </div>
         ),
       },
@@ -231,9 +307,16 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         description: strings.financingDescription,
         content: (
           <div className="form-card-body">
-            <FormField label={strings.interestRate} value={values.interestRate} onChange={handleChange('interestRate')} />
-            <FormField label={strings.insuranceRate} value={values.insuranceRate} onChange={handleChange('insuranceRate')} />
-            <FormField label={strings.loanDurationMonths} value={values.loanDurationMonths} onChange={handleChange('loanDurationMonths')} />
+            <FormField label={strings.interestRate} value={values.interestRate} onChange={handleChange('interestRate')} unit={strings.unitPercent} help={strings.helpInterestRate} invalidMessage={inv} />
+            <FormField label={strings.insuranceRate} value={values.insuranceRate} onChange={handleChange('insuranceRate')} unit={strings.unitPercent} help={strings.helpInsuranceRate} invalidMessage={inv} />
+            <YearsField
+              label={strings.loanDurationYears}
+              months={values.loanDurationMonths}
+              onMonthsChange={(m) => setValues((prev) => ({ ...prev, loanDurationMonths: m || '1' }))}
+              unit={strings.unitYears}
+              help={strings.helpLoanDuration}
+              invalidMessage={inv}
+            />
             <label className="form-field">
               <span className="field-label">{strings.deferralType}</span>
               <select className="field-input" value={values.deferralType} onChange={handleDeferralTypeChange}>
@@ -243,10 +326,10 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
               </select>
             </label>
             {values.deferralType !== 'none' && (
-              <FormField label={strings.deferralMonths} value={values.deferralMonths} onChange={handleChange('deferralMonths')} />
+              <FormField label={strings.deferralMonths} value={values.deferralMonths} onChange={handleChange('deferralMonths')} unit={strings.unitMonths} invalidMessage={inv} />
             )}
-            <FormField label={strings.loanFees} value={values.loanFees} onChange={handleChange('loanFees')} />
-            <FormField label={strings.guaranteeFees} value={values.guaranteeFees} onChange={handleChange('guaranteeFees')} />
+            <FormField label={strings.loanFees} value={values.loanFees} onChange={handleChange('loanFees')} unit={strings.unitEuro} invalidMessage={inv} />
+            <FormField label={strings.guaranteeFees} value={values.guaranteeFees} onChange={handleChange('guaranteeFees')} unit={strings.unitEuro} invalidMessage={inv} />
           </div>
         ),
       },
@@ -256,10 +339,10 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         description: strings.revenuesDescription,
         content: (
           <div className="form-card-body">
-            <FormField label={strings.monthlyRent} value={values.monthlyRent} onChange={handleChange('monthlyRent')} />
-            <FormField label={strings.monthlyRecoverableCharges} value={values.monthlyRecoverableCharges} onChange={handleChange('monthlyRecoverableCharges')} />
-            <FormField label={strings.rentRevaluationPercent} value={values.rentRevaluationPercent} onChange={handleChange('rentRevaluationPercent')} />
-            <FormField label={strings.vacancyRate} value={values.vacancyRate} onChange={handleChange('vacancyRate')} />
+            <FormField label={strings.monthlyRent} value={values.monthlyRent} onChange={handleChange('monthlyRent')} unit={strings.unitEuroPerMonth} help={strings.helpMonthlyRent} invalidMessage={inv} />
+            <FormField label={strings.monthlyRecoverableCharges} value={values.monthlyRecoverableCharges} onChange={handleChange('monthlyRecoverableCharges')} unit={strings.unitEuroPerMonth} help={strings.helpRecoverableCharges} invalidMessage={inv} />
+            <FormField label={strings.rentRevaluationPercent} value={values.rentRevaluationPercent} onChange={handleChange('rentRevaluationPercent')} unit={strings.unitPercent} help={strings.helpRentRevaluation} invalidMessage={inv} />
+            <FormField label={strings.vacancyRate} value={values.vacancyRate} onChange={handleChange('vacancyRate')} unit={strings.unitPercent} help={strings.helpVacancy} invalidMessage={inv} />
           </div>
         ),
       },
@@ -269,12 +352,12 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         description: strings.chargesDescription,
         content: (
           <div className="form-card-body">
-            <FormField label={strings.annualPropertyTax} value={values.annualPropertyTax} onChange={handleChange('annualPropertyTax')} />
-            <FormField label={strings.annualNonRecoverableCharges} value={values.annualNonRecoverableCharges} onChange={handleChange('annualNonRecoverableCharges')} />
-            <FormField label={strings.annualManagementPercent} value={values.annualManagementPercent} onChange={handleChange('annualManagementPercent')} />
-            <FormField label={strings.annualMaintenance} value={values.annualMaintenance} onChange={handleChange('annualMaintenance')} />
-            <FormField label={strings.annualInsurancePNO} value={values.annualInsurancePNO} onChange={handleChange('annualInsurancePNO')} />
-            <FormField label={strings.otherAnnualExpenses} value={values.otherAnnualExpenses} onChange={handleChange('otherAnnualExpenses')} />
+            <FormField label={strings.annualPropertyTax} value={values.annualPropertyTax} onChange={handleChange('annualPropertyTax')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
+            <FormField label={strings.annualNonRecoverableCharges} value={values.annualNonRecoverableCharges} onChange={handleChange('annualNonRecoverableCharges')} unit={strings.unitEuroPerYear} help={strings.helpNonRecoverable} invalidMessage={inv} />
+            <FormField label={strings.annualManagementPercent} value={values.annualManagementPercent} onChange={handleChange('annualManagementPercent')} unit={strings.unitPercent} help={strings.helpManagement} invalidMessage={inv} />
+            <FormField label={strings.annualMaintenance} value={values.annualMaintenance} onChange={handleChange('annualMaintenance')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
+            <FormField label={strings.annualInsurancePNO} value={values.annualInsurancePNO} onChange={handleChange('annualInsurancePNO')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
+            <FormField label={strings.otherAnnualExpenses} value={values.otherAnnualExpenses} onChange={handleChange('otherAnnualExpenses')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
           </div>
         ),
       },
@@ -296,15 +379,20 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         description: strings.resaleDescription,
         content: (
           <div className="form-card-body">
-            <FormField
-              label={strings.resaleHoldingMonths}
-              value={values.resaleHoldingMonths}
-              onChange={handleChange('resaleHoldingMonths')}
+            <YearsField
+              label={strings.resaleHoldingYears}
+              months={values.resaleHoldingMonths}
+              onMonthsChange={(m) => setValues((prev) => ({ ...prev, resaleHoldingMonths: m }))}
+              unit={strings.unitYears}
+              help={strings.helpResale}
+              invalidMessage={inv}
             />
             <FormField
               label={strings.resalePrice}
               value={values.resalePrice}
               onChange={handleChange('resalePrice')}
+              unit={strings.unitEuro}
+              invalidMessage={inv}
             />
           </div>
         ),
@@ -319,19 +407,15 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
             <label className="form-field">
               <span className="field-label">{strings.taxRegimeLabel}</span>
               <select className="field-input" value={values.taxRegime} onChange={handleTaxRegimeChange}>
-                <option value="none">{strings.taxNone}</option>
-                <option value="micro_foncier">{strings.taxMicroFoncier}</option>
-                <option value="reel_foncier">{strings.taxReelFoncier}</option>
-                <option value="lmnp_micro_bic">{strings.taxLmnpMicro}</option>
-                <option value="lmnp_reel">{strings.taxLmnpReel}</option>
-                <option value="sci_ir">{strings.taxReelFoncier}</option>
-                <option value="sci_is">{strings.taxSciIs}</option>
-                <option value="bailleur_prive">{strings.taxBailleurPrive}</option>
+                {TAX_REGIME_OPTIONS.map((key) => (
+                  <option key={key} value={key}>{regimeLabels[key]}</option>
+                ))}
               </select>
             </label>
-            <FormField label={strings.marginalTaxRate} value={values.marginalTaxRate} onChange={handleChange('marginalTaxRate')} />
-            <FormField label={strings.socialChargesRate} value={values.socialChargesRate} onChange={handleChange('socialChargesRate')} />
-            <FormField label={strings.corporateTaxRate} value={values.corporateTaxRate} onChange={handleChange('corporateTaxRate')} />
+            <p className="regime-hint">{strings[`regimeHint_${values.taxRegime}`]}</p>
+            <FormField label={strings.marginalTaxRate} value={values.marginalTaxRate} onChange={handleChange('marginalTaxRate')} unit={strings.unitPercent} help={strings.helpTmi} invalidMessage={inv} />
+            <FormField label={strings.socialChargesRate} value={values.socialChargesRate} onChange={handleChange('socialChargesRate')} unit={strings.unitPercent} help={strings.helpSocialCharges} invalidMessage={inv} />
+            <FormField label={strings.corporateTaxRate} value={values.corporateTaxRate} onChange={handleChange('corporateTaxRate')} unit={strings.unitPercent} help={strings.helpCorporateTax} invalidMessage={inv} />
             {(values.taxRegime === 'lmnp_reel' || values.taxRegime === 'sci_is') && (
               <label className="form-field form-field-checkbox">
                 <input type="checkbox" checked={values.feesAmortizeYear1} onChange={handleFeesAmortizeYear1Change} />
@@ -381,7 +465,7 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
                           </div>
                           <div className="pfu-detail-tooltip-row">
                             <span>{strings.flatTaxAmount}</span>
-                            <span>{currencyFormatter.format(flatTaxDetail.totalAccumulated)} × {(flatTaxDetail.flatTaxRate * 100).toFixed(1)} % = {currencyFormatter.format(flatTaxDetail.flatTaxAmount)}</span>
+                            <span>{currencyFormatter.format(Math.max(0, flatTaxDetail.totalAccumulated - flatTaxDetail.ownFundsReturned))} × {(flatTaxDetail.flatTaxRate * 100).toFixed(1)} % = {currencyFormatter.format(flatTaxDetail.flatTaxAmount)}</span>
                           </div>
                           <div className="pfu-detail-tooltip-row">
                             <span>{strings.flatTaxCorporateOnGain}</span>
@@ -408,12 +492,12 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         content: (
           <>
             <div className="results-grid">
+              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} />
               <ResultTile label={strings.monthlyCashflow} value={currencyFormatter.format(results.monthlyCashflow)} variant={results.monthlyCashflow >= 0 ? 'positive' : 'negative'} />
               <ResultTile label={strings.annualCashflow} value={currencyFormatter.format(results.annualCashflow)} variant={results.annualCashflow >= 0 ? 'positive' : 'negative'} />
               <ResultTile label={strings.grossYield} value={percentFormatter.format(results.grossYield)} />
               <ResultTile label={strings.netYield} value={percentFormatter.format(results.netYield)} />
               <ResultTile label={strings.cashOnCash} value={percentFormatter.format(results.cashOnCash)} />
-              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} />
               <ResultTile label={strings.annualCashflowAfterTax} value={currencyFormatter.format(results.annualCashflowAfterTax)} variant={results.annualCashflowAfterTax >= 0 ? 'positive' : 'negative'} />
             </div>
             <h3 className="results-breakdown-title">{strings.breakdownTitle}</h3>
@@ -505,16 +589,16 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
                       <td className="yearly-table-num">{currencyFormatter.format(row.crd)}</td>
                       <td className="yearly-table-num">{currencyFormatter.format(row.rent)}</td>
                       <td className="yearly-table-num">{currencyFormatter.format(row.charges)}</td>
-                      <td className="yearly-table-num">{currencyFormatter.format(row.cfBeforeTax)}</td>
+                      <td className={`yearly-table-num ${row.cfBeforeTax < 0 ? 'yearly-table-neg' : ''}`}>{currencyFormatter.format(row.cfBeforeTax)}</td>
                       <td className="yearly-table-num">{currencyFormatter.format(row.depreciation)}</td>
                       <td className="yearly-table-num">{currencyFormatter.format(row.taxBase)}</td>
-                      <td className="yearly-table-num">{currencyFormatter.format(row.tax)}</td>
-                    <td className="yearly-table-num">{currencyFormatter.format(row.carryforwardUsed)}</td>
-                    <td className="yearly-table-num">{currencyFormatter.format(row.deficitRemaining)}</td>
-                    <td className="yearly-table-num">{currencyFormatter.format(row.depreciationReserve)}</td>
-                    <td className="yearly-table-num">{row.resalePrice > 0 ? currencyFormatter.format(row.resalePrice) : '–'}</td>
-                    <td className="yearly-table-num">{currencyFormatter.format(row.cashDispo)}</td>
-                    <td className="yearly-table-num">{currencyFormatter.format(row.saleTax)}</td>
+                      <td className={`yearly-table-num ${row.tax < 0 ? 'yearly-table-pos' : ''}`}>{currencyFormatter.format(row.tax)}</td>
+                      <td className="yearly-table-num">{currencyFormatter.format(row.carryforwardUsed)}</td>
+                      <td className="yearly-table-num">{currencyFormatter.format(row.deficitRemaining)}</td>
+                      <td className="yearly-table-num">{currencyFormatter.format(row.depreciationReserve)}</td>
+                      <td className="yearly-table-num">{row.resalePrice > 0 ? currencyFormatter.format(row.resalePrice) : '–'}</td>
+                      <td className={`yearly-table-num ${row.cashDispo < 0 ? 'yearly-table-neg' : 'yearly-table-pos'}`}>{currencyFormatter.format(row.cashDispo)}</td>
+                      <td className="yearly-table-num">{currencyFormatter.format(row.saleTax)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -543,26 +627,124 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef }: R
         ),
       },
     ],
-    [
-      values,
-      strings,
-      currencyFormatter,
-      percentFormatter,
-      results,
-      chartData,
-      tableData,
-      loanChartsData,
-      irrByYearData,
-      handleChange,
-      handleTaxRegimeChange,
-      handleDeferralTypeChange,
-      handleFeesAmortizeYear1Change,
-    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [values, strings, currencyFormatter, percentFormatter, results, chartData, tableData, loanChartsData, irrByYearData],
   )
 
+  const { order, collapsed, moveSection, setCollapsed } = usePanelLayout(
+    'rental',
+    RENTAL_DEFAULT_ORDER,
+  )
+
+  // ============================================================
+  // MODE ESSENTIEL : 6 champs, verdict, résultats, projection
+  // ============================================================
+  if (uiMode === 'simple') {
+    return (
+      <main className="app-main simple-main">
+        <VerdictBar
+          figure={verdict.figure}
+          figureUnit={strings.verdictPerMonth}
+          tone={verdict.tone}
+          phrase={verdict.phrase}
+          kpis={verdict.kpis}
+        />
+        <div className="simple-layout">
+          <section className="simple-card">
+            <h3 className="simple-card-title"><span className="step-dot">1</span> {strings.simpleFormTitle}</h3>
+            <p className="simple-card-sub">{strings.simpleFormSubtitle}</p>
+            <FormField label={strings.purchasePrice} value={values.purchasePrice} onChange={handleChange('purchasePrice')} unit={strings.unitEuro} help={strings.helpPurchasePrice} invalidMessage={inv} />
+            <FormField label={strings.monthlyRent} value={values.monthlyRent} onChange={handleChange('monthlyRent')} unit={strings.unitEuroPerMonth} help={strings.helpMonthlyRent} invalidMessage={inv} />
+            <FormField label={strings.ownFunds} value={values.ownFunds} onChange={handleChange('ownFunds')} unit={strings.unitEuro} help={strings.helpOwnFunds} invalidMessage={inv} />
+            <div className="two-col">
+              <YearsField
+                label={strings.loanDurationYears}
+                months={values.loanDurationMonths}
+                onMonthsChange={(m) => setValues((prev) => ({ ...prev, loanDurationMonths: m || '1' }))}
+                unit={strings.unitYears}
+                help={strings.helpLoanDuration}
+                invalidMessage={inv}
+              />
+              <FormField label={strings.interestRate} value={values.interestRate} onChange={handleChange('interestRate')} unit={strings.unitPercent} help={strings.helpInterestRate} invalidMessage={inv} />
+            </div>
+            <label className="form-field">
+              <span className="field-label">{strings.taxRegimeLabel}</span>
+              <select className="field-input" value={values.taxRegime} onChange={handleTaxRegimeChange}>
+                {TAX_REGIME_OPTIONS.map((key) => (
+                  <option key={key} value={key}>{regimeLabels[key]}</option>
+                ))}
+              </select>
+            </label>
+            <p className="regime-hint">{strings[`regimeHint_${values.taxRegime}`]}</p>
+            <button type="button" className="simple-advanced-cta" onClick={onRequestExpertMode}>
+              {strings.simpleAdvancedCta}
+            </button>
+          </section>
+
+          <section className="simple-card">
+            <h3 className="simple-card-title"><span className="step-dot">2</span> {strings.simpleResultsTitle}</h3>
+            <p className="simple-card-sub">{strings.simpleResultsSubtitle}</p>
+            <div className="results-grid">
+              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} />
+              <ResultTile label={strings.totalCost} value={currencyFormatter.format(results.totalCost)} />
+              <ResultTile label={strings.loanAmount} value={currencyFormatter.format(results.loanAmount)} />
+              <ResultTile label={strings.estimatedAnnualTax} value={currencyFormatter.format(results.annualTax)} />
+              <ResultTile label={strings.grossYield} value={percentFormatter.format(results.grossYield)} />
+              <ResultTile label={strings.netYield} value={percentFormatter.format(results.netYield)} />
+            </div>
+            <h4 className="simple-projection-title">{strings.simpleProjectionTitle}</h4>
+            {compactTable}
+            <p className="simple-table-note">{strings.simpleTableNote}</p>
+          </section>
+        </div>
+        <section className="simple-card simple-chart-card">
+          <h3 className="simple-card-title">{strings.chartTitle}</h3>
+          <div className="chart-section-content">
+            <CashflowChart
+              data={chartData}
+              currencyFormatter={currencyFormatter}
+              revenueLabel={strings.chartRevenueLabel}
+              chargesLabel={strings.chartExpensesLabel}
+              cashflowLabel={strings.chartCashflowLabel}
+              tooltipStrings={{
+                revenue: strings.chartTooltipRevenue,
+                charges: strings.chartTooltipCharges,
+                cashflow: strings.chartTooltipCashflow,
+                propertyTax: strings.chartChargePropertyTax,
+                copro: strings.chartChargeCopro,
+                management: strings.chartChargeManagement,
+                maintenance: strings.chartChargeMaintenance,
+                insurance: strings.chartChargeInsurance,
+                other: strings.chartChargeOther,
+                loan: strings.chartChargeLoan,
+                depreciation: strings.chartChargeDepreciation,
+                carryforward: strings.chartChargeCarryforward,
+                tax: strings.chartChargeTax,
+                saleTax: strings.chartChargeSaleTax,
+                corporateTaxOnGain: strings.chartChargeCorporateOnGain,
+                flatTax: strings.chartChargeFlatTax,
+              }}
+            />
+          </div>
+        </section>
+        <p className="results-disclaimer simple-disclaimer">{strings.disclaimer}</p>
+      </main>
+    )
+  }
+
+  // ============================================================
+  // MODE EXPERT : interface complète
+  // ============================================================
   return (
     <>
       <main className="app-main app-main-sortable" ref={pdfRef}>
+        <VerdictBar
+          figure={verdict.figure}
+          figureUnit={strings.verdictPerMonth}
+          tone={verdict.tone}
+          phrase={verdict.phrase}
+          kpis={verdict.kpis}
+        />
         <SavedSimulationsPanel
           type="rental"
           currentData={values}

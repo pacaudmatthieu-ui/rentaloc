@@ -2,7 +2,7 @@ import { Component, useEffect, useRef, useState } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
 
 class ErrorBoundary extends Component<
-  { children: ReactNode },
+  { children: ReactNode; message: string; retryLabel: string },
   { error: Error | null }
 > {
   state: { error: Error | null } = { error: null }
@@ -15,11 +15,11 @@ class ErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div style={{ color: 'red', padding: '2rem', whiteSpace: 'pre-wrap' }}>
-          <h2>Erreur React</h2>
-          <p>{this.state.error.message}</p>
-          <pre>{this.state.error.stack}</pre>
-          <button onClick={() => this.setState({ error: null })}>Réessayer</button>
+        <div className="app-error-fallback" role="alert">
+          <p>{this.props.message}</p>
+          <button type="button" onClick={() => this.setState({ error: null })}>
+            {this.props.retryLabel}
+          </button>
         </div>
       )
     }
@@ -33,7 +33,6 @@ import { RentalPanelPage } from './panels/rental-investment'
 import { FlipPanelPage } from './panels/property-flip'
 import { ComparisonPanelPage } from './panels/comparison'
 import type { AppSection } from './shared/types'
-import { getSimulationType } from './shared/types'
 import {
   loadRentalSimulation,
   loadPropertyFlippingSimulation,
@@ -42,9 +41,13 @@ import {
   saveUserLanguage,
   loadUserLanguage,
   saveCurrentSimulationComparisonId,
+  saveUiMode,
+  loadUiMode,
 } from './shared/utils/storage'
 import type { SimulationFormValues } from './panels/rental-investment/model/types'
 import type { MarchandDeBiensValues } from './panels/property-flip/model/types'
+
+export type UiMode = 'simple' | 'expert'
 
 function App() {
   // Load saved language preference or default to 'fr'
@@ -53,28 +56,26 @@ function App() {
     return (saved === 'en' || saved === 'fr') ? saved : 'fr'
   })
   const [appSection, setAppSection] = useState<AppSection>('investissement_locatif')
-  
+
+  // Mode Essentiel / Expert : les utilisateurs existants (simulation déjà
+  // enregistrée) restent en Expert, les nouveaux découvrent le mode Essentiel.
+  const [uiMode, setUiMode] = useState<UiMode>(() => {
+    const saved = loadUiMode()
+    if (saved) return saved
+    return loadRentalSimulation<SimulationFormValues>() ? 'expert' : 'simple'
+  })
+  const handleUiModeChange = (mode: UiMode) => {
+    setUiMode(mode)
+    saveUiMode(mode)
+  }
+
   // Track initial values for each simulation type
   const [rentalInitialValues, setRentalInitialValues] = useState<SimulationFormValues | null>(null)
   const [propertyFlippingInitialValues, setPropertyFlippingInitialValues] = useState<MarchandDeBiensValues | null>(null)
-  
+
   // Refs to access current values from child components
   const rentalValuesRef = useRef<SimulationFormValues | null>(null)
   const propertyFlippingValuesRef = useRef<MarchandDeBiensValues | null>(null)
-  
-  // Simulation type is explicitly tracked via getSimulationType() helper
-  // - appSection 'investissement_locatif' maps to 'rental'
-  // - appSection 'marchand_de_biens' maps to 'property-flipping'
-  // This satisfies AC requirements for both Story 1.1 and Story 1.2
-  // The simulationType is set in application state (even if not directly used in render)
-  const simulationType = getSimulationType(appSection)
-  // When appSection is 'investissement_locatif', simulationType is 'rental'
-  // When appSection is 'marchand_de_biens', simulationType is 'property-flipping'
-  
-  // Note: simulationType is available for future use (e.g., analytics, conditional logic)
-  // Currently satisfies AC requirement: "simulation type is set to X in the application state"
-  // Consume variable to avoid unused variable warning (variable is set to satisfy AC)
-  void simulationType
 
   // Load saved data when switching sections
   useEffect(() => {
@@ -87,19 +88,6 @@ function App() {
     }
     // Comparison panel doesn't need to load simulation data
   }, [appSection])
-
-  // Handle section switching with data persistence
-  const handleSectionChange = (newSection: AppSection) => {
-    // Save current simulation data before switching
-    if (appSection === 'investissement_locatif' && rentalValuesRef.current) {
-      // Data will be saved by RentalPanelPage's useEffect
-      // We just need to switch
-    } else if (appSection === 'marchand_de_biens' && propertyFlippingValuesRef.current) {
-      // Data will be saved by FlipPanelPage's useEffect
-      // We just need to switch
-    }
-    setAppSection(newSection)
-  }
 
   // Handle opening simulation from comparison panel
   const handleOpenSimulation = (simulationData: SimulationFormValues | MarchandDeBiensValues, type: 'rental' | 'property-flipping', comparisonId?: string) => {
@@ -127,76 +115,103 @@ function App() {
   return (
     <div className="app-root">
       <header className="app-header">
-        <div>
-          <h1>{strings.title}</h1>
-          <p className="app-subtitle">{strings.subtitle}</p>
+        <div className="app-header-main">
+          <div className="app-brand">
+            <div className="app-logo-mark" aria-hidden="true">JM</div>
+            <div>
+              <h1>RentaLoc</h1>
+              <p className="app-subtitle">{strings.brandBy}</p>
+            </div>
+          </div>
           <div className="section-tabs">
             <button
               type="button"
               className={`section-tab ${appSection === 'investissement_locatif' ? 'section-tab-active' : ''}`}
-              onClick={() => handleSectionChange('investissement_locatif')}
+              onClick={() => setAppSection('investissement_locatif')}
             >
               {strings.sectionInvestissementLocatif}
             </button>
             <button
               type="button"
               className={`section-tab ${appSection === 'marchand_de_biens' ? 'section-tab-active' : ''}`}
-              onClick={() => handleSectionChange('marchand_de_biens')}
+              onClick={() => setAppSection('marchand_de_biens')}
             >
               {strings.sectionMarchandDeBiens}
             </button>
             <button
               type="button"
               className={`section-tab ${appSection === 'comparison' ? 'section-tab-active' : ''}`}
-              onClick={() => handleSectionChange('comparison')}
+              onClick={() => setAppSection('comparison')}
             >
               {strings.comparisonPanel}
             </button>
           </div>
         </div>
-        <div className="language-switcher">
-          <label className="field-label" htmlFor="language-select">
-            {strings.languageLabel}
-          </label>
-          <select
-            id="language-select"
-            className="language-select"
-            value={locale}
-            onChange={(event) => {
-              const newLocale = event.target.value as Locale
-              setLocale(newLocale)
-              saveUserLanguage(newLocale)
-            }}
-          >
-            <option value="en">{strings.languageEnglish}</option>
-            <option value="fr">{strings.languageFrench}</option>
-          </select>
+        <div className="app-header-side">
+          {appSection === 'investissement_locatif' && (
+            <div className="mode-toggle" role="group" aria-label="Mode">
+              <button
+                type="button"
+                className={uiMode === 'simple' ? 'mode-toggle-active' : ''}
+                onClick={() => handleUiModeChange('simple')}
+              >
+                {strings.modeSimple}
+              </button>
+              <button
+                type="button"
+                className={uiMode === 'expert' ? 'mode-toggle-active' : ''}
+                onClick={() => handleUiModeChange('expert')}
+              >
+                {strings.modeExpert}
+              </button>
+            </div>
+          )}
+          <div className="language-switcher">
+            <label className="field-label" htmlFor="language-select">
+              {strings.languageLabel}
+            </label>
+            <select
+              id="language-select"
+              className="language-select"
+              value={locale}
+              onChange={(event) => {
+                const newLocale = event.target.value as Locale
+                setLocale(newLocale)
+                saveUserLanguage(newLocale)
+              }}
+            >
+              <option value="en">{strings.languageEnglish}</option>
+              <option value="fr">{strings.languageFrench}</option>
+            </select>
+          </div>
         </div>
       </header>
 
-      {appSection === 'comparison' ? (
-        <ComparisonPanelPage
-          locale={locale}
-          strings={STRINGS[locale]}
-          onOpenSimulation={handleOpenSimulation}
-        />
-      ) : appSection === 'marchand_de_biens' ? (
-        <ErrorBoundary>
+      <ErrorBoundary message={strings.errorFallbackMessage} retryLabel={strings.errorFallbackRetry}>
+        {appSection === 'comparison' ? (
+          <ComparisonPanelPage
+            locale={locale}
+            strings={STRINGS[locale]}
+            onOpenSimulation={handleOpenSimulation}
+          />
+        ) : appSection === 'marchand_de_biens' ? (
           <FlipPanelPage
             locale={locale}
             strings={STRINGS[locale]}
             initialValues={propertyFlippingInitialValues}
             valuesRef={propertyFlippingValuesRef}
           />
-        </ErrorBoundary>
-      ) : (
-        <RentalPanelPage
-          locale={locale}
-          strings={STRINGS[locale]}
-          initialValues={rentalInitialValues}
-          valuesRef={rentalValuesRef}
-        />
-      )}
+        ) : (
+          <RentalPanelPage
+            locale={locale}
+            strings={STRINGS[locale]}
+            initialValues={rentalInitialValues}
+            valuesRef={rentalValuesRef}
+            uiMode={uiMode}
+            onRequestExpertMode={() => handleUiModeChange('expert')}
+          />
+        )}
+      </ErrorBoundary>
     </div>
   )
 }
