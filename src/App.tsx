@@ -212,6 +212,8 @@ function App() {
           />
         )}
       </ErrorBoundary>
+
+      <footer className="app-legal-footer">{strings.legalDisclaimer}</footer>
     </div>
   )
 }

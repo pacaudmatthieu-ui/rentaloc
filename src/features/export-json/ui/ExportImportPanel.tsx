@@ -23,10 +23,6 @@ export function ExportImportPanel<T>({
   pdfContentRef,
 }: ExportImportPanelProps<T>) {
   const [showImportModal, setShowImportModal] = useState(false)
-  const [captchaA, setCaptchaA] = useState(0)
-  const [captchaB, setCaptchaB] = useState(0)
-  const [captchaAnswer, setCaptchaAnswer] = useState('')
-  const [captchaError, setCaptchaError] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -42,10 +38,6 @@ export function ExportImportPanel<T>({
 
   const openImportModal = () => {
     setShowImportModal(true)
-    setCaptchaA(Math.floor(Math.random() * 9) + 1)
-    setCaptchaB(Math.floor(Math.random() * 9) + 1)
-    setCaptchaAnswer('')
-    setCaptchaError(false)
     setImportError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -55,13 +47,7 @@ export function ExportImportPanel<T>({
   }
 
   const handleImport = () => {
-    setCaptchaError(false)
     setImportError(null)
-    const expected = captchaA + captchaB
-    if (String(expected) !== captchaAnswer.trim()) {
-      setCaptchaError(true)
-      return
-    }
     const file = fileInputRef.current?.files?.[0]
     if (!file) return
     const reader = new FileReader()
@@ -107,22 +93,7 @@ export function ExportImportPanel<T>({
         <div className="export-import-overlay" onClick={closeImportModal}>
           <div className="export-import-modal" onClick={(e) => e.stopPropagation()}>
             <h3>{strings.importData}</h3>
-            <div className="export-import-captcha">
-              <label>
-                {strings.captchaLabel} {captchaA} + {captchaB} ?
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder={strings.captchaPlaceholder}
-                value={captchaAnswer}
-                onChange={(e) => setCaptchaAnswer(e.target.value)}
-                className={captchaError ? 'export-import-input-error' : ''}
-              />
-              {captchaError && (
-                <span className="export-import-error">{strings.captchaError}</span>
-              )}
-            </div>
+            <p className="export-import-warning">{strings.importOverwriteWarning}</p>
             <div className="export-import-file">
               <input
                 ref={fileInputRef}

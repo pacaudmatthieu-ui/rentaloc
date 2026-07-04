@@ -7,10 +7,19 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user ?? null)
+      })
+      .catch((error) => {
+        console.error('Error restoring auth session:', error)
+      })
+      .finally(() => {
+        // Quoi qu'il arrive, on sort de l'état « chargement » : sans ça,
+        // un pépin réseau bloquait le panneau de sauvegardes pour toujours
+        setLoading(false)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
