@@ -2722,13 +2722,11 @@
   outline: none;
 }
 
+/* Bulle positionnée en `fixed` par le composant (jamais rognée par un
+   conteneur à défilement) */
 .help-tip-bubble {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  translate: -50% 0;
-  width: 250px;
-  max-width: 78vw;
+  max-width: 82vw;
+  white-space: normal;
   background: #06120c;
   border: 1px solid var(--line);
   border-radius: var(--radius-s);
@@ -2740,34 +2738,13 @@
   text-transform: none;
   letter-spacing: normal;
   text-align: left;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  pointer-events: none;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
-  z-index: 600;
+  z-index: 100001;
 }
 
-.help-tip:hover .help-tip-bubble,
-.help-tip-open .help-tip-bubble {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-/* Dans le bandeau verdict (collé en haut), la bulle s'ouvre vers le bas */
-.verdict-bar .help-tip-bubble {
-  bottom: auto;
-  top: calc(100% + 8px);
-  left: auto;
-  right: 0;
-  translate: none;
-  transform: translateY(-4px);
-}
-
-.verdict-bar .help-tip:hover .help-tip-bubble,
-.verdict-bar .help-tip-open .help-tip-bubble {
-  transform: translateY(0);
+.help-tip-btn-open {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* ---------- Divers formulaires ---------- */
