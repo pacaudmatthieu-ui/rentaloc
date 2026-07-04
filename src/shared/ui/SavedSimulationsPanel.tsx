@@ -50,6 +50,7 @@ export function SavedSimulationsPanel({
   const [authEmail, setAuthEmail] = useState('')
   const [authSending, setAuthSending] = useState(false)
   const [authSent, setAuthSent] = useState(false)
+  const [authNewsletterOptIn, setAuthNewsletterOptIn] = useState(false)
 
   const showFeedback = (msg: string, isError = false) => {
     setFeedbackMessage(msg)
@@ -250,6 +251,19 @@ export function SavedSimulationsPanel({
       showFeedback(error, true)
     } else {
       setAuthSent(true)
+      // Opt-in marketing EXPLICITE (RGPD) : uniquement si la case est cochée.
+      // Même circuit protégé que la carte email : les contacts déjà présents
+      // dans Systeme.io (élèves, clients) ne sont jamais modifiés.
+      if (authNewsletterOptIn) {
+        fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: authEmail.trim() }),
+        }).catch(() => {
+          // Échec silencieux : la connexion reste prioritaire, l'inscription
+          // marketing ne doit jamais la bloquer
+        })
+      }
     }
   }
 
@@ -333,6 +347,14 @@ export function SavedSimulationsPanel({
                   {authSending ? '...' : strings.savedSimSendLink}
                 </button>
               </div>
+              <label className="form-field form-field-checkbox saved-sim-optin">
+                <input
+                  type="checkbox"
+                  checked={authNewsletterOptIn}
+                  onChange={(e) => setAuthNewsletterOptIn(e.target.checked)}
+                />
+                <span>{strings.savedSimNewsletterOptIn}</span>
+              </label>
             </>
           )}
         </div>
