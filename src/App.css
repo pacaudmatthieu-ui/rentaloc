@@ -2978,3 +2978,57 @@
   .mb-lot-row > .mb-lot-ppm { grid-area: ppm; align-self: center; }
   .mb-lot-row > .mb-remove-btn { grid-area: remove; justify-self: end; }
 }
+
+/* ============================================================
+   PACK CONFIANCE — feedback d'erreur, confirmation de suppression,
+   avertissement d'import, mentions légales
+   ============================================================ */
+.saved-sim-feedback-error {
+  background: var(--negative-soft);
+  color: var(--negative);
+  border: 1px solid rgba(240, 131, 122, 0.35);
+}
+
+.saved-sim-delete-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  width: 100%;
+  background: var(--negative-soft);
+  border: 1px solid rgba(240, 131, 122, 0.35);
+  border-radius: var(--radius-s);
+  padding: 0.5rem 0.75rem;
+}
+
+.saved-sim-delete-question {
+  font-size: 0.82rem;
+  color: var(--text-1);
+}
+
+/* Cibles tactiles confortables sur les actions de la liste */
+.saved-sim-action {
+  min-height: 34px;
+  padding: 0.3rem 0.7rem;
+}
+
+.export-import-warning {
+  font-size: 0.82rem;
+  color: var(--text-2);
+  background: var(--minor-soft, rgba(110, 160, 130, 0.12));
+  background: rgba(110, 160, 130, 0.12);
+  border-radius: var(--radius-s);
+  padding: 0.55rem 0.75rem;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.app-legal-footer {
+  margin-top: 2.2rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--text-3);
+  max-width: 90ch;
+}
