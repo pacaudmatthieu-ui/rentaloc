@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
 import { FormField, YearsField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList, VerdictBar, HelpTip } from '../../../shared/ui'
@@ -57,14 +57,20 @@ interface RentalPanelPageProps {
 }
 
 export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiMode = 'expert', onRequestExpertMode }: RentalPanelPageProps) {
-  const comparisonStore = useComparisonStore()
+  // Abonnements ciblés au store : seule la liste des simulations déclenche
+  // un re-rendu ; les actions ont des références stables
+  const comparisonSimulations = useComparisonStore((s) => s.simulations)
+  const initializeComparison = useComparisonStore((s) => s.initialize)
+  const addToComparison = useComparisonStore((s) => s.addToComparison)
+  const updateSimulationData = useComparisonStore((s) => s.updateSimulationData)
+  const isInComparisonCheck = useComparisonStore((s) => s.isInComparison)
   const [comparisonButtonState, setComparisonButtonState] = useState<'idle' | 'success' | 'error'>('idle')
   const [comparisonError, setComparisonError] = useState<string | null>(null)
 
   // Initialize comparison store on mount
   useEffect(() => {
-    comparisonStore.initialize()
-  }, [comparisonStore])
+    initializeComparison()
+  }, [initializeComparison])
 
   // Initialize with provided initial values, saved values, or default values
   // Priority: initialValues (from localStorage) > INITIAL_VALUES (defaults)
@@ -104,12 +110,11 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
   const isInComparison = useMemo(() => {
     const storedComparisonId = loadCurrentSimulationComparisonId()
     if (storedComparisonId) {
-      const state = comparisonStore.simulations
-      const found = state.find((sim) => sim.id === storedComparisonId && sim.type === 'rental')
+      const found = comparisonSimulations.find((sim) => sim.id === storedComparisonId && sim.type === 'rental')
       if (found) return true
     }
-    return comparisonStore.isInComparison('rental', values)
-  }, [comparisonStore, values])
+    return isInComparisonCheck('rental', values)
+  }, [comparisonSimulations, isInComparisonCheck, values])
 
   // Use ref to track last updated values to prevent infinite loops
   const lastUpdatedValuesRef = useRef<string>('')
@@ -119,16 +124,20 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
       const currentValuesStr = JSON.stringify(values)
       if (lastUpdatedValuesRef.current !== currentValuesStr) {
         lastUpdatedValuesRef.current = currentValuesStr
-        comparisonStore.updateSimulationData('rental', values)
+        updateSimulationData('rental', values)
       }
     }
-  }, [values, isInComparison, comparisonStore])
+  }, [values, isInComparison, updateSimulationData])
 
+  // Le verdict et les tuiles réagissent instantanément à la frappe ;
+  // les projections lourdes (tableau 20+ ans, graphiques, TRI) suivent avec
+  // une priorité plus basse pour ne jamais ralentir la saisie
+  const deferredValues = useDeferredValue(values)
   const results = useMemo(() => calculateResults(values), [values])
-  const chartData = useMemo(() => computeYearlyChartData(values), [values])
-  const tableData = useMemo(() => computeYearlyTableData(values), [values])
-  const loanChartsData = useMemo(() => computeLoanChartsData(values), [values])
-  const irrByYearData = useMemo(() => computeIRRByYearData(values, true), [values])
+  const chartData = useMemo(() => computeYearlyChartData(deferredValues), [deferredValues])
+  const tableData = useMemo(() => computeYearlyTableData(deferredValues), [deferredValues])
+  const loanChartsData = useMemo(() => computeLoanChartsData(deferredValues), [deferredValues])
+  const irrByYearData = useMemo(() => computeIRRByYearData(deferredValues, true), [deferredValues])
 
   const currencyFormatter = useMemo(
     () =>
@@ -778,7 +787,7 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               className={`export-import-btn ${isInComparison ? 'export-import-btn-disabled' : ''} ${comparisonButtonState === 'success' ? 'export-import-btn-success' : ''}`}
               onClick={() => {
                 if (isInComparison) return
-                const result = comparisonStore.addToComparison('rental', values)
+                const result = addToComparison('rental', values)
                 if (result.success) {
                   setComparisonButtonState('success')
                   setComparisonError(null)

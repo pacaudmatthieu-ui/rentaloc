@@ -1,5 +1,3 @@
-import html2pdf from 'html2pdf.js'
-
 export type ExportSection = 'investissement_locatif' | 'marchand_de_biens'
 
 export interface ExportPdfOptions {
@@ -7,10 +5,15 @@ export interface ExportPdfOptions {
   margin?: number
 }
 
-export function exportPdfFromElement(
+/**
+ * Le moteur PDF (html2pdf ≈ 500 Ko) n'est chargé qu'au premier clic sur
+ * « Exporter PDF » — il ne pèse plus rien sur le chargement initial du site.
+ */
+export async function exportPdfFromElement(
   element: HTMLElement,
   options: ExportPdfOptions,
-): void {
+): Promise<void> {
+  const { default: html2pdf } = await import('html2pdf.js')
   const { section, margin = 10 } = options
   const opt = {
     margin,

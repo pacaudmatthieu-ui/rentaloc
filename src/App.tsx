@@ -1,4 +1,4 @@
-import { Component, useEffect, useRef, useState } from 'react'
+import { Component, Suspense, lazy, useEffect, useRef, useState } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
 
 class ErrorBoundary extends Component<
@@ -29,9 +29,15 @@ class ErrorBoundary extends Component<
 import './App.css'
 import type { Locale } from './shared/types'
 import { STRINGS } from './shared/i18n/strings'
-import { RentalPanelPage } from './panels/rental-investment'
-import { FlipPanelPage } from './panels/property-flip'
-import { ComparisonPanelPage } from './panels/comparison'
+const RentalPanelPage = lazy(() =>
+  import('./panels/rental-investment').then((m) => ({ default: m.RentalPanelPage })),
+)
+const FlipPanelPage = lazy(() =>
+  import('./panels/property-flip').then((m) => ({ default: m.FlipPanelPage })),
+)
+const ComparisonPanelPage = lazy(() =>
+  import('./panels/comparison').then((m) => ({ default: m.ComparisonPanelPage })),
+)
 import type { AppSection } from './shared/types'
 import {
   loadRentalSimulation,
@@ -188,6 +194,7 @@ function App() {
       </header>
 
       <ErrorBoundary message={strings.errorFallbackMessage} retryLabel={strings.errorFallbackRetry}>
+        <Suspense fallback={<div className="app-panel-loading" aria-busy="true">{strings.panelLoading}</div>}>
         {appSection === 'comparison' ? (
           <ComparisonPanelPage
             locale={locale}
@@ -211,6 +218,7 @@ function App() {
             onRequestExpertMode={() => handleUiModeChange('expert')}
           />
         )}
+        </Suspense>
       </ErrorBoundary>
 
       <footer className="app-legal-footer">{strings.legalDisclaimer}</footer>
