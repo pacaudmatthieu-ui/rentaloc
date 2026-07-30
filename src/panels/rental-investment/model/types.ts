@@ -70,7 +70,8 @@ export type SimulationResults = {
   microBicCapExceeded?: boolean
 }
 
-// Cas par défaut réaliste (T2 en ville moyenne, régime simple pour débuter)
+// Cas par défaut : projet type pré-rempli côté acquisition/financement,
+// charges laissées vides (budgets estimés proposés dans les bulles d'aide)
 export const INITIAL_VALUES: SimulationFormValues = {
   purchasePrice: '150000',
   notaryFees: '',
@@ -86,15 +87,15 @@ export const INITIAL_VALUES: SimulationFormValues = {
   deferralMonths: '0',
   deferralType: 'none',
   monthlyRent: '700',
-  monthlyRecoverableCharges: '50',
+  monthlyRecoverableCharges: '',
   rentRevaluationPercent: '1',
   vacancyRate: '5',
-  annualPropertyTax: '900',
-  annualNonRecoverableCharges: '500',
+  annualPropertyTax: '',
+  annualNonRecoverableCharges: '',
   annualManagementPercent: '0',
-  annualMaintenance: '500',
-  annualInsurancePNO: '180',
-  otherAnnualExpenses: '0',
+  annualMaintenance: '',
+  annualInsurancePNO: '',
+  otherAnnualExpenses: '',
   taxRegime: 'lmnp_micro_bic',
   feesAmortizeYear1: true,
   marginalTaxRate: '30',
@@ -104,8 +105,8 @@ export const INITIAL_VALUES: SimulationFormValues = {
   resalePrice: '',
   sciIsWithdrawFlatTax: false,
   reducedNotaryFees: false,
-  chargesRevaluationPercent: '2',
-  resaleFeesPercent: '5',
-  annualCFE: '350',
-  annualAccountingFees: '0',
+  chargesRevaluationPercent: '',
+  resaleFeesPercent: '',
+  annualCFE: '',
+  annualAccountingFees: '',
 }
