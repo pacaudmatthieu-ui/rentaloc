@@ -39,6 +39,14 @@ export type SimulationFormValues = {
   reducedNotaryFees?: boolean
   /** Override frais de notaire (vide = auto) */
   notaryFeesOverride?: string
+  /** Revalorisation annuelle des charges (%/an) : taxe foncière, copro, entretien… */
+  chargesRevaluationPercent?: string
+  /** Frais de revente (agence, diagnostics) en % du prix de vente */
+  resaleFeesPercent?: string
+  /** CFE annuelle (location meublée / SCI IS), exonérée l'année d'acquisition */
+  annualCFE?: string
+  /** Frais de comptabilité annuels (LMNP réel, SCI IS) */
+  annualAccountingFees?: string
 }
 
 export type SimulationResults = {
@@ -96,4 +104,8 @@ export const INITIAL_VALUES: SimulationFormValues = {
   resalePrice: '',
   sciIsWithdrawFlatTax: false,
   reducedNotaryFees: false,
+  chargesRevaluationPercent: '2',
+  resaleFeesPercent: '5',
+  annualCFE: '350',
+  annualAccountingFees: '0',
 }

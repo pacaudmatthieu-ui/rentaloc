@@ -14,6 +14,10 @@ export type ChargesBreakdown = {
   corporateTaxOnGain?: number
   /** Flat tax PFU (année revente, quand option activée) */
   flatTax?: number
+  /** Frais de revente (agence, diagnostics) — année de revente */
+  saleFees?: number
+  /** Indemnité de remboursement anticipé du prêt — année de revente */
+  ira?: number
 }
 
 export type YearlyChartPoint = {

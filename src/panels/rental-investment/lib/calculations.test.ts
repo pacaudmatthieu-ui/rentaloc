@@ -44,6 +44,11 @@ function makeValues(overrides: Partial<SimulationFormValues>): SimulationFormVal
     resalePrice: '',
     sciIsWithdrawFlatTax: false,
     reducedNotaryFees: false,
+    // Pack Réalisme : neutralisé par défaut pour garder des tests déterministes
+    chargesRevaluationPercent: '0',
+    resaleFeesPercent: '0',
+    annualCFE: '0',
+    annualAccountingFees: '0',
     ...overrides,
   }
 }
@@ -415,5 +420,87 @@ describe('cohérence inter-vues', () => {
     }
     // Même impôt de cession dans les deux vues
     expect(lastIrr.details!.saleTax).toBeCloseTo(table[table.length - 1].saleTax, 4)
+  })
+})
+
+describe('Pack Réalisme', () => {
+  it("revalorise les charges d'exploitation de 2 %/an (année 2 = ×1,02)", () => {
+    const rows = computeYearlyTableData(
+      makeValues({ annualPropertyTax: '1000', chargesRevaluationPercent: '2' }),
+    )
+    expect(rows[0].charges).toBeCloseTo(1000, 2)
+    expect(rows[1].charges).toBeCloseTo(1020, 2)
+    expect(rows[9].charges).toBeCloseTo(1000 * Math.pow(1.02, 9), 2)
+  })
+
+  it("CFE : appliquée en meublé à partir de l'année 2 (exonération l'année d'acquisition)", () => {
+    const rows = computeYearlyTableData(
+      makeValues({ taxRegime: 'lmnp_micro_bic', annualCFE: '350' }),
+    )
+    expect(rows[0].charges).toBeCloseTo(0, 2)
+    expect(rows[1].charges).toBeCloseTo(350, 2)
+  })
+
+  it('CFE : non appliquée en location nue', () => {
+    const rows = computeYearlyTableData(
+      makeValues({ taxRegime: 'micro_foncier', annualCFE: '350' }),
+    )
+    expect(rows[1].charges).toBeCloseTo(0, 2)
+  })
+
+  it("frais de comptabilité : LMNP réel dès l'année 1, pas en micro-BIC", () => {
+    const reel = computeYearlyTableData(
+      makeValues({ taxRegime: 'lmnp_reel', annualAccountingFees: '500' }),
+    )
+    expect(reel[0].charges).toBeCloseTo(500, 2)
+    const micro = computeYearlyTableData(
+      makeValues({ taxRegime: 'lmnp_micro_bic', annualAccountingFees: '500' }),
+    )
+    expect(micro[0].charges).toBeCloseTo(0, 2)
+  })
+
+  it('revente : frais de revente déduits du cash disponible (5 % de 100 k€ = 5 000 €)', () => {
+    const rows = computeYearlyTableData(
+      makeValues({
+        ownFunds: '100000', // pas de prêt → pas d'IRA
+        resalePrice: '100000',
+        resaleHoldingMonths: '24',
+        resaleFeesPercent: '5',
+      }),
+    )
+    const last = rows[rows.length - 1]
+    expect(last.saleFees).toBeCloseTo(5000, 2)
+    expect(last.ira).toBeCloseTo(0, 2)
+    // Prix net vendeur 95 k€ < prix d'achat 100 k€ → pas de plus-value imposable
+    expect(last.saleTax).toBeCloseTo(0, 2)
+    expect(last.cashDispo).toBeCloseTo(95000, 2)
+  })
+
+  it("revente avec prêt en cours : IRA = min(6 mois d'intérêts, 3 % du CRD)", () => {
+    const rows = computeYearlyTableData(
+      makeValues({
+        interestRate: '1',
+        resalePrice: '150000',
+        resaleHoldingMonths: '24',
+        resaleFeesPercent: '0',
+      }),
+    )
+    const last = rows[rows.length - 1]
+    expect(last.crd).toBeGreaterThan(0)
+    // À 1 % : 6 mois d'intérêts (0,5 % du CRD) < plafond 3 % → IRA = CRD × 0,5 %
+    expect(last.ira).toBeCloseTo(last.crd * 0.005, 1)
+  })
+
+  it('IRA plafonnée à 3 % du CRD quand le taux est élevé', () => {
+    const rows = computeYearlyTableData(
+      makeValues({
+        interestRate: '8',
+        resalePrice: '150000',
+        resaleHoldingMonths: '24',
+        resaleFeesPercent: '0',
+      }),
+    )
+    const last = rows[rows.length - 1]
+    expect(last.ira).toBeCloseTo(last.crd * 0.03, 1)
   })
 })

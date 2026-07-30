@@ -19,6 +19,10 @@ export type ChartTooltipStrings = {
   corporateTaxOnGain?: string
   /** Label pour la flat tax (PFU) */
   flatTax?: string
+  /** Label pour les frais de revente (agence, diagnostics) */
+  saleFees?: string
+  /** Label pour l’indemnité de remboursement anticipé */
+  ira?: string
 }
 
 interface ChartTooltipContentProps {
@@ -130,6 +134,18 @@ export function ChartTooltipContent({
             <div className="chart-tooltip-row">
               <span>{tooltipStrings.saleTax ?? 'Impôt revente'}</span>
               <span>{currencyFormatter.format(b.saleTax)}</span>
+            </div>
+          )}
+          {b.saleFees != null && b.saleFees > 0 && (
+            <div className="chart-tooltip-row">
+              <span>{tooltipStrings.saleFees ?? 'Frais de revente'}</span>
+              <span>{currencyFormatter.format(b.saleFees)}</span>
+            </div>
+          )}
+          {b.ira != null && b.ira > 0 && (
+            <div className="chart-tooltip-row">
+              <span>{tooltipStrings.ira ?? 'IRA (remboursement anticipé)'}</span>
+              <span>{currencyFormatter.format(b.ira)}</span>
             </div>
           )}
         </div>
