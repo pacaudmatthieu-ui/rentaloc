@@ -61,18 +61,18 @@ function header(strings: Record<string, string>, locale: string): string {
 
 function footer(strings: Record<string, string>): string {
   return `
-    <div style="${S.cta}">
+    <div class="pdf-avoid" style="${S.cta}">
       ${esc(strings.reportCta)}
       <span style="${S.ctaLink}">jmacademie.com</span>
     </div>
-    <div style="${S.legal}">${esc(strings.legalDisclaimer)}</div>`
+    <div class="pdf-avoid" style="${S.legal}">${esc(strings.legalDisclaimer)}</div>`
 }
 
 function tiles(items: { label: string; value: string; tone?: 'pos' | 'neg' }[]): string {
   return `<div style="${S.grid}">${items
     .map(
       (t) => `
-      <div style="${S.tile}">
+      <div class="pdf-avoid" style="${S.tile}">
         <div style="${S.tileV}${t.tone === 'pos' ? S.pos : t.tone === 'neg' ? S.neg : ''}">${esc(t.value)}</div>
         <div style="${S.tileL}">${esc(t.label)}</div>
       </div>`,
@@ -81,7 +81,7 @@ function tiles(items: { label: string; value: string; tone?: 'pos' | 'neg' }[]):
 }
 
 function kv(label: string, value: string): string {
-  return `<div style="${S.kv}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`
+  return `<div class="pdf-avoid" style="${S.kv}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`
 }
 
 export function buildRentalReport(
@@ -96,12 +96,15 @@ export function buildRentalReport(
   const cf = results.monthlyCashflowAfterTax
   const heroTone = cf >= 0 ? S.heroPos : S.heroNeg
   const years = Math.round(toNumber(values.loanDurationMonths) / 12)
+  const notaryFees = values.notaryFeesOverride
+    ? toNumber(values.notaryFeesOverride)
+    : toNumber(values.purchasePrice) * (values.reducedNotaryFees ? 0.03 : 0.08)
 
   const rows = tableData
     .slice(0, 30)
     .map(
       (r) => `
-      <tr>
+      <tr class="pdf-avoid">
         <td style="${S.tdL}">${r.year}</td>
         <td style="${S.td}">${esc(currency.format(r.rent))}</td>
         <td style="${S.td}">${esc(currency.format(r.charges))}</td>
@@ -116,7 +119,7 @@ export function buildRentalReport(
   el.innerHTML = `
   <div style="${S.page}">
     ${header(strings, locale)}
-    <div style="${S.hero}">
+    <div class="pdf-avoid" style="${S.hero}">
       <span style="${S.heroFig}${heroTone}">${esc(currency.format(cf))}</span>
       <span style="${S.heroUnit}"> ${esc(strings.verdictPerMonth)}</span>
       <div style="${S.heroPhrase}">${esc(strings.reportRentalSubtitle)}</div>
@@ -129,8 +132,16 @@ export function buildRentalReport(
       { label: strings.estimatedAnnualTax, value: currency.format(results.annualTax) },
       { label: strings.annualCashflowAfterTax, value: currency.format(results.annualCashflowAfterTax), tone: results.annualCashflowAfterTax >= 0 ? 'pos' : 'neg' },
     ])}
-    <div style="${S.h2}">${esc(strings.reportAssumptions)}</div>
+    <div style="${S.h2}">${esc(strings.reportAcquisition)}</div>
     ${kv(strings.purchasePrice, currency.format(toNumber(values.purchasePrice)))}
+    ${kv(strings.notaryFees, currency.format(notaryFees))}
+    ${kv(strings.agencyFees, currency.format(toNumber(values.agencyFees)))}
+    ${kv(strings.renovationBudget, currency.format(toNumber(values.renovationBudget)))}
+    ${kv(strings.furnitureBudget, currency.format(toNumber(values.furnitureBudget)))}
+    ${kv(strings.loanFees, currency.format(toNumber(values.loanFees)))}
+    ${kv(strings.guaranteeFees, currency.format(toNumber(values.guaranteeFees)))}
+    ${kv(strings.totalCost, currency.format(results.totalCost))}
+    <div style="${S.h2}">${esc(strings.reportAssumptions)}</div>
     ${kv(strings.monthlyRent, `${currency.format(toNumber(values.monthlyRent))} / ${strings.unitMonths.replace(/s$/, '')}`)}
     ${kv(strings.ownFunds, currency.format(toNumber(values.ownFunds)))}
     ${kv(strings.loanDurationYears, `${years} ${strings.unitYears}`)}
@@ -171,7 +182,7 @@ export function buildFlipReport(
   el.innerHTML = `
   <div style="${S.page}">
     ${header(strings, locale)}
-    <div style="${S.hero}">
+    <div class="pdf-avoid" style="${S.hero}">
       <span style="${S.heroFig}${heroTone}">${esc(currency.format(flip.margeNetteAvantIS))}</span>
       <span style="${S.heroUnit}"> ${esc(strings.verdictMbUnit)}</span>
       <div style="${S.heroPhrase}">${esc(strings.reportFlipSubtitle)}</div>
@@ -218,6 +229,9 @@ export async function exportReport(element: HTMLElement, filename: string): Prom
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
+        // Jamais de coupure au milieu d'une ligne, d'une tuile ou du bandeau final
+        // @ts-expect-error : option supportée par html2pdf.js mais absente de ses types
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.pdf-avoid'] },
       })
       .from(element)
       .save()
