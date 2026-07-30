@@ -3124,3 +3124,10 @@
   font-size: 0.78rem;
   color: var(--text-2);
 }
+
+/* Estimateur budget travaux (3 typologies au m²) */
+.renov-estimator { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.1rem; }
+.renov-chip-row { display: flex; align-items: center; gap: 0.4rem; }
+.renov-chip { flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; text-align: left; }
+.renov-chip-rate { font-variant-numeric: tabular-nums; opacity: 0.85; white-space: nowrap; }
+.renov-chip:disabled { opacity: 0.45; cursor: not-allowed; }

@@ -47,6 +47,8 @@ export type SimulationFormValues = {
   annualCFE?: string
   /** Frais de comptabilité annuels (LMNP réel, SCI IS) */
   annualAccountingFees?: string
+  /** Surface habitable (m²) — sert à estimer le budget travaux, hors calculs financiers */
+  surfaceM2?: string
 }
 
 export type SimulationResults = {
@@ -89,7 +91,7 @@ export const INITIAL_VALUES: SimulationFormValues = {
   monthlyRent: '700',
   monthlyRecoverableCharges: '',
   rentRevaluationPercent: '1',
-  vacancyRate: '5',
+  vacancyRate: '0',
   annualPropertyTax: '',
   annualNonRecoverableCharges: '',
   annualManagementPercent: '0',
@@ -109,4 +111,5 @@ export const INITIAL_VALUES: SimulationFormValues = {
   resaleFeesPercent: '',
   annualCFE: '',
   annualAccountingFees: '',
+  surfaceM2: '',
 }

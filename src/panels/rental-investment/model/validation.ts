@@ -25,6 +25,7 @@ const REQUIRED_STRING_FIELDS: (keyof SimulationFormValues)[] = [
 const OPTIONAL_STRING_FIELDS: (keyof SimulationFormValues)[] = [
   'loanDurationMonths', 'deferralMonths', 'resaleHoldingMonths', 'resalePrice', 'notaryFeesOverride',
   'chargesRevaluationPercent', 'resaleFeesPercent', 'annualCFE', 'annualAccountingFees',
+  'surfaceM2',
 ]
 
 export function validateInvestissementData(data: unknown): data is SimulationFormValues {

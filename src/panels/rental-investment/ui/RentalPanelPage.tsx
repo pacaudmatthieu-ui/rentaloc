@@ -310,7 +310,34 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               <span>{strings.reducedNotaryFees}</span>
             </label>
             <FormField label={strings.agencyFees} value={values.agencyFees} onChange={handleChange('agencyFees')} unit={strings.unitEuro} invalidMessage={inv} />
+            <FormField label={strings.surfaceM2} value={values.surfaceM2 ?? ''} onChange={handleChange('surfaceM2')} unit="m²" help={strings.helpSurface} invalidMessage={inv} />
             <FormField label={strings.renovationBudget} value={values.renovationBudget} onChange={handleChange('renovationBudget')} unit={strings.unitEuro} help={strings.helpRenovation} invalidMessage={inv} />
+            <div className="renov-estimator">
+              <span className="preset-chips-label">{strings.renovEstimatorLabel}</span>
+              {([
+                { label: strings.renovLight, help: strings.renovLightHelp, rate: 200 },
+                { label: strings.renovMedium, help: strings.renovMediumHelp, rate: 550 },
+                { label: strings.renovFull, help: strings.renovFullHelp, rate: 1100 },
+              ] as const).map(({ label, help, rate }) => {
+                const surface = toNumber(values.surfaceM2 ?? '')
+                const amount = Math.round(rate * surface)
+                return (
+                  <div className="renov-chip-row" key={label}>
+                    <button
+                      type="button"
+                      className="preset-chip renov-chip"
+                      disabled={surface <= 0}
+                      title={surface <= 0 ? strings.renovNeedSurface : undefined}
+                      onClick={() => setValues((prev) => ({ ...prev, renovationBudget: String(amount) }))}
+                    >
+                      <span>{label}</span>
+                      <span className="renov-chip-rate">{rate} €/m²{surface > 0 ? ` → ${currencyFormatter.format(amount)}` : ''}</span>
+                    </button>
+                    <HelpTip text={help} />
+                  </div>
+                )
+              })}
+            </div>
             <FormField label={strings.furnitureBudget} value={values.furnitureBudget} onChange={handleChange('furnitureBudget')} unit={strings.unitEuro} help={strings.helpFurniture} invalidMessage={inv} />
             <FormField label={strings.ownFunds} value={values.ownFunds} onChange={handleChange('ownFunds')} unit={strings.unitEuro} help={strings.helpOwnFunds} invalidMessage={inv} />
           </div>
