@@ -19,6 +19,7 @@ export const RENTAL_PRESETS: RentalPreset[] = [
     values: {
       ...INITIAL_VALUES,
       purchasePrice: '90000',
+      surfaceM2: '25',
       notaryFeesOverride: '',
       agencyFees: '4000',
       renovationBudget: '8000',
@@ -52,6 +53,7 @@ export const RENTAL_PRESETS: RentalPreset[] = [
     values: {
       ...INITIAL_VALUES,
       purchasePrice: '180000',
+      surfaceM2: '45',
       notaryFeesOverride: '',
       agencyFees: '6000',
       renovationBudget: '5000',
@@ -85,6 +87,7 @@ export const RENTAL_PRESETS: RentalPreset[] = [
     values: {
       ...INITIAL_VALUES,
       purchasePrice: '320000',
+      surfaceM2: '160',
       notaryFeesOverride: '',
       agencyFees: '10000',
       renovationBudget: '60000',
