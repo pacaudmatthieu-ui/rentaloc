@@ -232,6 +232,15 @@ type EngineInputs = {
   taxRegime: TaxRegime
   feesAmortizeYear1: boolean
   acquisitionCostForPV: number
+  interestRate: number
+  /** Revalorisation annuelle des charges (taxe foncière, copro, entretien…) */
+  chargesRevaluationRate: number
+  /** Frais de revente (agence, diagnostics) en fraction du prix de vente */
+  resaleFeesRate: number
+  /** CFE annuelle (meublé / SCI IS), exonérée l'année d'acquisition */
+  annualCFE: number
+  /** Frais de comptabilité annuels (LMNP réel, SCI IS) */
+  annualAccountingFees: number
 }
 
 function parseInputs(values: SimulationFormValues): EngineInputs {
@@ -300,6 +309,11 @@ function parseInputs(values: SimulationFormValues): EngineInputs {
     taxRegime: values.taxRegime,
     feesAmortizeYear1: values.feesAmortizeYear1,
     acquisitionCostForPV: purchasePrice + notaryFees + agencyFees + renovationBudget,
+    interestRate,
+    chargesRevaluationRate: toNumber(values.chargesRevaluationPercent ?? '') / 100,
+    resaleFeesRate: toNumber(values.resaleFeesPercent ?? '') / 100,
+    annualCFE: toNumber(values.annualCFE ?? ''),
+    annualAccountingFees: toNumber(values.annualAccountingFees ?? ''),
   }
 }
 
@@ -577,22 +591,41 @@ function simulateYears(inputs: EngineInputs, numYears: number): EngineYearRow[] 
     const credit = (inputs.schedule.paymentPerYear[y] ?? 0) + insuranceCost
 
     const revalFactor = Math.pow(1 + inputs.rentRevaluationRate, y)
+    // Les charges suivent leur propre inflation (taxe foncière, copro, entretien…),
+    // distincte de la revalorisation des loyers — les figer sur 20 ans rendait
+    // les projections trop optimistes
+    const chargesFactor = Math.pow(1 + inputs.chargesRevaluationRate, y)
     const rentHCEffective = inputs.monthlyRent * 12 * (1 - inputs.vacancyRate) * revalFactor
     // Charges récupérables : refacturées au locataire quand le bien est occupé…
     const recoverableReceived =
-      inputs.monthlyRecoverableCharges * 12 * (1 - inputs.vacancyRate) * revalFactor
+      inputs.monthlyRecoverableCharges * 12 * (1 - inputs.vacancyRate) * chargesFactor
     // …mais payées à la copropriété toute l'année (la vacance reste à la charge du bailleur)
-    const recoverablePaid = inputs.monthlyRecoverableCharges * 12 * revalFactor
+    const recoverablePaid = inputs.monthlyRecoverableCharges * 12 * chargesFactor
     const cashIncome = rentHCEffective + recoverableReceived
     const managementCost = cashIncome * inputs.annualManagementPercent
+    // CFE : due par les loueurs en meublé et les sociétés à l'IS, exonérée
+    // l'année d'acquisition (année de création d'activité)
+    const isMeubleOuIS =
+      inputs.taxRegime === 'lmnp_micro_bic' ||
+      inputs.taxRegime === 'lmnp_reel' ||
+      inputs.taxRegime === 'sci_is'
+    const cfeCost = isMeubleOuIS && y >= 1 ? inputs.annualCFE * chargesFactor : 0
+    // Frais de comptabilité : régimes réels avec liasse (LMNP réel, SCI IS)
+    const accountingCost =
+      inputs.taxRegime === 'lmnp_reel' || inputs.taxRegime === 'sci_is'
+        ? inputs.annualAccountingFees * chargesFactor
+        : 0
     const operatingCharges =
-      inputs.annualPropertyTax +
-      inputs.annualNonRecoverableCharges +
+      (inputs.annualPropertyTax +
+        inputs.annualNonRecoverableCharges +
+        inputs.annualMaintenance +
+        inputs.annualInsurancePNO +
+        inputs.otherAnnualExpenses) *
+        chargesFactor +
       managementCost +
-      inputs.annualMaintenance +
-      inputs.annualInsurancePNO +
-      inputs.otherAnnualExpenses +
-      recoverablePaid
+      recoverablePaid +
+      cfeCost +
+      accountingCost
 
     const depreciation = computeDepreciationForYear(
       inputs.purchasePrice,
@@ -663,26 +696,63 @@ function computeSaleTaxForYear(
   inputs: EngineInputs,
   rows: EngineYearRow[],
   saleYearIndex: number,
-  resalePrice: number,
+  netSalePrice: number,
 ): number {
-  if (resalePrice <= 0 || inputs.taxRegime === 'none') return 0
+  if (netSalePrice <= 0 || inputs.taxRegime === 'none') return 0
   const row = rows[saleYearIndex]
   const holdingYears = saleYearIndex + 1
 
   if (inputs.taxRegime === 'sci_is') {
     const vnc = inputs.totalCost - (row?.amortizationDeductedCum ?? 0)
-    const gain = Math.max(0, resalePrice - vnc)
+    const gain = Math.max(0, netSalePrice - vnc)
     return computeMarginalIS(row?.taxable ?? 0, gain)
   }
 
   const amortizationToReintegrate =
     inputs.taxRegime === 'lmnp_reel' ? row?.amortizationDeductedCum ?? 0 : 0
   return computePVParticuliers(
-    resalePrice,
+    netSalePrice,
     inputs.acquisitionCostForPV,
     holdingYears,
     amortizationToReintegrate,
   )
+}
+
+export type SaleEvent = {
+  saleTax: number
+  crd: number
+  /** Frais de revente : agence, diagnostics… (% du prix de vente) */
+  saleFees: number
+  /** Indemnité de remboursement anticipé : min(6 mois d'intérêts, 3 % du CRD) */
+  ira: number
+  /** Ce que la vente rapporte réellement : prix − frais − IRA − impôt − CRD */
+  netCashDelta: number
+}
+
+/**
+ * Événement de revente complet, partagé par le tableau, les graphiques et le
+ * TRI. La revente n'est plus encaissée brute : frais de revente déduits du
+ * prix (cash ET assiette de plus-value, art. 150 VA du CGI) et IRA légale
+ * (art. L313-47 du Code de la consommation) si le prêt court encore.
+ */
+function computeSaleEvent(
+  inputs: EngineInputs,
+  rows: EngineYearRow[],
+  saleYearIndex: number,
+  resalePrice: number,
+): SaleEvent {
+  const crd = rows[saleYearIndex]?.crd ?? 0
+  const saleFees = resalePrice * inputs.resaleFeesRate
+  const ira = crd > 0 ? Math.min(crd * inputs.interestRate * 0.5, crd * 0.03) : 0
+  const netSalePrice = Math.max(0, resalePrice - saleFees)
+  const saleTax = computeSaleTaxForYear(inputs, rows, saleYearIndex, netSalePrice)
+  return {
+    saleTax,
+    crd,
+    saleFees,
+    ira,
+    netCashDelta: resalePrice - saleFees - ira - saleTax - crd,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -857,16 +927,15 @@ export function computeIRRByYearData(
   for (let saleYear = 1; saleYear <= numYears; saleYear++) {
     const cashFlows: number[] = [-inputs.ownFunds]
     const saleYearIndex = saleYear - 1
-    const saleTax = computeSaleTaxForYear(inputs, rows, saleYearIndex, effectiveResalePrice)
-    const crdAtSale = rows[saleYearIndex]?.crd ?? 0
+    const sale = computeSaleEvent(inputs, rows, saleYearIndex, effectiveResalePrice)
 
     const breakdown: IRRDetail['breakdown'] | undefined = includeDetails
       ? {
           initialInvestment: -inputs.ownFunds,
           annualCashflows: [],
-          saleProceeds: effectiveResalePrice,
-          saleTax,
-          loanBalance: crdAtSale,
+          saleProceeds: effectiveResalePrice - sale.saleFees - sale.ira,
+          saleTax: sale.saleTax,
+          loanBalance: sale.crd,
         }
       : undefined
 
@@ -874,7 +943,7 @@ export function computeIRRByYearData(
       const row = rows[y]
       let annualCashflow = row.cfBeforeTax - row.tax
       if (y === saleYearIndex) {
-        annualCashflow += effectiveResalePrice - saleTax - crdAtSale
+        annualCashflow += sale.netCashDelta
       }
       cashFlows.push(annualCashflow)
       if (breakdown) {
@@ -917,16 +986,21 @@ export function computeYearlyChartData(
 
   let saleTax = 0
   let crdAtSale = 0
+  let saleFees = 0
+  let ira = 0
   let flatTaxAmount = 0
   if (hasResale && resaleYearIndex >= 0) {
-    saleTax = computeSaleTaxForYear(inputs, rows, resaleYearIndex, resalePrice)
-    crdAtSale = rows[resaleYearIndex]?.crd ?? 0
+    const sale = computeSaleEvent(inputs, rows, resaleYearIndex, resalePrice)
+    saleTax = sale.saleTax
+    crdAtSale = sale.crd
+    saleFees = sale.saleFees
+    ira = sale.ira
 
     // SCI IS + option retrait : PFU sur le boni de liquidation uniquement
     // (le remboursement de l'apport n'est pas un dividende)
     if (inputs.taxRegime === 'sci_is' && values.sciIsWithdrawFlatTax) {
       const sumAnnualAccumulated = rows.reduce((s, r) => s + (r.cfBeforeTax - r.tax), 0)
-      const resaleNet = resalePrice - crdAtSale - saleTax
+      const resaleNet = resalePrice - saleFees - ira - crdAtSale - saleTax
       const totalAccumulated = sumAnnualAccumulated + resaleNet
       flatTaxAmount = Math.max(0, totalAccumulated - inputs.ownFunds) * FLAT_TAX_RATE
     }
@@ -935,8 +1009,9 @@ export function computeYearlyChartData(
   return rows.map((row, y) => {
     const isResaleYear = hasResale && y === resaleYearIndex
     const saleTaxTotal = isResaleYear ? saleTax + flatTaxAmount : 0
+    const saleCosts = isResaleYear ? saleFees + ira : 0
     const crd = isResaleYear ? crdAtSale : 0
-    const totalCharges = row.charges + row.credit + row.tax + saleTaxTotal + crd
+    const totalCharges = row.charges + row.credit + row.tax + saleTaxTotal + saleCosts + crd
     const revenueWithResale = row.revenue + (isResaleYear ? resalePrice : 0)
 
     const breakdown: ChargesBreakdown = {
@@ -958,6 +1033,8 @@ export function computeYearlyChartData(
         breakdown.flatTax = flatTaxAmount
       }
     }
+    if (isResaleYear && saleFees > 0) breakdown.saleFees = saleFees
+    if (isResaleYear && ira > 0) breakdown.ira = ira
 
     return {
       year: `${row.year}`,
@@ -1005,6 +1082,10 @@ export type YearlyTableRow = {
   depreciationReserve: number
   cashDispo: number
   saleTax: number
+  /** Frais de revente (agence, diagnostics) — année de revente */
+  saleFees: number
+  /** Indemnité de remboursement anticipé (IRA) — année de revente */
+  ira: number
   resalePrice: number
   /** Détail du calcul PFU (si SCI IS + option retrait activée et année de revente) */
   flatTaxDetail?: FlatTaxDetail
@@ -1027,19 +1108,21 @@ export function computeYearlyTableData(
 
   let saleTax = 0
   let crdAtSale = 0
+  let saleFees = 0
+  let ira = 0
+  let saleNetCashDelta = 0
   if (hasResale && resaleYearIndex >= 0) {
-    saleTax = computeSaleTaxForYear(inputs, rows, resaleYearIndex, resalePrice)
-    crdAtSale = rows[resaleYearIndex]?.crd ?? 0
+    const sale = computeSaleEvent(inputs, rows, resaleYearIndex, resalePrice)
+    saleTax = sale.saleTax
+    crdAtSale = sale.crd
+    saleFees = sale.saleFees
+    ira = sale.ira
+    saleNetCashDelta = sale.netCashDelta
   }
 
   const data: YearlyTableRow[] = rows.map((row, y) => {
     const isResaleYear = hasResale && y === resaleYearIndex
-    const cashDispo =
-      row.cfBeforeTax -
-      row.tax -
-      (isResaleYear ? saleTax : 0) +
-      (isResaleYear ? resalePrice : 0) -
-      (isResaleYear ? crdAtSale : 0)
+    const cashDispo = row.cfBeforeTax - row.tax + (isResaleYear ? saleNetCashDelta : 0)
 
     return {
       year: row.year,
@@ -1059,6 +1142,8 @@ export function computeYearlyTableData(
       depreciationReserve: row.depreciationReserve,
       cashDispo,
       saleTax: isResaleYear ? saleTax : 0,
+      saleFees: isResaleYear ? saleFees : 0,
+      ira: isResaleYear ? ira : 0,
       resalePrice: isResaleYear ? resalePrice : 0,
     }
   })
@@ -1081,7 +1166,7 @@ export function computeYearlyTableData(
     const sumAnnualAccumulated = annualAccumulated.reduce((s, a) => s + a.amount, 0)
     const resaleRow = data[resaleYearIndex]
     const corporateTaxOnGain = saleTax
-    const resaleNet = resalePrice - crdAtSale - corporateTaxOnGain
+    const resaleNet = resalePrice - saleFees - ira - crdAtSale - corporateTaxOnGain
     const totalAccumulated = sumAnnualAccumulated + resaleNet
     const ownFundsReturned = Math.min(inputs.ownFunds, Math.max(0, totalAccumulated))
     const flatTaxAmount = Math.max(0, totalAccumulated - inputs.ownFunds) * FLAT_TAX_RATE
@@ -1089,7 +1174,7 @@ export function computeYearlyTableData(
 
     resaleRow.saleTax = totalResaleTax
     resaleRow.cashDispo =
-      resaleRow.cfBeforeTax - resaleRow.tax - totalResaleTax + resalePrice - crdAtSale
+      resaleRow.cfBeforeTax - resaleRow.tax - totalResaleTax + resalePrice - saleFees - ira - crdAtSale
 
     resaleRow.flatTaxDetail = {
       annualAccumulated,

@@ -373,6 +373,9 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
             <FormField label={strings.annualMaintenance} value={values.annualMaintenance} onChange={handleChange('annualMaintenance')} unit={strings.unitEuroPerYear} help={strings.helpMaintenance} invalidMessage={inv} />
             <FormField label={strings.annualInsurancePNO} value={values.annualInsurancePNO} onChange={handleChange('annualInsurancePNO')} unit={strings.unitEuroPerYear} help={strings.helpPNO} invalidMessage={inv} />
             <FormField label={strings.otherAnnualExpenses} value={values.otherAnnualExpenses} onChange={handleChange('otherAnnualExpenses')} unit={strings.unitEuroPerYear} invalidMessage={inv} />
+            <FormField label={strings.chargesRevaluationPercent} value={values.chargesRevaluationPercent ?? ''} onChange={handleChange('chargesRevaluationPercent')} unit={strings.unitPercent} help={strings.helpChargesRevaluation} invalidMessage={inv} />
+            <FormField label={strings.annualCFE} value={values.annualCFE ?? ''} onChange={handleChange('annualCFE')} unit={strings.unitEuroPerYear} help={strings.helpCFE} invalidMessage={inv} />
+            <FormField label={strings.annualAccountingFees} value={values.annualAccountingFees ?? ''} onChange={handleChange('annualAccountingFees')} unit={strings.unitEuroPerYear} help={strings.helpAccountingFees} invalidMessage={inv} />
           </div>
         ),
       },
@@ -408,6 +411,14 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               onChange={handleChange('resalePrice')}
               unit={strings.unitEuro}
               help={strings.helpResalePrice}
+              invalidMessage={inv}
+            />
+            <FormField
+              label={strings.resaleFeesPercent}
+              value={values.resaleFeesPercent ?? ''}
+              onChange={handleChange('resaleFeesPercent')}
+              unit={strings.unitPercent}
+              help={strings.helpResaleFees}
               invalidMessage={inv}
             />
           </div>
@@ -561,6 +572,8 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
                 saleTax: strings.chartChargeSaleTax,
                 corporateTaxOnGain: strings.chartChargeCorporateOnGain,
                 flatTax: strings.chartChargeFlatTax,
+                saleFees: strings.chartChargeSaleFees,
+                ira: strings.chartChargeIra,
               }}
             />
           </div>
@@ -752,6 +765,8 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
                 saleTax: strings.chartChargeSaleTax,
                 corporateTaxOnGain: strings.chartChargeCorporateOnGain,
                 flatTax: strings.chartChargeFlatTax,
+                saleFees: strings.chartChargeSaleFees,
+                ira: strings.chartChargeIra,
               }}
             />
           </div>
