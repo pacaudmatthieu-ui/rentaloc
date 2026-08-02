@@ -745,6 +745,28 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               </select>
             </label>
             <p className="regime-hint">{strings[`regimeHint_${values.taxRegime}`]}</p>
+            {values.taxRegime !== 'none' && values.taxRegime !== 'sci_is' && (
+              <label className="form-field">
+                <span className="field-label">
+                  {strings.simpleTmiLabel}
+                  <HelpTip text={strings.helpSimpleTmi} />
+                </span>
+                <select
+                  className="field-input"
+                  value={values.marginalTaxRate}
+                  onChange={(event) => setValues((prev) => ({ ...prev, marginalTaxRate: event.target.value }))}
+                >
+                  {!['0', '11', '30', '41', '45'].includes(values.marginalTaxRate) && (
+                    <option value={values.marginalTaxRate}>{values.marginalTaxRate} %</option>
+                  )}
+                  <option value="0">{strings.tmiOption0}</option>
+                  <option value="11">{strings.tmiOption11}</option>
+                  <option value="30">{strings.tmiOption30}</option>
+                  <option value="41">{strings.tmiOption41}</option>
+                  <option value="45">{strings.tmiOption45}</option>
+                </select>
+              </label>
+            )}
             <button type="button" className="simple-advanced-cta" onClick={onRequestExpertMode}>
               {strings.simpleAdvancedCta}
             </button>
