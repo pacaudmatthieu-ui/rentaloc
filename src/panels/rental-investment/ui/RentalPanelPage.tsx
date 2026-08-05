@@ -142,6 +142,20 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
   const loanChartsData = useMemo(() => computeLoanChartsData(deferredValues), [deferredValues])
   const irrByYearData = useMemo(() => computeIRRByYearData(deferredValues, true), [deferredValues])
 
+  // Bilan « combien j'ai gagné à la revente » : décompose le dernier point du
+  // TRI (année de revente effective) en apport / cash-flows / revente nette
+  const saleGain = useMemo(() => {
+    const last = irrByYearData.length > 0 ? irrByYearData[irrByYearData.length - 1] : null
+    const d = last?.details
+    if (!last || !d) return null
+    const apport = -d.initialInvestment
+    const saleNet = d.saleProceeds - d.saleTax - d.loanBalance
+    const totalCF = d.annualCashflows.reduce((sum, a) => sum + a.cashflow, 0)
+    const operatingCF = totalCF - saleNet
+    const gain = d.initialInvestment + totalCF
+    return { years: last.year, irr: last.irr, apport, saleNet, operatingCF, gain }
+  }, [irrByYearData])
+
   const currencyFormatter = useMemo(
     () =>
       new Intl.NumberFormat(locale === 'fr' ? 'fr-FR' : 'en-US', {
@@ -669,22 +683,75 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
         title: strings.sectionLoanCharts,
         description: strings.loanChartsDescription,
         content: (
-          <LoanChartsSection
-            data={loanChartsData}
-            currencyFormatter={currencyFormatter}
-            percentFormatter={percentFormatter}
-            principalLabel={strings.loanChartPrincipal}
-            interestLabel={strings.loanChartInterest}
-            ltvLabel={strings.loanChartLtv}
-            yearLabel={strings.tableYear}
-            irrData={irrByYearData}
-            irrLabel={strings.loanChartIrr}
-          />
+          <>
+            <LoanChartsSection
+              data={loanChartsData}
+              currencyFormatter={currencyFormatter}
+              percentFormatter={percentFormatter}
+              principalLabel={strings.loanChartPrincipal}
+              interestLabel={strings.loanChartInterest}
+              ltvLabel={strings.loanChartLtv}
+              yearLabel={strings.tableYear}
+              irrData={irrByYearData}
+              irrLabel={strings.loanChartIrr}
+            />
+            {saleGain && (() => {
+              const signed = (v: number) => `${v >= 0 ? '+\u00a0' : '\u2212\u00a0'}${currencyFormatter.format(Math.abs(v))}`
+              const hasResaleProject =
+                toNumber(values.resalePrice ?? '0') > 0 && toNumber(values.resaleHoldingMonths ?? '0') > 0
+              const irrSuffix =
+                saleGain.irr != null
+                  ? strings.saleGainIrrSuffix.replace('{irr}', percentFormatter.format(saleGain.irr / 100))
+                  : ''
+              // Argent réellement sorti de la poche (apport + cash-flows négatifs)
+              // vs argent récupéré (revente nette + cash-flows positifs)
+              const invested = saleGain.apport + Math.max(0, -saleGain.operatingCF)
+              const recovered = saleGain.saleNet + Math.max(0, saleGain.operatingCF)
+              const phrase = (invested <= 0
+                ? strings.saleGainPhraseNoApport
+                : saleGain.gain >= 0
+                  ? strings.saleGainPhraseWin
+                  : strings.saleGainPhraseLoss)
+                .replace('{invested}', currencyFormatter.format(invested))
+                .replace('{recovered}', currencyFormatter.format(recovered))
+                .replace('{years}', String(saleGain.years))
+                .replace('{gain}', currencyFormatter.format(Math.abs(saleGain.gain)))
+                .replace('{irr}', irrSuffix)
+              return (
+                <div className="sale-gain-card">
+                  <h4 className="sale-gain-title">
+                    {strings.saleGainTitle}
+                    <HelpTip text={strings.helpSaleGain} />
+                  </h4>
+                  {!hasResaleProject && <p className="sale-gain-assumption">{strings.saleGainAssumption}</p>}
+                  <div className="sale-gain-rows">
+                    <div className="sale-gain-row">
+                      <span>{strings.saleGainApport}</span>
+                      <span>{signed(-saleGain.apport)}</span>
+                    </div>
+                    <div className="sale-gain-row">
+                      <span>{strings.saleGainOperating}</span>
+                      <span>{signed(saleGain.operatingCF)}</span>
+                    </div>
+                    <div className="sale-gain-row">
+                      <span>{strings.saleGainSaleNet}</span>
+                      <span>{signed(saleGain.saleNet)}</span>
+                    </div>
+                    <div className={`sale-gain-row sale-gain-row-total ${saleGain.gain >= 0 ? 'sale-gain-pos' : 'sale-gain-neg'}`}>
+                      <span>{strings.saleGainTotal} ({saleGain.years} {strings.taxComparisonYears})</span>
+                      <span>{signed(saleGain.gain)}</span>
+                    </div>
+                  </div>
+                  <p className={`sale-gain-phrase ${saleGain.gain >= 0 ? 'sale-gain-pos' : 'sale-gain-neg'}`}>{phrase}</p>
+                </div>
+              )
+            })()}
+          </>
         ),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [values, strings, currencyFormatter, percentFormatter, results, chartData, tableData, loanChartsData, irrByYearData],
+    [values, strings, currencyFormatter, percentFormatter, results, chartData, tableData, loanChartsData, irrByYearData, saleGain],
   )
 
   const { order, collapsed, moveSection, setCollapsed } = usePanelLayout(

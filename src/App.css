@@ -3131,3 +3131,15 @@
 .renov-chip { flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; text-align: left; }
 .renov-chip-rate { font-variant-numeric: tabular-nums; opacity: 0.85; white-space: nowrap; }
 .renov-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Bilan « combien j'ai gagné à la revente » */
+.sale-gain-card { margin-top: 1rem; padding: 1rem 1.1rem; border: 1px solid var(--border, rgba(148,163,184,0.25)); border-radius: 12px; background: rgba(16, 185, 129, 0.04); }
+.sale-gain-title { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.5rem; font-size: 0.98rem; }
+.sale-gain-assumption { margin: 0 0 0.6rem; font-size: 0.78rem; color: var(--text-3, #9ca3af); }
+.sale-gain-rows { display: flex; flex-direction: column; gap: 0.3rem; }
+.sale-gain-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.86rem; }
+.sale-gain-row > span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sale-gain-row-total { margin-top: 0.35rem; padding-top: 0.5rem; border-top: 1px solid rgba(148,163,184,0.3); font-weight: 700; font-size: 0.95rem; }
+.sale-gain-phrase { margin: 0.7rem 0 0; font-size: 0.9rem; line-height: 1.45; }
+.sale-gain-pos { color: #34d399; }
+.sale-gain-neg { color: #f87171; }
