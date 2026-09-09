@@ -504,3 +504,45 @@ describe('Pack Réalisme', () => {
     expect(last.ira).toBeCloseTo(last.crd * 0.03, 1)
   })
 })
+
+describe('différé et indicateurs de synthèse', () => {
+  it("différé total : les indicateurs se calculent sur la première année pleine, pas sur l'année de différé", () => {
+    const base = {
+      purchasePrice: '165000',
+      notaryFeesOverride: '13200',
+      agencyFees: '8000',
+      renovationBudget: '100000',
+      furnitureBudget: '10000',
+      ownFunds: '50000',
+      interestRate: '3.7',
+      insuranceRate: '0.59',
+      loanFees: '1200',
+      guaranteeFees: '900',
+      loanDurationMonths: '240',
+      monthlyRent: '1750',
+      monthlyRecoverableCharges: '60',
+      vacancyRate: '0',
+      annualPropertyTax: '1246',
+      annualMaintenance: '800',
+      annualInsurancePNO: '700',
+      taxRegime: 'lmnp_reel' as const,
+    }
+    const sansDiffere = calculateResults(makeValues(base))
+    const avecDiffere = calculateResults(
+      makeValues({ ...base, deferralType: 'total', deferralMonths: '12' }),
+    )
+    // Année de référence : 1 sans différé, 2 avec différé de 12 mois
+    expect(sansDiffere.referenceYear).toBe(1)
+    expect(avecDiffere.referenceYear).toBe(2)
+    // Avec différé, le crédit affiché doit être une VRAIE annuité (> 15 000 €/an
+    // pour 248 300 € sur 20 ans), pas la seule assurance (~1 465 €)
+    expect(avecDiffere.annualLoanAndInsurance).toBeGreaterThan(15000)
+    // Le cashflow de croisière avec différé est forcément moins bon que le
+    // cashflow sans différé (capital majoré des intérêts capitalisés)
+    expect(avecDiffere.monthlyCashflowAfterTax).toBeLessThan(
+      sansDiffere.monthlyCashflowAfterTax + 1,
+    )
+    // Et surtout très loin des ~1 332 €/mois affichés à tort avant correction
+    expect(avecDiffere.monthlyCashflowAfterTax).toBeLessThan(300)
+  })
+})

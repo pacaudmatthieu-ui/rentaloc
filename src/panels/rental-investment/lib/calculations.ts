@@ -761,9 +761,24 @@ function computeSaleEvent(
 
 export function calculateResults(values: SimulationFormValues): SimulationResults {
   const inputs = parseInputs(values)
-  const [year1] = simulateYears(inputs, 1)
 
-  const annualCashflow = year1.cfBeforeTax
+  // Avec un différé (partiel ou total), l'année 1 n'est pas représentative :
+  // le crédit ne se rembourse pas (ou pas entièrement) et le cashflow paraît
+  // mirifique. Les indicateurs de synthèse se calculent donc sur la première
+  // année COMPLÈTE après la fin du différé (régime de croisière).
+  const deferralMonths = Math.max(
+    0,
+    Math.min(toNumber(values.deferralMonths ?? '0'), inputs.loanDurationMonths - 1),
+  )
+  const deferralType = values.deferralType || 'none'
+  const referenceYearIndex =
+    deferralType !== 'none' && deferralMonths > 0
+      ? Math.min(Math.ceil(deferralMonths / 12), inputs.schedule.loanDurationYears - 1)
+      : 0
+  const rows = simulateYears(inputs, referenceYearIndex + 1)
+  const yearRef = rows[referenceYearIndex]
+
+  const annualCashflow = yearRef.cfBeforeTax
   const monthlyCashflow = annualCashflow / 12
 
   let grossYield = 0
@@ -773,29 +788,30 @@ export function calculateResults(values: SimulationFormValues): SimulationResult
   if (inputs.totalCost > 0) {
     // Rendement brut : définition usuelle = loyer annuel hors charges / coût total
     grossYield = (inputs.monthlyRent * 12) / inputs.totalCost
-    netYield = (year1.revenue - year1.charges) / inputs.totalCost
+    netYield = (yearRef.revenue - yearRef.charges) / inputs.totalCost
   }
   if (inputs.ownFunds > 0) {
     cashOnCash = annualCashflow / inputs.ownFunds
   }
 
-  const annualCashflowAfterTax = annualCashflow - year1.tax
+  const annualCashflowAfterTax = annualCashflow - yearRef.tax
 
   return {
     totalCost: inputs.totalCost,
     loanAmount: inputs.loanAmount,
-    annualRentEffective: year1.revenue,
-    annualCharges: year1.charges,
-    annualLoanAndInsurance: year1.credit,
+    annualRentEffective: yearRef.revenue,
+    annualCharges: yearRef.charges,
+    annualLoanAndInsurance: yearRef.credit,
     annualCashflow,
     monthlyCashflow,
     grossYield,
     netYield,
     cashOnCash,
-    annualTax: year1.tax,
+    annualTax: yearRef.tax,
     annualCashflowAfterTax,
     monthlyCashflowAfterTax: annualCashflowAfterTax / 12,
-    annualDepreciation: year1.depreciation,
+    annualDepreciation: yearRef.depreciation,
+    referenceYear: referenceYearIndex + 1,
     microFoncierCapExceeded:
       inputs.taxRegime === 'micro_foncier' && inputs.monthlyRent * 12 > MICRO_FONCIER_CAP,
     microBicCapExceeded:

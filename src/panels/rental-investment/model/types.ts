@@ -66,6 +66,8 @@ export type SimulationResults = {
   annualCashflowAfterTax: number
   monthlyCashflowAfterTax: number
   annualDepreciation: number
+  /** Année sur laquelle les indicateurs sont calculés (> 1 si différé : première année pleine après le différé) */
+  referenceYear: number
   /** Loyers annuels HC au-dessus du plafond micro-foncier (15 000 €) */
   microFoncierCapExceeded?: boolean
   /** Recettes annuelles au-dessus du plafond micro-BIC (77 700 €) */

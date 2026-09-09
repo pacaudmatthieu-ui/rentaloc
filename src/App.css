@@ -3143,3 +3143,6 @@
 .sale-gain-phrase { margin: 0.7rem 0 0; font-size: 0.9rem; line-height: 1.45; }
 .sale-gain-pos { color: #34d399; }
 .sale-gain-neg { color: #f87171; }
+
+/* Note différé : indicateurs calculés sur la première année pleine */
+.results-deferral-note { margin: 0.6rem 0 0.8rem; padding: 0.55rem 0.75rem; border-left: 3px solid #f59e0b; background: rgba(245, 158, 11, 0.08); border-radius: 6px; font-size: 0.8rem; line-height: 1.45; color: var(--text-2, #cbd5e1); }
