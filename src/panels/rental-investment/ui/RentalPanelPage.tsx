@@ -560,7 +560,10 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
         content: (
           <>
             <div className="results-grid">
-              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} help={strings.helpCashflow} />
+              <ResultTile label={`${strings.monthlyCashflowAfterTax}${results.deferralMonthlyCashflowAfterTax != null ? strings.afterDeferralSuffix : ''}`} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} help={strings.helpCashflow} />
+              {results.deferralMonthlyCashflowAfterTax != null && (
+                <ResultTile label={strings.deferralCashflowTile} value={currencyFormatter.format(results.deferralMonthlyCashflowAfterTax)} variant={results.deferralMonthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} help={strings.helpDeferralCashflow} />
+              )}
               <ResultTile label={strings.monthlyCashflow} value={currencyFormatter.format(results.monthlyCashflow)} variant={results.monthlyCashflow >= 0 ? 'positive' : 'negative'} />
               <ResultTile label={strings.annualCashflow} value={currencyFormatter.format(results.annualCashflow)} variant={results.annualCashflow >= 0 ? 'positive' : 'negative'} />
               <ResultTile label={strings.grossYield} value={percentFormatter.format(results.grossYield)} help={strings.helpGrossYield} />
@@ -850,7 +853,10 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
             <h3 className="simple-card-title"><span className="step-dot">2</span> {strings.simpleResultsTitle}</h3>
             <p className="simple-card-sub">{strings.simpleResultsSubtitle}</p>
             <div className="results-grid">
-              <ResultTile label={strings.monthlyCashflowAfterTax} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} help={strings.helpCashflow} />
+              <ResultTile label={`${strings.monthlyCashflowAfterTax}${results.deferralMonthlyCashflowAfterTax != null ? strings.afterDeferralSuffix : ''}`} value={currencyFormatter.format(results.monthlyCashflowAfterTax)} variant={results.monthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} help={strings.helpCashflow} />
+              {results.deferralMonthlyCashflowAfterTax != null && (
+                <ResultTile label={strings.deferralCashflowTile} value={currencyFormatter.format(results.deferralMonthlyCashflowAfterTax)} variant={results.deferralMonthlyCashflowAfterTax >= 0 ? 'positive' : 'negative'} help={strings.helpDeferralCashflow} />
+              )}
               <ResultTile label={strings.totalCost} value={currencyFormatter.format(results.totalCost)} />
               <ResultTile label={strings.loanAmount} value={currencyFormatter.format(results.loanAmount)} />
               <ResultTile label={strings.estimatedAnnualTax} value={currencyFormatter.format(results.annualTax)} />

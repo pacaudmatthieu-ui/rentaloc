@@ -777,6 +777,8 @@ export function calculateResults(values: SimulationFormValues): SimulationResult
       : 0
   const rows = simulateYears(inputs, referenceYearIndex + 1)
   const yearRef = rows[referenceYearIndex]
+  // Cashflow de l'année 1 (période de différé) — affiché en plus quand différé
+  const yearDeferral = referenceYearIndex > 0 ? rows[0] : null
 
   const annualCashflow = yearRef.cfBeforeTax
   const monthlyCashflow = annualCashflow / 12
@@ -812,6 +814,9 @@ export function calculateResults(values: SimulationFormValues): SimulationResult
     monthlyCashflowAfterTax: annualCashflowAfterTax / 12,
     annualDepreciation: yearRef.depreciation,
     referenceYear: referenceYearIndex + 1,
+    deferralMonthlyCashflowAfterTax: yearDeferral
+      ? (yearDeferral.cfBeforeTax - yearDeferral.tax) / 12
+      : undefined,
     microFoncierCapExceeded:
       inputs.taxRegime === 'micro_foncier' && inputs.monthlyRent * 12 > MICRO_FONCIER_CAP,
     microBicCapExceeded:
