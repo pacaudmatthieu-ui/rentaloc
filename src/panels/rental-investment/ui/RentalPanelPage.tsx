@@ -568,7 +568,14 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               <ResultTile label={strings.cashOnCash} value={percentFormatter.format(results.cashOnCash)} help={strings.helpCashOnCash} />
               <ResultTile label={strings.annualCashflowAfterTax} value={currencyFormatter.format(results.annualCashflowAfterTax)} variant={results.annualCashflowAfterTax >= 0 ? 'positive' : 'negative'} />
             </div>
-            <h3 className="results-breakdown-title">{strings.breakdownTitle}</h3>
+{results.referenceYear > 1 && (
+              <p className="results-deferral-note">
+                {strings.resultsDeferralNote
+                  .replace('{months}', values.deferralMonths || '0')
+                  .replace('{year}', String(results.referenceYear))}
+              </p>
+            )}
+                        <h3 className="results-breakdown-title">{strings.breakdownTitle}</h3>
             <div className="results-breakdown">
               <BreakdownRow label={strings.totalCost} value={currencyFormatter.format(results.totalCost)} />
               <BreakdownRow label={strings.loanAmount} value={currencyFormatter.format(results.loanAmount)} />
@@ -850,6 +857,13 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               <ResultTile label={strings.grossYield} value={percentFormatter.format(results.grossYield)} help={strings.helpGrossYield} />
               <ResultTile label={strings.netYield} value={percentFormatter.format(results.netYield)} help={strings.helpNetYield} />
             </div>
+            {results.referenceYear > 1 && (
+              <p className="results-deferral-note">
+                {strings.resultsDeferralNote
+                  .replace('{months}', values.deferralMonths || '0')
+                  .replace('{year}', String(results.referenceYear))}
+              </p>
+            )}
             <h4 className="simple-projection-title">{strings.simpleProjectionTitle}</h4>
             {compactTable}
             <p className="simple-table-note">{strings.simpleTableNote}</p>
