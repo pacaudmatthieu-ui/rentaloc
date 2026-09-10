@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { exportToJson, validateImportPayload } from '../lib'
 import { exportPdfFromElement } from '../../export-pdf/lib'
 import { exportReport } from '../../export-pdf/report'
@@ -123,7 +124,7 @@ export function ExportImportPanel<T>({
         </button>
       )}
       {extraButton}
-      {showImportModal && (
+      {showImportModal && createPortal(
         <div className="export-import-overlay" onClick={closeImportModal}>
           <div className="export-import-modal" onClick={(e) => e.stopPropagation()}>
             <h3>{strings.importData}</h3>
@@ -152,7 +153,8 @@ export function ExportImportPanel<T>({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
