@@ -12,6 +12,27 @@ if (!localStorage.getItem(MIGRATION_KEY)) {
   localStorage.setItem(MIGRATION_KEY, '1')
 }
 
+// Intégration en iframe (jmacademie.com) : on annonce la hauteur réelle du
+// contenu à la page parente pour qu'elle ajuste l'iframe — sans ça, l'iframe
+// à hauteur fixe coupe le bas de l'outil dès que le contenu grandit.
+if (window.parent !== window) {
+  let lastHeight = 0
+  const reportHeight = () => {
+    const height = Math.ceil(
+      Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
+    )
+    if (Math.abs(height - lastHeight) < 4) return
+    lastHeight = height
+    window.parent.postMessage({ type: 'rentaloc:height', height }, '*')
+  }
+  const observer = new ResizeObserver(reportHeight)
+  observer.observe(document.documentElement)
+  observer.observe(document.body)
+  window.addEventListener('load', reportHeight)
+  // Filet de sécurité : contenus asynchrones (graphiques, polices, panneaux dépliés)
+  window.setInterval(reportHeight, 1000)
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
