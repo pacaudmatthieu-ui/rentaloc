@@ -49,9 +49,9 @@ export function LoanChartsSection({
 
   const chartStyle = {
     margin: { top: 16, right: 50, bottom: 16, left: 8 },
-    gridStroke: 'rgba(148,163,184,0.3)',
+    gridStroke: 'rgba(64, 63, 61, 0.15)',
     axisStroke: 'rgba(148,163,184,0.4)',
-    tickFill: '#9ca3af',
+    tickFill: '#6C6A64',
     tickFontSize: 11,
   }
 
@@ -103,8 +103,8 @@ export function LoanChartsSection({
               }}
               labelFormatter={(label) => `${yearLabel} ${label}`}
               contentStyle={{
-                background: '#0f172a',
-                border: '1px solid rgba(148, 163, 184, 0.5)',
+                background: '#FFFFFF',
+                border: '1px solid #E3D9C2',
                 borderRadius: '8px',
                 fontSize: '0.8rem',
               }}
@@ -114,27 +114,27 @@ export function LoanChartsSection({
               yAxisId="left"
               dataKey="principal"
               type="monotone"
-              stroke="#38bdf8"
+              stroke="#3F5354"
               strokeWidth={2}
-              dot={{ fill: '#0ea5e9', r: 3 }}
+              dot={{ fill: '#3F5354', r: 3 }}
               name={principalLabel}
             />
             <Line
               yAxisId="left"
               dataKey="interest"
               type="monotone"
-              stroke="#f59e0b"
+              stroke="#BD9C67"
               strokeWidth={2}
-              dot={{ fill: '#fbbf24', r: 3 }}
+              dot={{ fill: '#BD9C67', r: 3 }}
               name={interestLabel}
             />
             <Line
               yAxisId="right"
               dataKey="ltv"
               type="monotone"
-              stroke="#34d399"
+              stroke="#6F9A7E"
               strokeWidth={2}
-              dot={{ fill: '#10b981', r: 3 }}
+              dot={{ fill: '#6F9A7E', r: 3 }}
               name={ltvLabel}
             />
           </LineChart>
@@ -168,8 +168,8 @@ export function LoanChartsSection({
                   />
                 )}
                 contentStyle={{
-                  background: '#0f172a',
-                  border: '1px solid rgba(148, 163, 184, 0.5)',
+                  background: '#FFFFFF',
+                  border: '1px solid #E3D9C2',
                   borderRadius: '8px',
                   fontSize: '0.8rem',
                   padding: '0.75rem',
@@ -185,9 +185,9 @@ export function LoanChartsSection({
               <Line
                 dataKey="irr"
                 type="monotone"
-                stroke="#a78bfa"
+                stroke="#BD9C67"
                 strokeWidth={2}
-                dot={{ fill: '#8b5cf6', r: 3 }}
+                dot={{ fill: '#BD9C67', r: 3 }}
                 name={irrLabel}
               />
             </LineChart>
