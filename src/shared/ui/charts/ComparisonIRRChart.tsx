@@ -45,9 +45,9 @@ export function ComparisonIRRChart({
 
   const chartStyle = {
     margin: { top: 16, right: 50, bottom: 16, left: 8 },
-    gridStroke: 'rgba(148,163,184,0.3)',
+    gridStroke: 'rgba(64, 63, 61, 0.15)',
     axisStroke: 'rgba(148,163,184,0.4)',
-    tickFill: '#9ca3af',
+    tickFill: '#6C6A64',
     tickFontSize: 11,
   }
 
@@ -73,8 +73,8 @@ export function ComparisonIRRChart({
             formatter={(value: number | undefined) => percentFormatter.format((value ?? 0) / 100)}
             labelFormatter={(label) => `${yearLabel} ${label}`}
             contentStyle={{
-              background: '#0f172a',
-              border: '1px solid rgba(148, 163, 184, 0.5)',
+              background: '#FFFFFF',
+              border: '1px solid #E3D9C2',
               borderRadius: '8px',
               fontSize: '0.8rem',
             }}

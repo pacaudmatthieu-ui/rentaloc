@@ -1,13 +1,9 @@
 .app-root {
   max-width: 1200px;
-  margin: 2.5rem auto;
+  margin: 1.25rem auto 2.5rem;
   padding: 1.5rem 1.75rem 2.5rem;
-  border-radius: 1.5rem;
-  background: radial-gradient(circle at top left, #132a1f, #0c1a14);
-  color: #f9fafb;
-  box-shadow:
-    0 24px 60px rgba(12, 26, 20, 0.55),
-    0 0 0 1px rgba(110, 160, 130, 0.1);
+  background: transparent;
+  color: var(--text-1);
 }
 
 .app-header {
@@ -26,7 +22,7 @@
 
 .app-subtitle {
   margin: 0.45rem 0 0;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.95rem;
   max-width: 34rem;
 }
@@ -40,10 +36,10 @@
 
 .language-select {
   border-radius: 999px;
-  border: 1px solid rgba(110, 160, 130, 0.7);
-  background: rgba(12, 26, 20, 0.8);
+  border: 1px solid #D5C9AC;
+  background: rgba(245, 237, 218, 0.9);
   padding: 0.4rem 0.9rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.9rem;
   outline: none;
   transition:
@@ -53,12 +49,12 @@
 }
 
 .language-select:hover {
-  border-color: #34d399;
+  border-color: #3F5354;
 }
 
 .language-select:focus-visible {
-  border-color: #34d399;
-  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.7);
+  border-color: #3F5354;
+  box-shadow: 0 0 0 1px rgba(63, 83, 84, 0.7);
 }
 
 .app-main {
@@ -84,8 +80,9 @@
 /* Collapsible & Sortable sections */
 .collapsible-section {
   border-radius: 1.1rem;
-  background: radial-gradient(circle at top left, #081510, #081510);
-  border: 1px solid rgba(110, 160, 130, 0.3);
+  background: var(--surface);
+  border: none;
+  box-shadow: 0 1px 3px rgba(64, 63, 61, 0.08);
   overflow: hidden;
 }
 
@@ -100,12 +97,13 @@
   gap: 0.5rem;
   padding: 0.85rem 1rem;
   cursor: pointer;
-  background: rgba(12, 26, 20, 0.5);
+  background: transparent;
+  border-bottom: 1px solid var(--line-soft);
   transition: background 0.15s ease;
 }
 
 .collapsible-section-header:hover {
-  background: rgba(12, 26, 20, 0.8);
+  background: rgba(245, 237, 218, 0.9);
 }
 
 .collapsible-section-arrow {
@@ -118,7 +116,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: #94a3b8;
+  color: #6C6A64;
   cursor: pointer;
   border-radius: 0.4rem;
   font-size: 0.7rem;
@@ -126,7 +124,7 @@
 }
 
 .collapsible-section-arrow:hover {
-  color: #34d399;
+  color: #3F5354;
 }
 
 .collapsible-arrow {
@@ -145,7 +143,7 @@
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
-  color: #64748b;
+  color: #94918A;
   cursor: grab;
   border-radius: 0.4rem;
   font-size: 0.85rem;
@@ -155,8 +153,8 @@
 }
 
 .collapsible-section-drag-handle:hover {
-  color: #94a3b8;
-  background: rgba(110, 160, 130, 0.15);
+  color: #6C6A64;
+  background: #EFE7D4;
 }
 
 .collapsible-section-drag-handle:active {
@@ -176,7 +174,7 @@
 .collapsible-section-description {
   margin: 0.25rem 0 0;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .collapsible-section-body {
@@ -210,14 +208,15 @@
 }
 
 .sortable-section-item.drag-over {
-  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.6);
+  box-shadow: 0 0 0 2px rgba(63, 83, 84, 0.6);
   border-radius: 1.1rem;
 }
 
 .form-card {
-  border-radius: 1.1rem;
-  background: radial-gradient(circle at top left, #081510, #081510);
-  border: 1px solid rgba(110, 160, 130, 0.3);
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: none;
+  box-shadow: 0 1px 3px rgba(64, 63, 61, 0.08);
   padding: 1rem 1.1rem 1.2rem;
 }
 
@@ -229,7 +228,7 @@
 .form-card-header p {
   margin: 0.25rem 0 0.9rem;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .form-card-body {
@@ -252,21 +251,21 @@
 }
 
 .form-field-checkbox input[type='checkbox'] {
-  accent-color: #34d399;
+  accent-color: #3F5354;
   width: 1rem;
   height: 1rem;
 }
 
 .field-label {
-  color: #d1d5db;
+  color: #55534E;
 }
 
 .field-input {
   border-radius: 0.7rem;
-  border: 1px solid rgba(110, 160, 130, 0.6);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.5rem 0.7rem;
-  color: #f9fafb;
+  color: #403F3D;
   font-size: 0.85rem;
   outline: none;
   transition:
@@ -276,20 +275,20 @@
 }
 
 .field-input::placeholder {
-  color: #6b7280;
+  color: #94918A;
 }
 
 .field-input:focus-visible {
-  border-color: #34d399;
+  border-color: #3F5354;
   box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.7),
-    0 0 20px rgba(52, 211, 153, 0.2);
-  background: #081510;
+    0 0 0 1px rgba(63, 83, 84, 0.7),
+    0 0 20px rgba(63, 83, 84, 0.15);
+  background: #FFFFFF;
 }
 
 .field-input-readonly {
   cursor: default;
-  color: #a7f3d0;
+  color: #3E6650;
 }
 
 .results-section {
@@ -300,12 +299,12 @@
   position: sticky;
   top: 1.5rem;
   border-radius: 1.25rem;
-  background: radial-gradient(circle at top, #0c1a14, #081510);
-  border: 1px solid rgba(191, 219, 254, 0.3);
+  background: var(--surface);
+  border: 1px solid rgba(92, 115, 112, 0.25);
   padding: 1.3rem 1.25rem 1.4rem;
   box-shadow:
-    0 20px 50px rgba(12, 26, 20, 0.8),
-    0 0 0 1px rgba(110, 160, 130, 0.2);
+    0 20px 50px rgba(245, 237, 218, 0.9),
+    0 0 0 1px #EFE7D4;
 }
 
 .results-card h2 {
@@ -316,7 +315,7 @@
 .results-subtitle {
   margin: 0.2rem 0 0.9rem;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .results-grid {
@@ -327,26 +326,24 @@
 }
 
 .result-tile {
-  border-radius: 0.9rem;
+  border-radius: 8px;
   padding: 0.7rem 0.75rem;
-  background: radial-gradient(circle at top left, #081510, #081510);
-  border: 1px solid rgba(110, 160, 130, 0.4);
+  background: var(--surface-2);
+  border: none;
 }
 
-.result-tile-positive {
-  border-color: rgba(52, 211, 153, 0.7);
-  background: radial-gradient(circle at top left, #065f46, #022c22);
-}
+/* La couleur est portée par le chiffre, pas par un fond qui crie */
+.result-tile-positive .result-value { color: #3E6650; }
+.result-tile-negative .result-value { color: var(--negative); }
 
-.result-tile-negative {
-  border-color: rgba(248, 113, 113, 0.8);
-  background: radial-gradient(circle at top left, #7f1d1d, #450a0a);
-}
+/* Seule la première tuile (l'indicateur principal) garde un fond teinté */
+.results-grid .result-tile:first-child.result-tile-positive { background: #CEE1D3; }
+.results-grid .result-tile:first-child.result-tile-negative { background: rgba(163, 79, 56, 0.10); }
 
 .result-label {
   display: block;
   font-size: 0.75rem;
-  color: #d1d5db;
+  color: #55534E;
 }
 
 .result-value {
@@ -364,9 +361,9 @@
 
 .section-tab {
   border-radius: 999px;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(12, 26, 20, 0.8);
-  color: #e5e7eb;
+  border: 1px solid #DCD2B8;
+  background: rgba(245, 237, 218, 0.9);
+  color: #403F3D;
   padding: 0.4rem 1rem;
   font-size: 0.85rem;
   cursor: pointer;
@@ -374,13 +371,13 @@
 }
 
 .section-tab:hover {
-  border-color: #34d399;
+  border-color: #3F5354;
 }
 
 .section-tab-active {
-  border-color: #34d399;
-  background: rgba(52, 211, 153, 0.15);
-  color: #6ee7b7;
+  border-color: #3F5354;
+  background: rgba(63, 83, 84, 0.10);
+  color: #3E6650;
 }
 
 .marchand-de-biens-main {
@@ -395,9 +392,9 @@
 
 .mb-add-apartment-btn {
   border-radius: 999px;
-  border: 1px solid rgba(52, 211, 153, 0.7);
-  background: rgba(52, 211, 153, 0.15);
-  color: #6ee7b7;
+  border: 1px solid rgba(63, 83, 84, 0.7);
+  background: rgba(63, 83, 84, 0.10);
+  color: #3E6650;
   padding: 0.4rem 0.9rem;
   font-size: 0.85rem;
   cursor: pointer;
@@ -411,7 +408,7 @@
 .mb-no-apartments {
   margin: 0;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .mb-apartment-list {
@@ -428,7 +425,7 @@
 
 .form-field-hint {
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: #6C6A64;
   padding-left: 0.25rem;
   font-style: italic;
 }
@@ -436,7 +433,7 @@
 .mb-travaux-detail-btn {
   background: none;
   border: none;
-  color: #34d399;
+  color: #3F5354;
   font-size: 0.75rem;
   cursor: pointer;
   padding: 0.15rem 0.25rem;
@@ -445,7 +442,7 @@
 }
 
 .mb-travaux-detail-btn:hover {
-  color: #6ee7b7;
+  color: #3E6650;
 }
 
 .mb-travaux-detail {
@@ -455,7 +452,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  background: rgba(12, 26, 20, 0.4);
+  background: rgba(64, 63, 61, 0.10);
 }
 
 .mb-travaux-detail-header {
@@ -467,7 +464,7 @@
 .mb-travaux-detail-title {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .mb-extra-charge-row {
@@ -482,38 +479,38 @@
   flex: 1 1 0;
   min-width: 0;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.4rem 0.6rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.85rem;
 }
 
 .mb-extra-charge-label::placeholder {
-  color: #6b7280;
+  color: #94918A;
   font-style: italic;
 }
 
 .mb-extra-charge-label:focus {
   outline: none;
-  border-color: #34d399;
+  border-color: #3F5354;
 }
 
 .mb-extra-charge-amount {
   flex: 0 0 5.5rem;
   min-width: 0;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.4rem 0.5rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.85rem;
   text-align: right;
 }
 
 .mb-extra-charge-amount:focus {
   outline: none;
-  border-color: #34d399;
+  border-color: #3F5354;
 }
 
 .mb-extra-charge-row .mb-remove-btn {
@@ -524,9 +521,9 @@
 
 .mb-add-charge-btn {
   background: none;
-  border: 1px dashed rgba(110, 160, 130, 0.4);
+  border: 1px dashed #E3D9C2;
   border-radius: 0.5rem;
-  color: #9ca3af;
+  color: #6C6A64;
   font-size: 0.8rem;
   padding: 0.4rem 0.75rem;
   cursor: pointer;
@@ -535,8 +532,8 @@
 }
 
 .mb-add-charge-btn:hover {
-  border-color: #34d399;
-  color: #34d399;
+  border-color: #3F5354;
+  color: #3F5354;
 }
 
 /* Lot table (unified lots + resale) */
@@ -551,9 +548,9 @@
   grid-template-columns: 2fr 1.5fr 5rem 1.5fr 4.5rem 2rem;
   gap: 0.4rem;
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: #6C6A64;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(110, 160, 130, 0.3);
+  border-bottom: 1px solid #E9E0CC;
 }
 
 .mb-lot-row {
@@ -565,10 +562,10 @@
 
 .mb-lot-select {
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.35rem 0.5rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.8rem;
   width: 100%;
 }
@@ -582,25 +579,25 @@
 .mb-lot-superficie input {
   width: 3.5rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.35rem 0.4rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.8rem;
   text-align: right;
 }
 
 .mb-lot-superficie span {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .mb-lot-price {
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.35rem 0.5rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.8rem;
   width: 100%;
   text-align: right;
@@ -610,12 +607,12 @@
 .mb-lot-select:focus,
 .mb-lot-superficie input:focus {
   outline: none;
-  border-color: #34d399;
+  border-color: #3F5354;
 }
 
 .mb-lot-ppm {
   font-size: 0.75rem;
-  color: #a7f3d0;
+  color: #3E6650;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -623,7 +620,7 @@
 .mb-lot-summary {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(110, 160, 130, 0.3);
+  border-top: 1px solid #E9E0CC;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -633,7 +630,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.85rem;
-  color: #d1d5db;
+  color: #55534E;
 }
 
 /* Saved simulations panel */
@@ -651,38 +648,38 @@
   padding: 0.4rem 0.8rem;
   font-size: 0.8rem;
   cursor: pointer;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
-  color: #e5e7eb;
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
+  color: #403F3D;
 }
 
 .saved-sim-btn:hover {
-  border-color: #34d399;
-  color: #34d399;
+  border-color: #3F5354;
+  color: #3F5354;
 }
 
 .saved-sim-btn-save {
-  background: rgba(52, 211, 153, 0.15);
-  border-color: #34d399;
-  color: #34d399;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #F5EDDA;
 }
 
 .saved-sim-btn-confirm {
-  background: rgba(52, 211, 153, 0.2);
-  border-color: #34d399;
-  color: #34d399;
+  background: rgba(63, 83, 84, 0.15);
+  border-color: #3F5354;
+  color: #3F5354;
 }
 
 .saved-sim-btn-cancel {
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .saved-sim-feedback {
   margin-top: 0.4rem;
   font-size: 0.8rem;
-  color: #34d399;
+  color: #3F5354;
   padding: 0.3rem 0.5rem;
-  background: rgba(52, 211, 153, 0.1);
+  background: rgba(63, 83, 84, 0.07);
   border-radius: 0.4rem;
   display: inline-block;
 }
@@ -697,16 +694,16 @@
 .saved-sim-name-input {
   flex: 1;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.6);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.4rem 0.6rem;
-  color: #f9fafb;
+  color: #403F3D;
   font-size: 0.85rem;
 }
 
 .saved-sim-name-input:focus {
   outline: none;
-  border-color: #34d399;
+  border-color: #3F5354;
 }
 
 .saved-sim-list {
@@ -720,7 +717,7 @@
 
 .saved-sim-empty {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
   margin: 0.25rem 0;
 }
 
@@ -730,8 +727,8 @@
   align-items: center;
   padding: 0.5rem 0.65rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.3);
-  background: rgba(20, 40, 30, 0.6);
+  border: 1px solid #E9E0CC;
+  background: var(--surface-2);
   gap: 0.5rem;
 }
 
@@ -745,7 +742,7 @@
 
 .saved-sim-name {
   font-size: 0.85rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -754,7 +751,7 @@
 
 .saved-sim-date {
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .saved-sim-actions {
@@ -766,7 +763,7 @@
 .saved-sim-action {
   border: none;
   background: none;
-  color: #a7f3d0;
+  color: #3E6650;
   font-size: 0.75rem;
   cursor: pointer;
   padding: 0.2rem 0.4rem;
@@ -774,15 +771,15 @@
 }
 
 .saved-sim-action:hover {
-  background: rgba(52, 211, 153, 0.15);
+  background: rgba(63, 83, 84, 0.10);
 }
 
 .saved-sim-action-delete {
-  color: #fca5a5;
+  color: #A34F38;
 }
 
 .saved-sim-action-delete:hover {
-  background: rgba(252, 165, 165, 0.15);
+  background: rgba(163, 79, 56, 0.12);
 }
 
 .saved-sim-rename-form {
@@ -801,7 +798,7 @@
 
 .saved-sim-user-email {
   font-size: 0.75rem;
-  color: #34d399;
+  color: #3F5354;
 }
 
 .saved-sim-auth-form {
@@ -810,16 +807,16 @@
 
 .saved-sim-auth-hint {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
   margin: 0 0 0.4rem;
 }
 
 .saved-sim-auth-sent {
   font-size: 0.85rem;
-  color: #34d399;
+  color: #3F5354;
   margin: 0;
   padding: 0.5rem 0.7rem;
-  background: rgba(52, 211, 153, 0.1);
+  background: rgba(63, 83, 84, 0.07);
   border-radius: 0.4rem;
 }
 
@@ -838,18 +835,18 @@
   text-align: left;
   padding: 0.5rem 0.6rem;
   font-size: 0.75rem;
-  color: #9ca3af;
-  border-bottom: 1px solid rgba(110, 160, 130, 0.3);
+  color: #6C6A64;
+  border-bottom: 1px solid #E9E0CC;
   font-weight: 500;
 }
 
 .tax-comparison-table td {
   padding: 0.55rem 0.6rem;
-  border-bottom: 1px solid rgba(110, 160, 130, 0.15);
+  border-bottom: 1px solid #EFE7D4;
 }
 
 .tax-comparison-table tbody tr:hover {
-  background: rgba(52, 211, 153, 0.05);
+  background: rgba(63, 83, 84, 0.04);
 }
 
 .tax-comparison-best {
@@ -857,7 +854,7 @@
 }
 
 .tax-comparison-regime {
-  color: #e5e7eb;
+  color: #403F3D;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -865,8 +862,8 @@
 
 .tax-comparison-badge {
   font-size: 0.65rem;
-  background: rgba(52, 211, 153, 0.2);
-  color: #34d399;
+  background: rgba(63, 83, 84, 0.15);
+  color: #3F5354;
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
   font-weight: 600;
@@ -875,16 +872,16 @@
 
 .tax-comparison-value {
   font-variant-numeric: tabular-nums;
-  color: #d1d5db;
+  color: #55534E;
   text-align: right;
 }
 
 .tax-comparison-positive {
-  color: #34d399;
+  color: #3F5354;
 }
 
 .tax-comparison-negative {
-  color: #f87171;
+  color: #A34F38;
 }
 
 .tax-comparison-excluded {
@@ -896,7 +893,7 @@
 
 .tax-comparison-excluded-item {
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: #6C6A64;
   font-style: italic;
 }
 
@@ -906,20 +903,20 @@
 
 .mb-key-metrics-title {
   font-size: 0.9rem;
-  color: #e5e7eb;
+  color: #403F3D;
   margin: 0 0 0.5rem;
   font-weight: 600;
 }
 
 .mb-fiscal-disclaimer {
   font-size: 0.75rem;
-  color: #f59e0b;
+  color: #BD9C67;
   font-style: italic;
   margin: 0 0 0.5rem;
   padding: 0.4rem 0.6rem;
-  background: rgba(245, 158, 11, 0.08);
+  background: rgba(189, 156, 103, 0.12);
   border-radius: 0.4rem;
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid #BD9C67;
 }
 
 .mb-apartment-row {
@@ -932,43 +929,43 @@
 .mb-apartment-type {
   min-width: 8rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.4rem 0.6rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.85rem;
 }
 
 .mb-apartment-tva {
   min-width: 7rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.4rem 0.6rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.85rem;
 }
 
 .mb-apartment-superficie {
   width: 5rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.4rem 0.6rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.85rem;
 }
 
 .mb-apartment-suffix {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .mb-remove-btn {
   border-radius: 0.5rem;
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  background: rgba(239, 68, 68, 0.1);
-  color: #fca5a5;
+  border: 1px solid rgba(163, 79, 56, 0.5);
+  background: rgba(163, 79, 56, 0.1);
+  color: #A34F38;
   padding: 0.3rem 0.6rem;
   font-size: 0.75rem;
   cursor: pointer;
@@ -987,15 +984,15 @@
 
 .mb-revente-card {
   border-radius: 1rem;
-  background: radial-gradient(circle at top left, #081510, #081510);
-  border: 1px solid rgba(110, 160, 130, 0.3);
+  background: var(--surface);
+  border: 1px solid #E9E0CC;
   padding: 1rem 1.1rem;
 }
 
 .mb-revente-title {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .mb-revente-table {
@@ -1009,9 +1006,9 @@
   grid-template-columns: minmax(6rem, 1fr) minmax(5rem, 0.8fr) 4rem 1fr 4.5rem;
   gap: 0.5rem;
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: #6C6A64;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(110, 160, 130, 0.3);
+  border-bottom: 1px solid #E9E0CC;
 }
 
 .mb-revente-row {
@@ -1026,7 +1023,7 @@
 .mb-revente-cell-tva,
 .mb-revente-cell-superficie,
 .mb-revente-cell-price {
-  color: #d1d5db;
+  color: #55534E;
 }
 
 .mb-revente-cell-tva {
@@ -1036,39 +1033,39 @@
 
 .mb-revente-cell-price {
   font-variant-numeric: tabular-nums;
-  color: #a7f3d0;
+  color: #3E6650;
 }
 
 .mb-revente-input {
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.35rem 0.5rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-size: 0.8rem;
 }
 
 .mb-revente-input:focus {
   outline: none;
-  border-color: #34d399;
+  border-color: #3F5354;
 }
 
 .mb-revente-total-row {
   font-weight: 600;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(110, 160, 130, 0.4);
+  border-top: 1px solid #E3D9C2;
   margin-top: 0.25rem;
 }
 
 .mb-revente-cell-total {
-  color: #a7f3d0;
+  color: #3E6650;
   font-variant-numeric: tabular-nums;
 }
 
 .mb-revente-summary {
   margin-top: 0.75rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(110, 160, 130, 0.4);
+  border-top: 1px solid #E3D9C2;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -1078,20 +1075,20 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: #d1d5db;
+  color: #55534E;
 }
 
 .mb-revente-summary-row span:last-child {
   font-variant-numeric: tabular-nums;
-  color: #a7f3d0;
+  color: #3E6650;
 }
 
 .mb-revente-positive {
-  color: #34d399 !important;
+  color: #3F5354 !important;
 }
 
 .mb-revente-negative {
-  color: #f87171 !important;
+  color: #A34F38 !important;
 }
 
 @media (max-width: 900px) {
@@ -1107,7 +1104,7 @@
 .mb-taxation-section {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(110, 160, 130, 0.4);
+  border-top: 1px solid #E3D9C2;
 }
 
 .mb-fiscal-result-table {
@@ -1124,7 +1121,7 @@
 
 .mb-fiscal-regime-label {
   font-size: 0.9rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-weight: 500;
 }
 
@@ -1139,15 +1136,15 @@
   gap: 0.5rem;
   cursor: pointer;
   font-size: 0.9rem;
-  color: #94a3b8;
+  color: #6C6A64;
 }
 
 .mb-fiscal-regime-option input {
-  accent-color: #34d399;
+  accent-color: #3F5354;
 }
 
 .mb-fiscal-regime-option:has(input:checked) span {
-  color: #e5e7eb;
+  color: #403F3D;
   font-weight: 500;
 }
 
@@ -1159,13 +1156,13 @@
 .mb-taxation-description {
   margin: 0 0 1rem;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .mb-taxation-table {
   border-radius: 1rem;
-  background: rgba(12, 26, 20, 0.95);
-  border: 1px solid rgba(110, 160, 130, 0.4);
+  background: rgba(253, 251, 245, 0.96);
+  border: 1px solid #E3D9C2;
   overflow: visible;
 }
 
@@ -1188,23 +1185,23 @@
 }
 
 .mb-vat-table th {
-  color: #94a3b8;
+  color: #6C6A64;
   font-weight: 500;
 }
 
 .mb-vat-regime-label {
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .mb-vat-hint {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #6C6A64;
   font-weight: 400;
 }
 
 .mb-vat-cell {
   font-variant-numeric: tabular-nums;
-  color: #a7f3d0;
+  color: #3E6650;
 }
 
 .mb-vat-cell-same {
@@ -1215,11 +1212,11 @@
 .mb-vat-resto {
   font-size: 0.8rem;
   margin-top: 0.25rem;
-  color: #94a3b8;
+  color: #6C6A64;
 }
 
 .mb-vat-resto.mb-vat-credit {
-  color: #34d399;
+  color: #3F5354;
 }
 
 .mb-vat-cell-tooltip {
@@ -1234,12 +1231,12 @@
   z-index: 9999;
   bottom: calc(100% + 0.5rem);
   right: 0;
-  background: #0c1a14;
-  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: #F5EDDA;
+  border: 1px solid #DCD2B8;
   border-radius: 8px;
   padding: 0.85rem 1.1rem;
   font-size: 0.8rem;
-  color: #e5e7eb;
+  color: #403F3D;
   white-space: nowrap;
   width: max-content;
   max-width: min(500px, 85vw);
@@ -1260,7 +1257,7 @@
 .chart-section {
   margin-top: 2rem;
   padding-top: 1.75rem;
-  border-top: 1px solid rgba(110, 160, 130, 0.4);
+  border-top: 1px solid #E3D9C2;
 }
 
 .chart-section-title {
@@ -1270,8 +1267,8 @@
 
 .chart-section-content {
   border-radius: 1rem;
-  background: rgba(12, 26, 20, 0.95);
-  border: 1px solid rgba(110, 160, 130, 0.4);
+  background: rgba(253, 251, 245, 0.96);
+  border: 1px solid #E3D9C2;
   padding: 1.25rem;
   min-height: 420px;
 }
@@ -1282,8 +1279,8 @@
 
 .loan-chart-card {
   border-radius: 1rem;
-  background: rgba(12, 26, 20, 0.95);
-  border: 1px solid rgba(110, 160, 130, 0.4);
+  background: rgba(253, 251, 245, 0.96);
+  border: 1px solid #E3D9C2;
   padding: 1rem 1.25rem;
 }
 
@@ -1298,12 +1295,12 @@
 .loan-chart-title {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .chart-tooltip {
-  background: #0c1a14;
-  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: #F5EDDA;
+  border: 1px solid #DCD2B8;
   border-radius: 8px;
   padding: 0.75rem 1rem;
   font-size: 0.8rem;
@@ -1329,7 +1326,7 @@
 
 .chart-tooltip-title {
   font-weight: 600;
-  color: #e5e7eb;
+  color: #403F3D;
   margin-bottom: 0.5rem;
 }
 
@@ -1337,11 +1334,11 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  color: #d1d5db;
+  color: #55534E;
 }
 
 .chart-tooltip-row span:last-child {
-  color: #a7f3d0;
+  color: #3E6650;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1357,27 +1354,27 @@
 .chart-tooltip-breakdown {
   padding-left: 0.75rem;
   margin-top: 0.25rem;
-  border-left: 1px solid rgba(110, 160, 130, 0.4);
+  border-left: 1px solid #E3D9C2;
 }
 
 .chart-tooltip-breakdown .chart-tooltip-row {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .chart-tooltip-depreciation {
-  color: #86efac !important;
+  color: #3E6650 !important;
   font-style: italic;
 }
 
 .chart-tooltip-carryforward {
-  color: #93c5fd !important;
+  color: #5C7370 !important;
 }
 
 .yearly-table-section {
   margin-top: 2rem;
   padding-top: 1.75rem;
-  border-top: 1px solid rgba(110, 160, 130, 0.4);
+  border-top: 1px solid #E3D9C2;
 }
 
 .yearly-table-title {
@@ -1388,8 +1385,8 @@
 .yearly-table-wrapper {
   overflow-x: auto;
   border-radius: 1rem;
-  background: rgba(12, 26, 20, 0.95);
-  border: 1px solid rgba(110, 160, 130, 0.4);
+  background: rgba(253, 251, 245, 0.96);
+  border: 1px solid #E3D9C2;
 }
 
 .yearly-table {
@@ -1407,7 +1404,7 @@
 }
 
 .yearly-table th {
-  color: #94a3b8;
+  color: #6C6A64;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -1417,12 +1414,12 @@
   text-align: left;
   position: sticky;
   left: 0;
-  background: rgba(12, 26, 20, 0.98);
+  background: rgba(253, 251, 245, 0.98);
   z-index: 1;
 }
 
 .yearly-table td {
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .yearly-table-num {
@@ -1453,15 +1450,15 @@
 }
 
 .pfu-detail-tooltip-content {
-  background: rgba(12, 26, 20, 0.98);
-  border: 1px solid rgba(110, 160, 130, 0.4);
+  background: rgba(253, 251, 245, 0.98);
+  border: 1px solid #E3D9C2;
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   min-width: 500px;
   max-width: 600px;
   font-size: 0.85rem;
-  color: #e5e7eb;
+  color: #403F3D;
   position: relative;
 }
 
@@ -1474,27 +1471,27 @@
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid rgba(110, 160, 130, 0.4);
+  border-top: 8px solid #E3D9C2;
 }
 
 .pfu-detail-tooltip-title {
   margin: 0 0 0.75rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: #5C7370;
 }
 
 .pfu-detail-tooltip-intro {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .pfu-detail-tooltip-list {
   margin: 0 0 1rem;
   padding-left: 1.5rem;
   font-size: 0.8rem;
-  color: #a7f3d0;
+  color: #3E6650;
   line-height: 1.6;
 }
 
@@ -1511,11 +1508,11 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 0.3rem 0;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .pfu-detail-tooltip-row span:first-child {
-  color: #9ca3af;
+  color: #6C6A64;
   flex-shrink: 0;
   min-width: 200px;
 }
@@ -1528,8 +1525,8 @@
 
 .pfu-detail-tooltip-row.pfu-detail-tooltip-total {
   font-weight: 600;
-  color: #93c5fd;
-  border-top: 1px solid rgba(110, 160, 130, 0.2);
+  color: #5C7370;
+  border-top: 1px solid #EFE7D4;
   padding-top: 0.5rem;
   margin-top: 0.25rem;
 }
@@ -1547,7 +1544,7 @@
 .yearly-table-sale-tax-value {
   text-decoration: underline;
   text-decoration-style: dotted;
-  text-decoration-color: rgba(110, 160, 130, 0.5);
+  text-decoration-color: #DCD2B8;
 }
 
 .yearly-table-flat-tax-tooltip {
@@ -1569,15 +1566,15 @@
 }
 
 .yearly-table-flat-tax-tooltip-content {
-  background: rgba(12, 26, 20, 0.98);
-  border: 1px solid rgba(110, 160, 130, 0.4);
+  background: rgba(253, 251, 245, 0.98);
+  border: 1px solid #E3D9C2;
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   min-width: 500px;
   max-width: 600px;
   font-size: 0.85rem;
-  color: #e5e7eb;
+  color: #403F3D;
   position: relative;
 }
 
@@ -1591,27 +1588,27 @@
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid rgba(110, 160, 130, 0.4);
+  border-top: 8px solid #E3D9C2;
 }
 
 .yearly-table-flat-tax-tooltip-title {
   margin: 0 0 0.75rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: #5C7370;
 }
 
 .yearly-table-flat-tax-tooltip-intro {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .yearly-table-flat-tax-tooltip-list {
   margin: 0 0 1rem;
   padding-left: 1.5rem;
   font-size: 0.8rem;
-  color: #a7f3d0;
+  color: #3E6650;
   line-height: 1.6;
 }
 
@@ -1628,11 +1625,11 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 0.3rem 0;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .yearly-table-flat-tax-tooltip-row span:first-child {
-  color: #9ca3af;
+  color: #6C6A64;
   flex-shrink: 0;
   min-width: 200px;
 }
@@ -1645,8 +1642,8 @@
 
 .yearly-table-flat-tax-tooltip-row.yearly-table-flat-tax-tooltip-total {
   font-weight: 600;
-  color: #93c5fd;
-  border-top: 1px solid rgba(110, 160, 130, 0.2);
+  color: #5C7370;
+  border-top: 1px solid #EFE7D4;
   padding-top: 0.5rem;
   margin-top: 0.25rem;
 }
@@ -1662,8 +1659,8 @@
 
 .results-breakdown {
   border-radius: 0.9rem;
-  background: rgba(12, 26, 20, 0.95);
-  border: 1px solid rgba(110, 160, 130, 0.4);
+  background: rgba(253, 251, 245, 0.96);
+  border: 1px solid #E3D9C2;
   padding: 0.7rem 0.8rem;
   display: flex;
   flex-direction: column;
@@ -1678,18 +1675,18 @@
 }
 
 .breakdown-label {
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .breakdown-value {
-  color: #a7f3d0;
+  color: #3E6650;
   font-variant-numeric: tabular-nums;
 }
 
 .results-disclaimer {
   margin: 0.9rem 0 0;
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .export-import-panel {
@@ -1701,17 +1698,17 @@
 .export-import-btn {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
-  color: #e5e7eb;
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
+  color: #403F3D;
   font-size: 0.9rem;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .export-import-btn:hover {
-  border-color: #34d399;
-  background: rgba(52, 211, 153, 0.1);
+  border-color: #3F5354;
+  background: rgba(63, 83, 84, 0.07);
 }
 
 .export-import-overlay {
@@ -1726,8 +1723,8 @@
 }
 
 .export-import-modal {
-  background: #0c1a14;
-  border: 1px solid rgba(110, 160, 130, 0.5);
+  background: #F5EDDA;
+  border: 1px solid #DCD2B8;
   border-radius: 1rem;
   padding: 1.5rem;
   max-width: 420px;
@@ -1749,20 +1746,20 @@
 
 .export-import-captcha label {
   font-size: 0.9rem;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .export-import-captcha input {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(12, 26, 20, 0.95);
-  color: #e5e7eb;
+  border: 1px solid #DCD2B8;
+  background: rgba(253, 251, 245, 0.96);
+  color: #403F3D;
   font-size: 0.95rem;
 }
 
 .export-import-input-error {
-  border-color: #ef4444 !important;
+  border-color: #B0503A !important;
 }
 
 .export-import-file {
@@ -1771,13 +1768,13 @@
 
 .export-import-file-input {
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: #6C6A64;
 }
 
 .export-import-error {
   display: block;
   font-size: 0.8rem;
-  color: #ef4444;
+  color: #B0503A;
   margin-bottom: 1rem;
 }
 
@@ -1790,20 +1787,20 @@
 .export-import-modal-actions button {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(110, 160, 130, 0.5);
-  background: rgba(20, 40, 30, 0.95);
-  color: #e5e7eb;
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
+  color: #403F3D;
   font-size: 0.9rem;
   cursor: pointer;
 }
 
 .export-import-modal-actions button:hover {
-  border-color: #34d399;
+  border-color: #3F5354;
 }
 
 .export-import-confirm {
-  background: rgba(52, 211, 153, 0.2) !important;
-  border-color: #34d399 !important;
+  background: rgba(63, 83, 84, 0.15) !important;
+  border-color: #3F5354 !important;
 }
 
 @media (min-width: 900px) {
@@ -1848,9 +1845,9 @@
 }
 
 .export-import-btn-success {
-  background: rgba(34, 197, 94, 0.2);
+  background: rgba(62, 102, 80, 0.2);
   border-color: rgba(34, 197, 94, 0.5);
-  color: #86efac;
+  color: #3E6650;
 }
 
 /* Comparison Panel Styles */
@@ -1880,13 +1877,13 @@
 .comparison-best-reason {
   margin: 0.5rem 0 0;
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .comparison-strategy-indicator {
   margin: 0.5rem 0 0;
   font-size: 0.9rem;
-  color: #60a5fa;
+  color: #5C7370;
   font-weight: 500;
 }
 
@@ -1906,18 +1903,18 @@
 
 .comparison-criteria-selector .field-label {
   font-size: 0.85rem;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .comparison-empty {
   text-align: center;
   padding: 3rem 1rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .comparison-empty h2 {
   margin: 0 0 0.5rem;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .comparison-empty p {
@@ -1937,8 +1934,8 @@
   display: flex;
   flex-direction: column;
   border-radius: 1.1rem;
-  background: radial-gradient(circle at top left, #081510, #081510);
-  border: 1px solid rgba(110, 160, 130, 0.3);
+  background: var(--surface);
+  border: 1px solid #E9E0CC;
   overflow: hidden;
   min-width: 280px;
   max-height: 80vh;
@@ -1949,8 +1946,8 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
-  background: rgba(12, 26, 20, 0.5);
-  border-bottom: 1px solid rgba(110, 160, 130, 0.2);
+  background: rgba(250, 244, 230, 0.6);
+  border-bottom: 1px solid #EFE7D4;
   position: relative;
 }
 
@@ -1973,16 +1970,16 @@
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
-  background: rgba(34, 197, 94, 0.2);
-  color: #86efac;
-  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: rgba(62, 102, 80, 0.2);
+  color: #3E6650;
+  border: 1px solid rgba(62, 102, 80, 0.4);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .comparison-column-best {
   border-color: rgba(34, 197, 94, 0.5) !important;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+  box-shadow: 0 0 0 2px rgba(62, 102, 80, 0.2);
 }
 
 .comparison-type-badge {
@@ -1995,15 +1992,15 @@
 }
 
 .comparison-type-rental {
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(92, 115, 112, 0.18);
+  color: #5C7370;
+  border: 1px solid rgba(92, 115, 112, 0.3);
 }
 
 .comparison-type-property-flipping {
-  background: rgba(168, 85, 247, 0.2);
-  color: #c4b5fd;
-  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: rgba(189, 156, 103, 0.2);
+  color: #BD9C67;
+  border: 1px solid rgba(189, 156, 103, 0.35);
 }
 
 .comparison-column-header-actions {
@@ -2018,7 +2015,7 @@
 .comparison-open-btn {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: #6C6A64;
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 0.25rem;
@@ -2031,8 +2028,8 @@
 }
 
 .comparison-open-btn:hover {
-  background: rgba(52, 211, 153, 0.2);
-  color: #34d399;
+  background: rgba(63, 83, 84, 0.15);
+  color: #3F5354;
 }
 
 .comparison-open-btn svg {
@@ -2043,7 +2040,7 @@
 .comparison-remove-btn {
   background: transparent;
   border: none;
-  color: #9ca3af;
+  color: #6C6A64;
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
@@ -2060,7 +2057,7 @@
 
 .comparison-remove-btn:hover {
   background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
+  color: #A34F38;
 }
 
 .comparison-column-content {
@@ -2072,7 +2069,7 @@
 }
 
 .comparison-error {
-  color: #ef4444;
+  color: #B0503A;
   padding: 1rem;
   text-align: center;
 }
@@ -2082,15 +2079,15 @@
   margin-bottom: 2rem;
   padding: 1.5rem;
   border-radius: 1.1rem;
-  background: radial-gradient(circle at top left, #081510, #081510);
-  border: 1px solid rgba(110, 160, 130, 0.3);
+  background: var(--surface);
+  border: 1px solid #E9E0CC;
 }
 
 .comparison-strategy-title {
   margin: 0 0 1rem;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .comparison-strategy-grid {
@@ -2102,15 +2099,15 @@
 .comparison-strategy-card {
   padding: 1rem;
   border-radius: 0.75rem;
-  background: rgba(12, 26, 20, 0.5);
-  border: 1px solid rgba(110, 160, 130, 0.2);
+  background: rgba(250, 244, 230, 0.6);
+  border: 1px solid #EFE7D4;
 }
 
 .comparison-strategy-card h4 {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: #5C7370;
 }
 
 .comparison-strategy-metric {
@@ -2126,30 +2123,30 @@
 
 .comparison-strategy-label {
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .comparison-strategy-value {
   font-size: 1rem;
   font-weight: 600;
-  color: #e5e7eb;
+  color: #403F3D;
 }
 
 .comparison-strategy-note {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #94918A;
   font-style: italic;
 }
 
 .comparison-strategy-highlight {
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(206, 225, 211, 0.5);
+  border: 1px solid rgba(62, 102, 80, 0.3);
 }
 
 .comparison-strategy-highlight .comparison-strategy-value {
-  color: #86efac;
+  color: #3E6650;
 }
 
 .comparison-strategy-explanation {
@@ -2157,9 +2154,9 @@
   padding: 0.75rem;
   border-radius: 0.5rem;
   background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(92, 115, 112, 0.18);
   font-size: 0.85rem;
-  color: #a7f3d0;
+  color: #3E6650;
   line-height: 1.5;
 }
 
@@ -2168,8 +2165,8 @@
   margin-bottom: 1rem;
   padding: 1rem;
   border-radius: 0.75rem;
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(206, 225, 211, 0.5);
+  border: 1px solid rgba(62, 102, 80, 0.3);
 }
 
 .comparison-tax-best {
@@ -2181,13 +2178,13 @@
 
 .comparison-tax-label {
   font-size: 0.9rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .comparison-tax-value {
   font-size: 1rem;
   font-weight: 600;
-  color: #86efac;
+  color: #3E6650;
 }
 
 .comparison-tax-savings {
@@ -2199,12 +2196,12 @@
 .comparison-tax-savings-amount {
   font-size: 1rem;
   font-weight: 600;
-  color: #86efac;
+  color: #3E6650;
 }
 
 .comparison-tax-savings-percent {
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .comparison-tax-table {
@@ -2219,10 +2216,10 @@
   gap: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: rgba(12, 26, 20, 0.5);
+  background: rgba(250, 244, 230, 0.6);
   font-size: 0.85rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: #5C7370;
 }
 
 .comparison-tax-row {
@@ -2231,36 +2228,36 @@
   gap: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: rgba(12, 26, 20, 0.3);
-  border: 1px solid rgba(110, 160, 130, 0.2);
+  background: rgba(64, 63, 61, 0.08);
+  border: 1px solid #EFE7D4;
   transition: all 0.15s ease;
 }
 
 .comparison-tax-row:hover {
-  background: rgba(12, 26, 20, 0.5);
-  border-color: rgba(110, 160, 130, 0.3);
+  background: rgba(250, 244, 230, 0.6);
+  border-color: #E9E0CC;
 }
 
 .comparison-tax-row-best {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(206, 225, 211, 0.5);
+  border-color: rgba(62, 102, 80, 0.3);
 }
 
 .comparison-tax-regime {
   font-size: 0.9rem;
-  color: #e5e7eb;
+  color: #403F3D;
   font-weight: 500;
 }
 
 .comparison-tax-amount,
 .comparison-tax-cashflow {
   font-size: 0.9rem;
-  color: #a7f3d0;
+  color: #3E6650;
   font-variant-numeric: tabular-nums;
 }
 
 .comparison-tax-row-best .comparison-tax-regime {
-  color: #86efac;
+  color: #3E6650;
   font-weight: 600;
 }
 
@@ -2268,7 +2265,7 @@
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
   background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(92, 115, 112, 0.18);
   margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
@@ -2277,12 +2274,12 @@
 
 .comparison-tax-regime-label {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #6C6A64;
 }
 
 .comparison-tax-regime-value {
   font-size: 0.85rem;
-  color: #93c5fd;
+  color: #5C7370;
   font-weight: 500;
 }
 
@@ -2294,7 +2291,7 @@
   margin: 0 0 1rem;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #93c5fd;
+  color: #5C7370;
 }
 
 /* Yearly Tax Comparison Table */
@@ -2311,15 +2308,15 @@
 
 .comparison-tax-yearly-table thead {
   background: rgba(12, 26, 20, 0.7);
-  border-bottom: 2px solid rgba(110, 160, 130, 0.3);
+  border-bottom: 2px solid #E9E0CC;
 }
 
 .comparison-tax-yearly-table th {
   padding: 0.75rem;
   text-align: center;
   font-weight: 600;
-  color: #93c5fd;
-  border-right: 1px solid rgba(110, 160, 130, 0.2);
+  color: #5C7370;
+  border-right: 1px solid #EFE7D4;
   white-space: nowrap;
 }
 
@@ -2346,23 +2343,23 @@
 }
 
 .comparison-tax-yearly-table tbody tr {
-  border-bottom: 1px solid rgba(110, 160, 130, 0.15);
+  border-bottom: 1px solid #EFE7D4;
   transition: background-color 0.15s ease;
 }
 
 .comparison-tax-yearly-table tbody tr:hover {
-  background: rgba(12, 26, 20, 0.3);
+  background: rgba(64, 63, 61, 0.08);
 }
 
 .comparison-tax-yearly-table tbody tr.comparison-tax-row-best {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(206, 225, 211, 0.5);
+  border-color: rgba(62, 102, 80, 0.3);
 }
 
 .comparison-tax-yearly-table td {
   padding: 0.75rem;
-  color: #e5e7eb;
-  border-right: 1px solid rgba(110, 160, 130, 0.1);
+  color: #403F3D;
+  border-right: 1px solid #F1EADA;
   font-variant-numeric: tabular-nums;
   vertical-align: top;
 }
@@ -2372,72 +2369,72 @@
 }
 
 .comparison-tax-regime-cell {
-  background: rgba(12, 26, 20, 0.4);
+  background: rgba(64, 63, 61, 0.10);
   font-weight: 500;
   position: sticky;
   left: 0;
   z-index: 1;
-  background: rgba(12, 26, 20, 0.4);
+  background: rgba(64, 63, 61, 0.10);
 }
 
 .comparison-tax-yearly-table tbody tr.comparison-tax-row-best .comparison-tax-regime-cell {
-  background: rgba(34, 197, 94, 0.15);
+  background: rgba(62, 102, 80, 0.15);
 }
 
 .comparison-tax-regime-name {
   font-size: 0.9rem;
-  color: #93c5fd;
+  color: #5C7370;
   font-weight: 600;
 }
 
 .comparison-tax-regime-sim-name {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #6C6A64;
   margin-top: 0.25rem;
 }
 
 .comparison-tax-year-cell {
   text-align: center;
-  color: #a7f3d0;
+  color: #3E6650;
 }
 
 .comparison-tax-year-amount {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #e5e7eb;
+  color: #403F3D;
   margin-bottom: 0.25rem;
 }
 
 .comparison-tax-year-resale {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #6C6A64;
   margin-top: 0.25rem;
   padding-top: 0.25rem;
-  border-top: 1px solid rgba(110, 160, 130, 0.2);
+  border-top: 1px solid #EFE7D4;
 }
 
 .comparison-tax-year-resale-label {
   display: block;
   font-size: 0.7rem;
-  color: #6b7280;
+  color: #94918A;
   margin-bottom: 0.1rem;
 }
 
 .comparison-tax-year-resale-value {
   display: block;
-  color: #a7f3d0;
+  color: #3E6650;
   font-weight: 500;
 }
 
 .comparison-tax-total-cell {
   text-align: center;
   font-weight: 600;
-  background: rgba(12, 26, 20, 0.3);
+  background: rgba(64, 63, 61, 0.08);
 }
 
 .comparison-tax-total-value {
   font-size: 1rem;
-  color: #93c5fd;
+  color: #5C7370;
   font-weight: 700;
 }
 
@@ -2484,14 +2481,14 @@
   height: 46px;
   flex: none;
   border-radius: 13px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  background: var(--accent);
   display: grid;
   place-items: center;
-  font-weight: 800;
-  font-size: 1.1rem;
-  color: #06251a;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #F5EDDA;
   letter-spacing: -0.02em;
-  box-shadow: 0 6px 18px rgba(16, 153, 107, 0.35);
+  border-radius: 6px;
 }
 
 .app-brand h1 {
@@ -2544,7 +2541,7 @@
 
 .mode-toggle .mode-toggle-active {
   background: var(--accent);
-  color: #06251a;
+  color: #F5EDDA;
 }
 
 /* ---------- Bandeau verdict sticky ---------- */
@@ -2556,11 +2553,12 @@
   align-items: center;
   gap: 1.1rem;
   flex-wrap: wrap;
-  background: linear-gradient(180deg, var(--surface-2), var(--surface));
-  border: 1px solid var(--line);
+  background: var(--accent);
+  border: none;
   border-radius: var(--radius);
   padding: 0.85rem 1.3rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 6px 24px rgba(63, 83, 84, 0.25);
+  color: #E9E2D0;
   margin-bottom: 1.2rem;
   grid-column: 1 / -1;
 }
@@ -2579,19 +2577,19 @@
   line-height: 1.1;
 }
 
-.verdict-positive { color: var(--accent); }
-.verdict-negative { color: var(--negative); }
-.verdict-neutral { color: var(--text-1); }
+.verdict-positive { color: #CBE3D3; }
+.verdict-negative { color: #E8B49F; }
+.verdict-neutral { color: #F5EDDA; }
 
 .verdict-unit {
   font-size: 0.9rem;
-  color: var(--text-2);
+  color: #C9C2B0;
   font-weight: 500;
 }
 
 .verdict-phrase {
   font-size: 0.9rem;
-  color: var(--text-2);
+  color: #D8D1BE;
   max-width: 44ch;
   margin-top: 0.15rem;
 }
@@ -2608,6 +2606,7 @@
 }
 
 .verdict-kpi-value {
+  color: #E8C892;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
@@ -2615,7 +2614,7 @@
 
 .verdict-kpi-label {
   font-size: 0.68rem;
-  color: var(--text-3);
+  color: #B8B19C;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   display: flex;
@@ -2629,8 +2628,8 @@
   display: flex;
   align-items: stretch;
   border-radius: 0.7rem;
-  border: 1px solid rgba(110, 160, 130, 0.6);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -2647,8 +2646,8 @@
 .input-group:focus-within {
   border-color: var(--accent);
   box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.7),
-    0 0 20px rgba(52, 211, 153, 0.2);
+    0 0 0 1px rgba(63, 83, 84, 0.7),
+    0 0 20px rgba(63, 83, 84, 0.15);
 }
 
 .input-group .field-input:focus-visible {
@@ -2676,7 +2675,7 @@
 
 .input-group-invalid:focus-within {
   border-color: var(--negative);
-  box-shadow: 0 0 0 1px rgba(240, 131, 122, 0.6);
+  box-shadow: 0 0 0 1px rgba(163, 79, 56, 0.6);
 }
 
 .field-error {
@@ -2727,7 +2726,7 @@
 .help-tip-bubble {
   max-width: 82vw;
   white-space: normal;
-  background: #06120c;
+  background: #F5EDDA;
   border: 1px solid var(--line);
   border-radius: var(--radius-s);
   padding: 0.6rem 0.75rem;
@@ -2781,8 +2780,9 @@
 }
 
 .simple-card {
-  background: rgba(13, 27, 20, 0.72);
-  border: 1px solid rgba(110, 160, 130, 0.18);
+  background: var(--surface);
+  border: none;
+  box-shadow: 0 1px 3px rgba(64, 63, 61, 0.08);
   border-radius: var(--radius);
   padding: 1.15rem 1.25rem 1.3rem;
   display: flex;
@@ -2826,7 +2826,7 @@
 .simple-advanced-cta {
   margin-top: 0.4rem;
   background: none;
-  border: 1px dashed rgba(110, 160, 130, 0.45);
+  border: 1px dashed #E3D9C2;
   border-radius: var(--radius-s);
   color: var(--accent);
   font: inherit;
@@ -2877,7 +2877,7 @@
 .app-error-fallback button {
   margin-top: 0.8rem;
   background: var(--accent);
-  color: #06251a;
+  color: #F5EDDA;
   border: 0;
   border-radius: 999px;
   font: inherit;
@@ -2964,8 +2964,8 @@
       'type regime'
       'superficie prix'
       'ppm remove';
-    background: rgba(13, 27, 20, 0.6);
-    border: 1px solid rgba(110, 160, 130, 0.18);
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
     border-radius: var(--radius-s);
     padding: 0.6rem;
     margin-bottom: 0.55rem;
@@ -3016,8 +3016,8 @@
 .export-import-warning {
   font-size: 0.82rem;
   color: var(--text-2);
-  background: var(--minor-soft, rgba(110, 160, 130, 0.12));
-  background: rgba(110, 160, 130, 0.12);
+  background: var(--minor-soft, #F1EADA);
+  background: #F1EADA;
   border-radius: var(--radius-s);
   padding: 0.55rem 0.75rem;
   margin: 0.4rem 0 0.8rem;
@@ -3039,8 +3039,8 @@
 .lead-capture-card {
   position: relative;
   margin-top: 1.4rem;
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.10), rgba(16, 153, 107, 0.05));
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: linear-gradient(135deg, rgba(63, 83, 84, 0.07), rgba(63, 83, 84, 0.05));
+  border: 1px solid rgba(63, 83, 84, 0.3);
   border-radius: var(--radius);
   padding: 1.1rem 2.6rem 1rem 1.25rem;
   display: flex;
@@ -3057,8 +3057,8 @@
   flex: 1;
   min-width: 200px;
   border-radius: 0.7rem;
-  border: 1px solid rgba(110, 160, 130, 0.6);
-  background: rgba(20, 40, 30, 0.95);
+  border: 1px solid #DCD2B8;
+  background: rgba(255, 255, 255, 0.97);
   padding: 0.55rem 0.8rem;
   color: var(--text-1);
   font-size: 16px;
@@ -3069,7 +3069,7 @@
   border: 0;
   border-radius: 0.7rem;
   background: var(--accent);
-  color: #06251a;
+  color: #F5EDDA;
   font: inherit;
   font-weight: 700;
   padding: 0.55rem 1.2rem;
@@ -3093,13 +3093,13 @@
   cursor: pointer;
   font-size: 0.85rem;
 }
-.lead-capture-dismiss:hover { color: var(--text-1); background: rgba(110, 160, 130, 0.15); }
+.lead-capture-dismiss:hover { color: var(--text-1); background: #EFE7D4; }
 .lead-capture-done { align-items: flex-start; color: var(--accent); font-weight: 600; }
 
 .preset-chips { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
 .preset-chips-label { font-size: 0.76rem; color: var(--text-3); }
 .preset-chip {
-  border: 1px solid rgba(52, 211, 153, 0.4);
+  border: 1px solid rgba(63, 83, 84, 0.4);
   background: var(--accent-soft);
   color: var(--accent);
   border-radius: 999px;
@@ -3110,7 +3110,7 @@
   cursor: pointer;
   min-height: 32px;
 }
-.preset-chip:hover, .preset-chip:focus-visible { background: rgba(52, 211, 153, 0.22); outline: none; }
+.preset-chip:hover, .preset-chip:focus-visible { background: rgba(206, 225, 211, 0.9); outline: none; }
 
 .app-panel-loading {
   padding: 3rem;
@@ -3133,16 +3133,16 @@
 .renov-chip:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Bilan « combien j'ai gagné à la revente » */
-.sale-gain-card { margin-top: 1rem; padding: 1rem 1.1rem; border: 1px solid var(--border, rgba(148,163,184,0.25)); border-radius: 12px; background: rgba(16, 185, 129, 0.04); }
+.sale-gain-card { margin-top: 1rem; padding: 1rem 1.1rem; border: 1px solid var(--border, rgba(64, 63, 61, 0.12)); border-radius: 12px; background: rgba(63, 83, 84, 0.04); }
 .sale-gain-title { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.5rem; font-size: 0.98rem; }
-.sale-gain-assumption { margin: 0 0 0.6rem; font-size: 0.78rem; color: var(--text-3, #9ca3af); }
+.sale-gain-assumption { margin: 0 0 0.6rem; font-size: 0.78rem; color: var(--text-3, #6C6A64); }
 .sale-gain-rows { display: flex; flex-direction: column; gap: 0.3rem; }
 .sale-gain-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.86rem; }
 .sale-gain-row > span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.sale-gain-row-total { margin-top: 0.35rem; padding-top: 0.5rem; border-top: 1px solid rgba(148,163,184,0.3); font-weight: 700; font-size: 0.95rem; }
+.sale-gain-row-total { margin-top: 0.35rem; padding-top: 0.5rem; border-top: 1px solid rgba(64, 63, 61, 0.15); font-weight: 700; font-size: 0.95rem; }
 .sale-gain-phrase { margin: 0.7rem 0 0; font-size: 0.9rem; line-height: 1.45; }
-.sale-gain-pos { color: #34d399; }
-.sale-gain-neg { color: #f87171; }
+.sale-gain-pos { color: #3F5354; }
+.sale-gain-neg { color: #A34F38; }
 
 /* Note différé : indicateurs calculés sur la première année pleine */
-.results-deferral-note { margin: 0.6rem 0 0.8rem; padding: 0.55rem 0.75rem; border-left: 3px solid #f59e0b; background: rgba(245, 158, 11, 0.08); border-radius: 6px; font-size: 0.8rem; line-height: 1.45; color: var(--text-2, #cbd5e1); }
+.results-deferral-note { margin: 0.6rem 0 0.8rem; padding: 0.55rem 0.75rem; border-left: 3px solid #BD9C67; background: rgba(189, 156, 103, 0.12); border-radius: 6px; font-size: 0.8rem; line-height: 1.45; color: var(--text-2, #55534E); }

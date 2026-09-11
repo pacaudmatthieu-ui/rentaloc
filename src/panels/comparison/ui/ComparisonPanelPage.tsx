@@ -207,12 +207,12 @@ export function ComparisonPanelPage({ locale, strings, onOpenSimulation }: Compa
     
     // Colors for each simulation line
     const colors = [
-      '#a78bfa', // purple
-      '#38bdf8', // sky blue
-      '#f59e0b', // amber
-      '#34d399', // emerald
-      '#f87171', // red
-      '#60a5fa', // blue
+      '#3F5354', // vert foncé charte
+      '#BD9C67', // doré charte
+      '#6F9A7E', // vert sauge
+      '#A34F38', // terracotta
+      '#5C7370', // vert-de-gris
+      '#8A6E4B', // brun doré
     ]
 
     for (let year = 1; year <= maxYear; year++) {

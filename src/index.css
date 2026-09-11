@@ -1,27 +1,27 @@
 :root {
   /* ===== Design tokens RentaLoc ===== */
-  --bg: #0a1410;
-  --bg-glow: #0e1c15;
-  --surface: #101d16;
-  --surface-2: #15251c;
-  --line: #23392c;
-  --line-soft: #1b2e23;
-  --text-1: #eaf2ec;
-  --text-2: #a8bcae;
-  --text-3: #75897b;
-  --accent: #34d399;
-  --accent-deep: #10996b;
-  --accent-soft: rgba(52, 211, 153, 0.12);
-  --negative: #f0837a;
-  --negative-soft: rgba(240, 131, 122, 0.12);
-  --radius: 14px;
-  --radius-s: 9px;
+  --bg: #F5EDDA;
+  --bg-glow: #FAF4E6;
+  --surface: #FFFFFF;
+  --surface-2: #FAF4E6;
+  --line: #E3D9C2;
+  --line-soft: #EDE5D2;
+  --text-1: #403F3D;
+  --text-2: #6C6A64;
+  --text-3: #94918A;
+  --accent: #3F5354;
+  --accent-deep: #324344;
+  --accent-soft: rgba(63, 83, 84, 0.08);
+  --negative: #A34F38;
+  --negative-soft: rgba(163, 79, 56, 0.08);
+  --radius: 10px;
+  --radius-s: 6px;
 
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
     'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: dark;
+  color-scheme: light;
   color: var(--text-1);
   background: var(--bg);
   font-synthesis: none;
@@ -40,7 +40,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #0c1a14;
+  background: #F5EDDA;
 }
 
 a {
