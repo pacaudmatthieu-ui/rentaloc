@@ -483,23 +483,6 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               help={strings.helpResaleFees}
               invalidMessage={inv}
             />
-          </div>
-        ),
-      },
-      {
-        id: 'resale-outcome',
-        title: strings.sectionResaleOutcome,
-        description: strings.resaleOutcomeDescription,
-        content: (
-          <>
-            <h4 className="loan-chart-title">{strings.loanChartIrr}</h4>
-            <IRRChartSection
-              data={irrByYearData}
-              currencyFormatter={currencyFormatter}
-              percentFormatter={percentFormatter}
-              yearLabel={strings.tableYear}
-              irrLabel={strings.loanChartIrr}
-            />
             {saleGain && (() => {
               const signed = (v: number) => `${v >= 0 ? '+\u00a0' : '\u2212\u00a0'}${currencyFormatter.format(Math.abs(v))}`
               const hasResaleProject =
@@ -551,7 +534,21 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
                 </div>
               )
             })()}
-          </>
+          </div>
+        ),
+      },
+      {
+        id: 'resale-outcome',
+        title: strings.loanChartIrr,
+        description: strings.irrSectionDescription,
+        content: (
+          <IRRChartSection
+            data={irrByYearData}
+            currencyFormatter={currencyFormatter}
+            percentFormatter={percentFormatter}
+            yearLabel={strings.tableYear}
+            irrLabel={strings.loanChartIrr}
+          />
         ),
       },
       {
