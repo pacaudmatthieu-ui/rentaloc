@@ -1,6 +1,6 @@
 export { CashflowChart } from './CashflowChart'
 export { ChartTooltipContent, type ChartTooltipStrings } from './ChartTooltip'
-export { LoanChartsSection, type LoanChartPoint } from './LoanChartsSection'
+export { LoanChartsSection, IRRChartSection, type LoanChartPoint } from './LoanChartsSection'
 export { ComparisonIRRChart, type ComparisonIRRDataPoint } from './ComparisonIRRChart'
 export { IRRTooltipContent } from './IRRTooltipContent'
 export type { IRRChartPoint } from './types'

@@ -28,8 +28,15 @@ export function usePanelLayout(
           parsed.order?.includes(id),
         )
         const extraIds = defaultOrder.filter((id) => !parsed.order?.includes(id))
+        // Les sections apparues depuis la sauvegarde s'insèrent à leur
+        // position par défaut (pas en fin de liste)
+        const merged = [...validOrder]
+        for (const id of extraIds) {
+          const idx = defaultOrder.indexOf(id)
+          merged.splice(Math.min(idx, merged.length), 0, id)
+        }
         return {
-          order: [...validOrder, ...extraIds],
+          order: merged,
           collapsed: parsed.collapsed ?? {},
         }
       }

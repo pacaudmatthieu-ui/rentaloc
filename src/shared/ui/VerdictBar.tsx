@@ -6,6 +6,8 @@ export type VerdictKpi = {
   value: string
   tone?: 'positive' | 'negative' | 'neutral'
   help?: string
+  /** Info-bulle native au survol (ex. : inviter à remplir le projet de revente) */
+  title?: string
 }
 
 interface VerdictBarProps {
@@ -36,7 +38,7 @@ export function VerdictBar({ figure, figureUnit, tone, phrase, kpis }: VerdictBa
       </div>
       <div className="verdict-kpis">
         {kpis.map((kpi) => (
-          <div className="verdict-kpi" key={kpi.label}>
+          <div className="verdict-kpi" key={kpi.label} title={kpi.title}>
             <div className={`verdict-kpi-value verdict-${kpi.tone ?? 'neutral'}`}>{kpi.value}</div>
             <div className="verdict-kpi-label">
               {kpi.label}
