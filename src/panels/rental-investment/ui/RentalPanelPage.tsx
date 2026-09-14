@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import type { Locale } from '../../../shared/types'
 import { toNumber } from '../../../shared/lib/format'
-import { FormField, YearsField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, SortableSectionList, VerdictBar, HelpTip } from '../../../shared/ui'
+import { FormField, YearsField, ResultTile, BreakdownRow, CashflowChart, LoanChartsSection, IRRChartSection, SortableSectionList, VerdictBar, HelpTip } from '../../../shared/ui'
 import type { VerdictKpi } from '../../../shared/ui'
 import { usePanelLayout } from '../../../shared/hooks/usePanelLayout'
 import { ExportImportPanel } from '../../../features/export-json'
@@ -33,11 +33,12 @@ const RENTAL_DEFAULT_ORDER = [
   'taxation',
   'tax-comparison',
   'resale',
+  'resale-outcome',
   'chart',
   'yearly-table',
   'loan-charts',
 ]
-const RENTAL_GRID_LAYOUT = [2, 3, 2, 1, 1, 1, 1] as const
+const RENTAL_GRID_LAYOUT = [2, 3, 2, 1, 1, 1, 1, 1] as const
 
 const TAX_REGIME_OPTIONS: SimulationFormValues['taxRegime'][] = [
   'none',
@@ -258,13 +259,33 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
         help: strings.helpIrr,
       },
     ]
+    // Gain net à la revente : affiché seulement si le projet de revente est
+    // renseigné ; sinon un « — » qui invite à le remplir (bulle + survol)
+    const hasResaleProject =
+      toNumber(values.resalePrice ?? '0') > 0 && toNumber(values.resaleHoldingMonths ?? '0') > 0
+    if (hasResaleProject && saleGain) {
+      kpis.push({
+        label: `${strings.verdictSaleGainLabel} (${saleGain.years} ${strings.taxComparisonYears})`,
+        value: `${saleGain.gain >= 0 ? '+\u00a0' : '\u2212\u00a0'}${currencyFormatter.format(Math.abs(saleGain.gain))}`,
+        tone: saleGain.gain >= 0 ? 'positive' : 'negative',
+        help: strings.helpVerdictSaleGain,
+      })
+    } else {
+      kpis.push({
+        label: strings.verdictSaleGainLabel,
+        value: '—',
+        tone: 'neutral',
+        help: strings.verdictSaleGainEmptyHint,
+        title: strings.verdictSaleGainEmptyHint,
+      })
+    }
     return {
       figure: currencyFormatter.format(cfMonth),
       tone,
       phrase,
       kpis,
     }
-  }, [results, irrByYearData, currencyFormatter, percentFormatter, strings])
+  }, [results, irrByYearData, saleGain, values.resalePrice, values.resaleHoldingMonths, currencyFormatter, percentFormatter, strings])
 
   // ----- Tableau annuel (colonnes essentielles / complètes) -----
   const compactTable = (
@@ -463,6 +484,74 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
               invalidMessage={inv}
             />
           </div>
+        ),
+      },
+      {
+        id: 'resale-outcome',
+        title: strings.sectionResaleOutcome,
+        description: strings.resaleOutcomeDescription,
+        content: (
+          <>
+            <h4 className="loan-chart-title">{strings.loanChartIrr}</h4>
+            <IRRChartSection
+              data={irrByYearData}
+              currencyFormatter={currencyFormatter}
+              percentFormatter={percentFormatter}
+              yearLabel={strings.tableYear}
+              irrLabel={strings.loanChartIrr}
+            />
+            {saleGain && (() => {
+              const signed = (v: number) => `${v >= 0 ? '+\u00a0' : '\u2212\u00a0'}${currencyFormatter.format(Math.abs(v))}`
+              const hasResaleProject =
+                toNumber(values.resalePrice ?? '0') > 0 && toNumber(values.resaleHoldingMonths ?? '0') > 0
+              const irrSuffix =
+                saleGain.irr != null
+                  ? strings.saleGainIrrSuffix.replace('{irr}', percentFormatter.format(saleGain.irr / 100))
+                  : ''
+              // Argent réellement sorti de la poche (apport + cash-flows négatifs)
+              // vs argent récupéré (revente nette + cash-flows positifs)
+              const invested = saleGain.apport + Math.max(0, -saleGain.operatingCF)
+              const recovered = saleGain.saleNet + Math.max(0, saleGain.operatingCF)
+              const phrase = (invested <= 0
+                ? strings.saleGainPhraseNoApport
+                : saleGain.gain >= 0
+                  ? strings.saleGainPhraseWin
+                  : strings.saleGainPhraseLoss)
+                .replace('{invested}', currencyFormatter.format(invested))
+                .replace('{recovered}', currencyFormatter.format(recovered))
+                .replace('{years}', String(saleGain.years))
+                .replace('{gain}', currencyFormatter.format(Math.abs(saleGain.gain)))
+                .replace('{irr}', irrSuffix)
+              return (
+                <div className="sale-gain-card">
+                  <h4 className="sale-gain-title">
+                    {strings.saleGainTitle}
+                    <HelpTip text={strings.helpSaleGain} />
+                  </h4>
+                  {!hasResaleProject && <p className="sale-gain-assumption">{strings.saleGainAssumption}</p>}
+                  <div className="sale-gain-rows">
+                    <div className="sale-gain-row">
+                      <span>{strings.saleGainApport}</span>
+                      <span>{signed(-saleGain.apport)}</span>
+                    </div>
+                    <div className="sale-gain-row">
+                      <span>{strings.saleGainOperating}</span>
+                      <span>{signed(saleGain.operatingCF)}</span>
+                    </div>
+                    <div className="sale-gain-row">
+                      <span>{strings.saleGainSaleNet}</span>
+                      <span>{signed(saleGain.saleNet)}</span>
+                    </div>
+                    <div className={`sale-gain-row sale-gain-row-total ${saleGain.gain >= 0 ? 'sale-gain-pos' : 'sale-gain-neg'}`}>
+                      <span>{strings.saleGainTotal} ({saleGain.years} {strings.taxComparisonYears})</span>
+                      <span>{signed(saleGain.gain)}</span>
+                    </div>
+                  </div>
+                  <p className={`sale-gain-phrase ${saleGain.gain >= 0 ? 'sale-gain-pos' : 'sale-gain-neg'}`}>{phrase}</p>
+                </div>
+              )
+            })()}
+          </>
         ),
       },
       {
@@ -693,70 +782,15 @@ export function RentalPanelPage({ locale, strings, initialValues, valuesRef, uiM
         title: strings.sectionLoanCharts,
         description: strings.loanChartsDescription,
         content: (
-          <>
-            <LoanChartsSection
-              data={loanChartsData}
-              currencyFormatter={currencyFormatter}
-              percentFormatter={percentFormatter}
-              principalLabel={strings.loanChartPrincipal}
-              interestLabel={strings.loanChartInterest}
-              ltvLabel={strings.loanChartLtv}
-              yearLabel={strings.tableYear}
-              irrData={irrByYearData}
-              irrLabel={strings.loanChartIrr}
-            />
-            {saleGain && (() => {
-              const signed = (v: number) => `${v >= 0 ? '+\u00a0' : '\u2212\u00a0'}${currencyFormatter.format(Math.abs(v))}`
-              const hasResaleProject =
-                toNumber(values.resalePrice ?? '0') > 0 && toNumber(values.resaleHoldingMonths ?? '0') > 0
-              const irrSuffix =
-                saleGain.irr != null
-                  ? strings.saleGainIrrSuffix.replace('{irr}', percentFormatter.format(saleGain.irr / 100))
-                  : ''
-              // Argent réellement sorti de la poche (apport + cash-flows négatifs)
-              // vs argent récupéré (revente nette + cash-flows positifs)
-              const invested = saleGain.apport + Math.max(0, -saleGain.operatingCF)
-              const recovered = saleGain.saleNet + Math.max(0, saleGain.operatingCF)
-              const phrase = (invested <= 0
-                ? strings.saleGainPhraseNoApport
-                : saleGain.gain >= 0
-                  ? strings.saleGainPhraseWin
-                  : strings.saleGainPhraseLoss)
-                .replace('{invested}', currencyFormatter.format(invested))
-                .replace('{recovered}', currencyFormatter.format(recovered))
-                .replace('{years}', String(saleGain.years))
-                .replace('{gain}', currencyFormatter.format(Math.abs(saleGain.gain)))
-                .replace('{irr}', irrSuffix)
-              return (
-                <div className="sale-gain-card">
-                  <h4 className="sale-gain-title">
-                    {strings.saleGainTitle}
-                    <HelpTip text={strings.helpSaleGain} />
-                  </h4>
-                  {!hasResaleProject && <p className="sale-gain-assumption">{strings.saleGainAssumption}</p>}
-                  <div className="sale-gain-rows">
-                    <div className="sale-gain-row">
-                      <span>{strings.saleGainApport}</span>
-                      <span>{signed(-saleGain.apport)}</span>
-                    </div>
-                    <div className="sale-gain-row">
-                      <span>{strings.saleGainOperating}</span>
-                      <span>{signed(saleGain.operatingCF)}</span>
-                    </div>
-                    <div className="sale-gain-row">
-                      <span>{strings.saleGainSaleNet}</span>
-                      <span>{signed(saleGain.saleNet)}</span>
-                    </div>
-                    <div className={`sale-gain-row sale-gain-row-total ${saleGain.gain >= 0 ? 'sale-gain-pos' : 'sale-gain-neg'}`}>
-                      <span>{strings.saleGainTotal} ({saleGain.years} {strings.taxComparisonYears})</span>
-                      <span>{signed(saleGain.gain)}</span>
-                    </div>
-                  </div>
-                  <p className={`sale-gain-phrase ${saleGain.gain >= 0 ? 'sale-gain-pos' : 'sale-gain-neg'}`}>{phrase}</p>
-                </div>
-              )
-            })()}
-          </>
+          <LoanChartsSection
+            data={loanChartsData}
+            currencyFormatter={currencyFormatter}
+            percentFormatter={percentFormatter}
+            principalLabel={strings.loanChartPrincipal}
+            interestLabel={strings.loanChartInterest}
+            ltvLabel={strings.loanChartLtv}
+            yearLabel={strings.tableYear}
+          />
         ),
       },
     ],
