@@ -125,6 +125,10 @@ export function ExportImportPanel<T>({
       )}
       {extraButton}
       {showImportModal && createPortal(
+        /* Le portail sort de l'arbre .rentaloc-app : on ré-enveloppe dans un
+           conteneur porteur du scope CSS (display:contents = aucune boîte
+           rendue, seuls les styles confinés s'appliquent à la modale) */
+        <div className="rentaloc-app" style={{ display: 'contents' }}>
         <div className="export-import-overlay" onClick={closeImportModal}>
           <div className="export-import-modal" onClick={(e) => e.stopPropagation()}>
             <h3>{strings.importData}</h3>
@@ -153,6 +157,7 @@ export function ExportImportPanel<T>({
               </button>
             </div>
           </div>
+        </div>
         </div>,
         document.body,
       )}

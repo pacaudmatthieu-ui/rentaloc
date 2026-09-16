@@ -102,6 +102,19 @@ opt-in RGPD, PDF, pack réalisme, charges sans pré-remplissage, estimateur trav
   Un doublon `rentaloc-rmnu` existe peut-être encore (à supprimer par Matthieu).
 - **GitHub MCP** pour les PR/merges (pas de gh CLI en environnement distant).
 
+## Intégration WordPress sans iframe
+
+- Tous les styles sont confinés sous `.rentaloc-app` (postcss.config.cjs,
+  postcss-prefix-selector) : ne JAMAIS écrire de CSS global (:root, body).
+- `npm run build:wp` produit `dist-wp/rentaloc.js` + `rentaloc.css` (noms
+  stables, un seul fichier, base './'). Le workflow
+  `.github/workflows/build-wp.yml` reconstruit et committe dist-wp/ à
+  chaque push sur main puis purge jsDelivr. La page WordPress charge :
+  `<div id="rentaloc-root"></div>` + le CSS/JS via
+  https://cdn.jsdelivr.net/gh/pacaudmatthieu-ui/rentaloc@main/dist-wp/…
+- Le portail de la modale d'import réapplique la classe `.rentaloc-app`.
+- api/subscribe.ts autorise le CORS depuis jmacademie.com (préflight OPTIONS).
+
 ## Environnement de vérification
 
 - Lint : 23 erreurs PRÉEXISTANTES (react-hooks compiler dans App.tsx et

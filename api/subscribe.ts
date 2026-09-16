@@ -28,7 +28,26 @@ async function sio(apiKey: string, path: string, init?: RequestInit): Promise<Re
   })
 }
 
+// Origines autorisées à appeler cette API depuis un autre domaine
+// (intégration du simulateur sans iframe sur le site JM Académie)
+const ALLOWED_ORIGINS = [
+  'https://jmacademie.com',
+  'https://www.jmacademie.com',
+]
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const origin = String(req.headers.origin ?? '')
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Vary', 'Origin')
+  }
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    res.setHeader('Access-Control-Max-Age', '86400')
+    res.status(204).end()
+    return
+  }
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method_not_allowed' })
     return

@@ -1,0 +1,49 @@
+# Construit le bundle d'intégration WordPress (dist-wp/) à chaque push sur
+# main et le committe dans le repo. Le site jmacademie.com le charge ensuite
+# via jsDelivr :
+#   https://cdn.jsdelivr.net/gh/pacaudmatthieu-ui/rentaloc@main/dist-wp/rentaloc.js
+#   https://cdn.jsdelivr.net/gh/pacaudmatthieu-ui/rentaloc@main/dist-wp/rentaloc.css
+name: Build WordPress bundle
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'dist-wp/**'
+
+permissions:
+  contents: write
+
+jobs:
+  build-wp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build bundle WordPress
+        run: npm run build:wp
+
+      - name: Commit dist-wp
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist-wp
+          if git diff --staged --quiet; then
+            echo "dist-wp inchangé, rien à committer"
+          else
+            git commit -m "chore: build dist-wp pour l'intégration WordPress [skip ci]"
+            git push
+          fi
+
+      - name: Purger le cache jsDelivr
+        run: |
+          curl -fsS "https://purge.jsdelivr.net/gh/pacaudmatthieu-ui/rentaloc@main/dist-wp/rentaloc.js" || true
+          curl -fsS "https://purge.jsdelivr.net/gh/pacaudmatthieu-ui/rentaloc@main/dist-wp/rentaloc.css" || true

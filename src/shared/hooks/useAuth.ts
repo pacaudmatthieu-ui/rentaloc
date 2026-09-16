@@ -32,7 +32,7 @@ export function useAuth() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.origin,
+        // Revenir sur la page exacte (site autonome OU page WordPress)\n        emailRedirectTo: window.location.origin + window.location.pathname,
       },
     })
     return { error: error?.message ?? null }
