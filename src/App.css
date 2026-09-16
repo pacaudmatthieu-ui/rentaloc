@@ -195,7 +195,7 @@
 
 @media (max-width: 900px) {
   .sortable-section-row {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }
 
@@ -3146,3 +3146,82 @@
 
 /* Note différé : indicateurs calculés sur la première année pleine */
 .results-deferral-note { margin: 0.6rem 0 0.8rem; padding: 0.55rem 0.75rem; border-left: 3px solid #BD9C67; background: rgba(189, 156, 103, 0.12); border-radius: 6px; font-size: 0.8rem; line-height: 1.45; color: var(--text-2, #55534E); }
+
+/* ============================================================
+   MOBILE — plus aucun débordement horizontal
+   (les tableaux défilent DANS leur zone, les rangées passent à la ligne)
+   ============================================================ */
+/* Les blocs de grille ne s'élargissent plus à la largeur de leur contenu */
+.sortable-section-item,
+.collapsible-section,
+.collapsible-section-body,
+.form-card,
+.simple-card,
+.results-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Tableaux larges : zone défilante horizontale, colonnes lisibles */
+.yearly-table-wrapper {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+.tax-comparison-panel {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tax-comparison-table {
+  min-width: 540px;
+}
+
+@media (max-width: 640px) {
+  .app-root {
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+  .app-header-main,
+  .app-header-side {
+    max-width: 100%;
+  }
+  .section-tabs {
+    flex-wrap: wrap;
+  }
+  /* Bandeau verdict : non collant sur mobile (il masquerait la moitié de
+     l'écran en défilant), 4 puces sur 2 colonnes */
+  .verdict-bar {
+    position: static;
+  }
+  .verdict-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem 1rem;
+  }
+  .verdict-kpi {
+    text-align: left;
+    min-width: 0;
+  }
+  .verdict-kpi-label {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  /* Rangées de boutons : passage à la ligne, 2 par ligne */
+  .export-import-panel,
+  .saved-sim-buttons,
+  .saved-sim-actions {
+    flex-wrap: wrap;
+  }
+  .export-import-btn {
+    flex: 1 1 calc(50% - 0.75rem);
+    min-width: 0;
+    text-align: center;
+  }
+  .renov-chip {
+    white-space: normal;
+  }
+  .sale-gain-row {
+    flex-wrap: wrap;
+    gap: 0.2rem 1rem;
+  }
+}
