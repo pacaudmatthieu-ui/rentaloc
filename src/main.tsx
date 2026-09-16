@@ -33,7 +33,15 @@ if (window.parent !== window) {
   window.setInterval(reportHeight, 1000)
 }
 
-createRoot(document.getElementById('root')!).render(
+// Point de montage : #rentaloc-root si présent (intégration WordPress
+// sans iframe), sinon #root (site autonome rentaloc.vercel.app).
+// La classe .rentaloc-app porte tous les styles de l'application
+// (voir postcss.config.cjs) : rien ne fuit sur le site hôte.
+const container =
+  document.getElementById('rentaloc-root') ?? document.getElementById('root')!
+container.classList.add('rentaloc-app')
+
+createRoot(container).render(
   <StrictMode>
     <App />
   </StrictMode>,
